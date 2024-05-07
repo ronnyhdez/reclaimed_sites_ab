@@ -1,0 +1,182 @@
+---
+title: "Quick EDA wells"
+execute:
+  message: false
+  warning: false
+format: 
+  html:
+    theme:
+      - flatly
+    linkcolor: "#FF5500"
+    highlight-style: tango
+    toc: true
+    number-sections: false
+    colorlinks: true
+    code-fold: true
+    code-line-numbers: true
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(dplyr)
+library(sf)
+library(janitor)
+library(purrr)
+library(visdat)
+library(ggplot2)
+library(rmarkdown)
+```
+
+# Abandoned wells
+
+Here I'm just going to explore the data of the abandoned wells layer. 
+Specifically just the attribute table to validate categories that can be useful
+for the filtering and dates.
+
+## Read data
+
+```{r}
+abandoned_wells <- st_read(dsn = 'HFI2021.gdb/HFI2021.gdb',
+                           layer = 'o16_WellsAbnd_HFI_2021') |> 
+        clean_names()
+```
+
+```{r}
+glimpse(abandoned_wells)
+```
+
+We have a dataframe with `r nrow(abandoned_wells)` rows and 
+`r ncol(abandoned_wells)` variables.
+
+## Attribute table general characteristics
+
+Use just the attribute table as dataframe for quick exploration
+
+```{r}
+abandoned_wells_df <- abandoned_wells |> 
+        st_drop_geometry()
+```
+
+How many unique values do we have per variable?
+
+```{r}
+abandoned_wells_df |> 
+        map_dfr(~n_distinct(.x)) |> 
+        paged_table()
+```
+
+Insights from the output:
+
+ - `footprint_id` does not match the number of observations. Check if there are
+ NA's in polygons and why.
+ - `well_status` we just have 1 which means **abandoned**.
+ - `spud_date` and `spud_year` are the date when drilling first began on the
+ well pad. 125 years in the registry? Check how many years of data we have.
+ - The `number_wellheads` is the total number of wellbores on the well pad. Does
+ this have an impact in the reclamation process?
+ - `visible` variable probably have `NA's`. There should be just 3 values:
+ 0 = not visible, 1 = fully visible, 2 = partially visible. This reflects the
+ state of visibility of a footprint. No idea what this means.
+ - `oilsands_evaluation_well` we have just the 2 categories described in
+ documentation: 0 = No Oil Sands Evaluation (OSE) well, 1 = OSE well present.
+ - Check distribution of variable `reclamation_status`.
+ - `reclamation_date` it's the most recent reclamation certification.
+
+Explore character variables:
+
+```{r}
+abandoned_wells_df |> 
+        select_if(is.character) |> 
+        glimpse()
+```
+
+ - We have just 6 character variables. 
+ - Take into account that other variables with categories are encoded with
+ numbers and I should check the ABMI data document to understand the meaning.
+
+Check unique values per character variable:
+
+```{r}
+# Check number of distinct observations
+abandoned_wells_df |> 
+        select_if(is.character) |> 
+        map(~n_distinct(.x))
+
+# Check categories 
+abandoned_wells_df |> 
+        select_if(is.character) |> 
+        select(-hfi_id, -disp_num, -lcu_id) |>
+        map(~unique(.x))
+```
+
+```{r}
+# abandoned_wells_df |> 
+#         vis_dat(warn_large_data = FALSE)
+```
+
+## Date variables
+
+We have the following variables that represents a date in the dataset:
+
+| Variable | Meaning |
+| -------- | ------- |
+| first_spud_date            | date when drilling first began on the well pad
+| first_spud_year            | date when drilling first began on the well pad
+| reclamation_date           | most recent reclamation certification issued
+| min_onproduction_date      | earliest reported year a well went into prod
+| max_last_production_date   | latest reported year of production at a well
+| max_abandoned_date         | latest reported year a well was abandoned
+| year                       | ? (Did not find definition in documentation)
+ 
+We need to obtain sites that have ...
+
+```{r}
+abandoned_wells_df |> 
+        group_by(reclamation_date) |> 
+        tally()
+```
+
+ - There are many observations with a year reclamation date value of 0.
+ - I'm going to filter these values
+ 
+Let's check the number of sites per year of the most recent reclamation
+certification issued:
+
+```{r}
+abandoned_wells_df |> 
+        group_by(reclamation_date) |> 
+        tally() |> 
+        filter(reclamation_date != 0) |> 
+        ggplot(aes(x = reclamation_date, y = n)) +
+        geom_col() +
+        labs(x = "Year of the most recent reclamation certification issued",
+             y = "Total well sites") +
+        theme_light()
+```
+
+Does the reclamation date has to match with abandoned date?
+
+Differences would mean: 
+
+0 = Same year abandoned date reclamation.
+> 0 = Date reclamation is more recent than the abandoned date.
+< 0 = Abandoned date is more recent than reclamation date.
+
+```{r}
+abandoned_wells_df |> 
+        filter(reclamation_date != 0 & max_abandoned_date != 0) |> 
+        mutate(diff = reclamation_date - max_abandoned_date) |> 
+        select(diff, reclamation_date, max_abandoned_date) |> 
+        # arrange(desc(diff))
+        # paged_table()
+        group_by(diff) |> 
+        tally() |> 
+        # paged_table()
+        ggplot(aes(x = diff, y = n)) +
+        geom_col() +
+        theme_light()
+```
+
+
