@@ -1,5 +1,6 @@
 ---
-title: "Quick EDA wells"
+title: "Abandoned wells data exploration"
+author: Ronny A. Hernandez Mora
 execute:
   message: false
   warning: false
@@ -10,6 +11,8 @@ format:
     linkcolor: "#FF5500"
     highlight-style: tango
     toc: true
+    toc-title: Table of contents
+    toc-location: left
     number-sections: false
     colorlinks: true
     code-fold: true
@@ -20,6 +23,7 @@ editor_options:
 ---
 
 ```{r}
+#| echo: false
 library(dplyr)
 library(sf)
 library(janitor)
@@ -29,13 +33,16 @@ library(ggplot2)
 library(rmarkdown)
 ```
 
-# Abandoned wells
+This is an Exploratory Data Analysis to understand the data characteristics of 
+the layer `o16_WellsAbnd_HFI_2021` from the [Wall-to-Wall Human Footprint Inventory](https://abmi.ca/home/data-analytics/da-top/da-product-overview/Human-Footprint-Products/HF-inventory.html) by the [Alberta Biodiversity Monitoring Institute](https://abmi.ca/home.html).
 
-Here I'm just going to explore the data of the abandoned wells layer. 
-Specifically just the attribute table to validate categories that can be useful
-for the filtering and dates.
+The aim is to identify characteristics that may aid in 
+[selecting polygons](https://github.com/ronnyhdez/reclaimed_sites_ab/issues/6)
+for subsequent analysis.
 
-## Read data
+# Read the data
+
+Following information is part of the file metadata:
 
 ```{r}
 abandoned_wells <- st_read(dsn = 'HFI2021.gdb/HFI2021.gdb',
@@ -43,14 +50,15 @@ abandoned_wells <- st_read(dsn = 'HFI2021.gdb/HFI2021.gdb',
         clean_names()
 ```
 
+This is a dataframe with `r nrow(abandoned_wells)` observations and 
+`r ncol(abandoned_wells)` variables. A glimpse of the first observations per
+each variable and its type is shown here:
+
 ```{r}
 glimpse(abandoned_wells)
 ```
 
-We have a dataframe with `r nrow(abandoned_wells)` rows and 
-`r ncol(abandoned_wells)` variables.
-
-## Attribute table general characteristics
+# Attribute table general characteristics
 
 Use just the attribute table as dataframe for quick exploration
 
@@ -84,12 +92,12 @@ Insights from the output:
  - Check distribution of variable `reclamation_status`.
  - `reclamation_date` it's the most recent reclamation certification.
 
-Explore character variables:
+## Character variables
 
 ```{r}
 abandoned_wells_df |> 
         select_if(is.character) |> 
-        glimpse()
+        glimpse() 
 ```
 
  - We have just 6 character variables. 
@@ -116,7 +124,7 @@ abandoned_wells_df |>
 #         vis_dat(warn_large_data = FALSE)
 ```
 
-## Date variables
+# Date variables
 
 We have the following variables that represents a date in the dataset:
 
@@ -130,17 +138,32 @@ We have the following variables that represents a date in the dataset:
 | max_abandoned_date         | latest reported year a well was abandoned
 | year                       | ? (Did not find definition in documentation)
  
-We need to obtain sites that have ...
+We need to obtain the latest reclamation date for each of the polygons. One
+site could potentially have several reclamation dates, but we have no way to
+find out that information from this dataset. Also we are considering using just
+the last reclamation date for the analysis. This dataset has reclamation
+dates that span `r range(abandoned_wells_df$reclamation_date)`.
 
 ```{r}
 abandoned_wells_df |> 
         group_by(reclamation_date) |> 
-        tally()
+        tally() |> 
+        paged_table()
+
+zero_obs <- abandoned_wells_df |> 
+        group_by(reclamation_date) |> 
+        tally() |> 
+        filter(reclamation_date == 0) |> 
+        select(n) |> 
+        pull()
 ```
 
- - There are many observations with a year reclamation date value of 0.
- - I'm going to filter these values
- 
+::: {.callout-important}
+From the summarized table, there are `r zero_obs` observations with a year
+reclamation **date value of 0**. This means that if reclamation date is
+an important variable for the analysis, we will loose these polygons.
+:::
+
 Let's check the number of sites per year of the most recent reclamation
 certification issued:
 
@@ -155,6 +178,28 @@ abandoned_wells_df |>
              y = "Total well sites") +
         theme_light()
 ```
+
+## Number of observations with minimun amount of years from reclamation year
+
+We need to obtain polygons with a sufficient time range from the last
+reclamation year to include in the analysis. The following interactive plot
+helps to explore the number of observations that we have if we select the
+number of years since the last reclamation certification was issued.
+
+::: {.callout-important}
+The total number of observations from the dataset is `r nrow(abandoned_wells_df)`
+but there are `r zero_obs` observations with a year reclamation **date value of 0**. 
+:::
+
+```{r}
+# Create interactive plot that shows number of observations with at least
+# 20 years or X since last year of reclamation
+
+
+
+```
+
+## Reclamation date vs Abandoned date
 
 Does the reclamation date has to match with abandoned date?
 
@@ -179,4 +224,15 @@ abandoned_wells_df |>
         theme_light()
 ```
 
+## Reclamation date vs Last Production date
 
+Here I have the same question: Does the reclamation date has to match with
+the last production date? Given that we need polygons with no buildings or 
+infrastructure on it to avoid anomalies in the spectral signature 
+
+## Observations
+
+# Key points:
+
+ - We do have the last reclamation year
+ - There are xxx NA's
