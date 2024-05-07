@@ -31,6 +31,7 @@ library(purrr)
 library(visdat)
 library(ggplot2)
 library(rmarkdown)
+library(gt)
 ```
 
 This is an Exploratory Data Analysis to understand the data characteristics of 
@@ -50,8 +51,8 @@ abandoned_wells <- st_read(dsn = 'HFI2021.gdb/HFI2021.gdb',
         clean_names()
 ```
 
-This is a dataframe with `r nrow(abandoned_wells)` observations and 
-`r ncol(abandoned_wells)` variables. A glimpse of the first observations per
+This is a dataframe with **`r nrow(abandoned_wells)` observations** and 
+**`r ncol(abandoned_wells)` variables**. A glimpse of the first observations per
 each variable and its type is shown here:
 
 ```{r}
@@ -67,6 +68,8 @@ abandoned_wells_df <- abandoned_wells |>
         st_drop_geometry()
 ```
 
+## Unique values per variable
+
 How many unique values do we have per variable?
 
 ```{r}
@@ -81,7 +84,8 @@ Insights from the output:
  NA's in polygons and why.
  - `well_status` we just have 1 which means **abandoned**.
  - `spud_date` and `spud_year` are the date when drilling first began on the
- well pad. 125 years in the registry? Check how many years of data we have.
+ well pad. 125 different years in the registry? Check how many years of data 
+ we have.
  - The `number_wellheads` is the total number of wellbores on the well pad. Does
  this have an impact in the reclamation process?
  - `visible` variable probably have `NA's`. There should be just 3 values:
@@ -91,6 +95,82 @@ Insights from the output:
  documentation: 0 = No Oil Sands Evaluation (OSE) well, 1 = OSE well present.
  - Check distribution of variable `reclamation_status`.
  - `reclamation_date` it's the most recent reclamation certification.
+
+## Key variable
+
+What is each row? The dataset has `r nrow(abandoned_wells_df)` observations that
+should match the same amount of unique values for one of the variables contained
+in the dataset. The variable closer to this number is `footprint_id`, but it
+has less number of unique values. What are they?
+
+Assuming that each row in the dataset is one unique site (or one unique
+observation), the `wellsite_footprint_id` should have one observation per each
+id.  
+
+```{r}
+abandoned_wells_df |> 
+        group_by(wellsite_footprint_id) |> 
+        tally(sort = T) |> 
+        filter(n > 1) |> 
+        gt()
+```
+
+Check the characteristics of those observations that are not NA, but have
+more than 1 id
+
+```{r}
+repeated_ids <- abandoned_wells_df |> 
+        group_by(wellsite_footprint_id) |> 
+        tally() |> 
+        filter(n > 1 & !is.na(wellsite_footprint_id)) |> 
+        select(wellsite_footprint_id) |> 
+        pull()
+
+abandoned_wells_df |> 
+        filter(wellsite_footprint_id %in% repeated_ids) |> 
+        arrange(wellsite_footprint_id) |> 
+        paged_table()
+```
+
+```{r}
+abandoned_wells |> 
+        filter(wellsite_footprint_id == 109118) |> 
+        ggplot() +
+        geom_sf() 
+
+abandoned_wells |> 
+        filter(wellsite_footprint_id == 109503) |> 
+        ggplot() +
+        geom_sf()
+
+abandoned_wells |> 
+        filter(wellsite_footprint_id == 268598) |> 
+        ggplot() +
+        geom_sf()
+
+abandoned_wells |> 
+        filter(wellsite_footprint_id == 287438) |> 
+        ggplot() +
+        geom_sf()
+```
+
+What is happening with the NA's in id?
+
+```{r}
+abandoned_wells_df |> 
+        filter(is.na(wellsite_footprint_id) == TRUE) |> 
+        vis_dat(sort_type = F)
+```
+
+
+```{r}
+abandoned_wells |> 
+        filter(is.na(wellsite_footprint_id) == TRUE) |> 
+        # arrange(hfi_id)
+        slice(34) |> 
+        ggplot() +
+        geom_sf() 
+```
 
 ## Character variables
 
@@ -229,6 +309,10 @@ abandoned_wells_df |>
 Here I have the same question: Does the reclamation date has to match with
 the last production date? Given that we need polygons with no buildings or 
 infrastructure on it to avoid anomalies in the spectral signature 
+
+## Polygons characteristics
+
+ - Size distribution of area_ha shape length shape area
 
 ## Observations
 
