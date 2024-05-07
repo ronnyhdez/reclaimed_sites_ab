@@ -32,6 +32,7 @@ library(visdat)
 library(ggplot2)
 library(rmarkdown)
 library(gt)
+library(cowplot)
 ```
 
 This is an Exploratory Data Analysis to understand the data characteristics of 
@@ -107,7 +108,12 @@ Assuming that each row in the dataset is one unique site (or one unique
 observation), the `wellsite_footprint_id` should have one observation per each
 id.  
 
+When grouping all the observations per `wellsite_footprint_id`, I found those
+id's that have more than 1 observation as shown in @tbl-id_tally.
+
 ```{r}
+#| label: tbl-id_tally
+#| tbl-cap: "Well site id's with more than 1 observation"
 abandoned_wells_df |> 
         group_by(wellsite_footprint_id) |> 
         tally(sort = T) |> 
@@ -115,10 +121,13 @@ abandoned_wells_df |>
         gt()
 ```
 
-Check the characteristics of those observations that are not NA, but have
-more than 1 id
+The @tbl-id_repeated_complete, shows every well site with more than 1 
+observation per id. In total, there are **56** well sites with this condition,  excluding the observations with NAs. It seems to have the same values for each
+of its variables except for the `shape_length` and `shape_area`.
 
 ```{r}
+#| label: tbl-id_repeated_complete
+#| tbl-cap: "Data frame subset of the well sites which have more than 1 observation per id"
 repeated_ids <- abandoned_wells_df |> 
         group_by(wellsite_footprint_id) |> 
         tally() |> 
@@ -132,57 +141,97 @@ abandoned_wells_df |>
         paged_table()
 ```
 
+The @fig-same_wellsite_id plots of the observations with the same `id` shows that probably, some
+well sites, are composed by more than 1 polygon. They look relatively close. 
+This segmentation explains the differences in the `shape_length` and 
+`shape_area` variables when the rest of the variables are the exact same per
+`id`
+
 ```{r}
-abandoned_wells |> 
+#| label: fig-same_wellsite_id
+#| fig-cap: "Polygons with the same well site id"
+a <- abandoned_wells |> 
         filter(wellsite_footprint_id == 109118) |> 
         ggplot() +
         geom_sf() 
 
-abandoned_wells |> 
+b <- abandoned_wells |> 
         filter(wellsite_footprint_id == 109503) |> 
         ggplot() +
         geom_sf()
 
-abandoned_wells |> 
+c <- abandoned_wells |> 
         filter(wellsite_footprint_id == 268598) |> 
         ggplot() +
         geom_sf()
 
-abandoned_wells |> 
+d <- abandoned_wells |> 
         filter(wellsite_footprint_id == 287438) |> 
         ggplot() +
         geom_sf()
+
+plot_grid(a, b, c, d, labels = c('A', 'B', 'C', 'D'))
 ```
 
-What is happening with the NA's in id?
+### What is happening with the NA's in id?
+
+There are `r sum(is.na(abandoned_wells_df$wellsite_footprint_id))` observations
+which have NA in the `wellsite_footprint_id` variable. The @fig-na_wellsite_id
+shows that together with the `wellsite_footprint_id`, the `disp_num`, `lcu_id`,
+and the vast majority of `fieldname` observations are also NAs.
 
 ```{r}
+#| label: fig-na_wellsite_id
+#| fig-cap: "Observations with NA in the well site id variable"
 abandoned_wells_df |> 
         filter(is.na(wellsite_footprint_id) == TRUE) |> 
         vis_dat(sort_type = F)
 ```
 
+Polygons with NA's in their ids seems to be fine (not segmented or empty). The
+@fig-na_wellsite_id_polygon shows two of them.
 
 ```{r}
-abandoned_wells |> 
+#| label: fig-na_wellsite_id_polygon
+#| fig-cap: "Polygons with NAs in their ids"
+a <- abandoned_wells |> 
         filter(is.na(wellsite_footprint_id) == TRUE) |> 
-        # arrange(hfi_id)
         slice(34) |> 
         ggplot() +
         geom_sf() 
+
+b <- abandoned_wells |> 
+        filter(is.na(wellsite_footprint_id) == TRUE) |> 
+        slice(534) |> 
+        ggplot() +
+        geom_sf() 
+
+plot_grid(a, b, labels = c('A', 'B'))
 ```
+
+::: {.callout-important}
+There are `r length(repeated_ids)` "segmented polygons" which are represented by
+the same id. Also we have `r sum(is.na(abandoned_wells_df$wellsite_footprint_id))`
+NA's in the well site ids, which have at the same time NAs in `disp_num`,
+`lcu_id`, and `fieldname`
+
+Should we exclude the 56 segmented polygons?
+Do we want to use polygons without any id?
+:::
 
 ## Character variables
 
+We have just 6 character variables. Nonetheless, I should take into account that
+other variables with categories are encoded with numbers and I should check the
+ABMI data document to understand the meaning. The table @tbl-character_variables
+ 
 ```{r}
+#| label: tbl-character_variables
+#| tbl-cap: "Glimpse of the character variables"
 abandoned_wells_df |> 
         select_if(is.character) |> 
         glimpse() 
 ```
-
- - We have just 6 character variables. 
- - Take into account that other variables with categories are encoded with
- numbers and I should check the ABMI data document to understand the meaning.
 
 Check unique values per character variable:
 
@@ -203,6 +252,13 @@ abandoned_wells_df |>
 # abandoned_wells_df |> 
 #         vis_dat(warn_large_data = FALSE)
 ```
+
+::: {.callout-note}
+Everything seems find with the character variables. Not much information seems
+to be useful for the analysis.
+
+There is just the category `abandoned`, 3 `fieldnames` and 4 data `sources`
+:::
 
 # Date variables
 
