@@ -331,7 +331,13 @@ but there are `r zero_obs` observations with a year reclamation **date value of 
 # Create interactive plot that shows number of observations with at least
 # 20 years or X since last year of reclamation
 
-
+abandoned_wells_df |> 
+        group_by(reclamation_date) |> 
+        tally() |> 
+        filter(reclamation_date != 0) |> 
+        mutate(years = max(abandoned_wells_df$reclamation_date) -
+                       reclamation_date) |> 
+        filter(years > 20)
 
 ```
 
