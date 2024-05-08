@@ -437,6 +437,11 @@ In this case, excluding observations with dates equal to `0`, there are
 reclamation date, `r cat$total[2]` where the reclamation date is more recent
 than the production date, and `r cat$total[3]` with both dates being the same.
 
+::: {.callout-important}
+Do we need to consider last production dates and abandoned dates to be earlier
+than the last reclamation date?
+:::
+
 # Polygons characteristics
 
 The variables `shape_length` and `shape_area` has the following definitions:
@@ -469,6 +474,7 @@ dist_table_area |>
         clean_names() |> 
         filter(f != 0) |> 
         rename(
+                'Class limits (m2)' = 'class_limits',
                 'Frecuency' = 'f',
                 'Relative Frecuency' = 'rf',
                 'Relative Frecuency %' = 'rf_percent',
