@@ -33,6 +33,7 @@ library(ggplot2)
 library(rmarkdown)
 library(gt)
 library(cowplot)
+library(plotly)
 ```
 
 This is an Exploratory Data Analysis to understand the data characteristics of 
@@ -322,37 +323,70 @@ reclamation year to include in the analysis. The following interactive plot
 helps to explore the number of observations that we have if we select the
 number of years since the last reclamation certification was issued.
 
-::: {.callout-important}
-The total number of observations from the dataset is `r nrow(abandoned_wells_df)`
-but there are `r zero_obs` observations with a year reclamation **date value of 0**. 
-:::
-
 ```{r}
 # Create interactive plot that shows number of observations with at least
 # 20 years or X since last year of reclamation
 
-abandoned_wells_df |> 
+at_least_20 <- abandoned_wells_df |> 
         group_by(reclamation_date) |> 
         tally() |> 
         filter(reclamation_date != 0) |> 
         mutate(years = max(abandoned_wells_df$reclamation_date) -
                        reclamation_date) |> 
-        filter(years > 20)
-
+        filter(years >= 20) |> 
+        select(n) |> 
+        pull() |> 
+        sum()
 ```
+
+The number of polygons with at least 20 years are `r at_least_20`
+
+::: {.column-margin}
+This is looking just at the reclamation year, without filtering by any other
+variable. Therefore, number of observations could be lower due to other 
+filtering criteria based on variables other than reclamation maximum year.
+:::
 
 ## Reclamation date vs Abandoned date
 
-Does the reclamation date has to match with abandoned date?
+```{r}
+cat <- abandoned_wells_df |> 
+        filter(reclamation_date != 0 & max_abandoned_date != 0) |> 
+        mutate(diff = reclamation_date - max_abandoned_date) |> 
+        select(diff, reclamation_date, max_abandoned_date) |> 
+        # arrange(desc(diff))
+        # paged_table()
+        group_by(diff) |> 
+        tally() |> 
+        mutate(cat = case_when(
+                diff < 0 ~ "less",
+                diff > 0 ~ "more",
+                diff == 0 ~ "same",
+                .default = NA
+        )) |> 
+        group_by(cat) |> 
+        summarize(
+                total = sum(n)
+        )
+```
 
-Differences would mean: 
+Does the reclamation date has to match with abandoned date? In the data set,
+excluding observations with dates equal to `0`, there are `r cat$total[1]` 
+polygons where the abandoned date is more recent than reclamation date,
+`r cat$total[2]` where the reclamation date is more recent than the abandoned
+date, and `r cat$total[3]` with both dates being the same.
 
-0 = Same year abandoned date reclamation.
-> 0 = Date reclamation is more recent than the abandoned date.
-< 0 = Abandoned date is more recent than reclamation date.
+The interactive @fig-reclamation_vs_abandoned shows the difference in years 
+distribution of these dates. The differences indicate: 
+
+ - `0` = Same year abandoned date reclamation.
+ - `> 0` = Date reclamation is more recent than the abandoned date.
+ - `< 0` = Abandoned date is more recent than reclamation date.
 
 ```{r}
-abandoned_wells_df |> 
+#| label: fig-reclamation_vs_abandoned
+#| fig-cap: "Distribution of difference in years between reclamation and abandoned dates"
+a <- abandoned_wells_df |> 
         filter(reclamation_date != 0 & max_abandoned_date != 0) |> 
         mutate(diff = reclamation_date - max_abandoned_date) |> 
         select(diff, reclamation_date, max_abandoned_date) |> 
@@ -364,15 +398,43 @@ abandoned_wells_df |>
         ggplot(aes(x = diff, y = n)) +
         geom_col() +
         theme_light()
+
+ggplotly(a)
 ```
 
 ## Reclamation date vs Last Production date
 
 Here I have the same question: Does the reclamation date has to match with
 the last production date? Given that we need polygons with no buildings or 
-infrastructure on it to avoid anomalies in the spectral signature 
+infrastructure on it to avoid anomalies in the spectral signature, does the
+period of production implies that there is some sort of infrastructure in the
+well area?
 
-## Polygons characteristics
+```{r}
+cat <- abandoned_wells_df |> 
+        filter(reclamation_date != 0 & max_last_production_date != 0) |> 
+        mutate(diff = reclamation_date - max_last_production_date) |> 
+        select(diff, reclamation_date, max_last_production_date) |> 
+        # arrange(desc(diff))
+        # paged_table()
+        group_by(diff) |> 
+        tally() |> 
+        mutate(cat = case_when(
+                diff < 0 ~ "less",
+                diff > 0 ~ "more",
+                diff == 0 ~ "same",
+                .default = NA
+        )) |> 
+        group_by(cat) |> 
+        summarize(
+                total = sum(n)
+        )
+```
+
+less means that last production date was more recent than the reclamation date
+
+
+# Polygons characteristics
 
  - Size distribution of area_ha shape length shape area
 
