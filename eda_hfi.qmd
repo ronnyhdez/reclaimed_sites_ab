@@ -1,0 +1,34 @@
+---
+title: "Wells HFI 2021"
+format: pdf
+---
+
+# EDA
+
+ - Explore the layer o09_WellsActive_HFI_2021 from the [ABMI human footprint](https://abmi.ca/home/data-analytics/da-top/da-product-overview/Human-Footprint-Products/HF-inventory.html)
+
+```{python}
+import fiona
+import geopandas as gpd
+```
+
+```{python}
+fiona.listlayers('HFI2021.gdb/HFI2021.gdb')
+```
+
+There are two layers about wells:
+
+ - o09_WellsActive_HFI_2021
+ - o16_WellsAbnd_HFI_2021
+
+# Wells abandoned
+
+```{python}
+abandoned_wells = gpd.read_file('HFI2021.gdb/HFI2021.gdb', 
+driver = 'FileGDB', layer = 'o16_WellsAbnd_HFI_2021')
+```
+
+
+```{python}
+print(abandoned_wells.head())
+```
