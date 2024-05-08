@@ -4,7 +4,7 @@
     "href": "abandoned_wells.html",
     "title": "Abandoned wells data exploration",
     "section": "",
-    "text": "This is an Exploratory Data Analysis to understand the data characteristics of the layer o16_WellsAbnd_HFI_2021 from the Wall-to-Wall Human Footprint Inventory by the Alberta Biodiversity Monitoring Institute.\nThe aim is to identify characteristics that may aid in selecting polygons for subsequent analysis."
+    "text": "This is an Exploratory Data Analysis to understand the data characteristics of the layer o16_WellsAbnd_HFI_2021 from the Wall-to-Wall Human Footprint Inventory by the Alberta Biodiversity Monitoring Institute.\nThe aim is to identify characteristics that may aid in selecting polygons for subsequent analysis.\nFor the findings summary, go to Key findings"
   },
   {
     "objectID": "abandoned_wells.html#unique-values-per-variable",
