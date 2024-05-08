@@ -1,3 +1,18 @@
 project:
   type: website
   output-dir: docs
+  render:
+    - "!eda_hfi.qmd"
+    - "*.qmd"
+  
+website:
+  title: "Reclamation"
+  navbar:
+    left:
+      - abandoned_wells.qmd
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
