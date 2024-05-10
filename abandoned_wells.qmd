@@ -439,6 +439,29 @@ In this case, excluding observations with dates equal to `0`, there are
 reclamation date, `r cat$total[2]` where the reclamation date is more recent
 than the production date, and `r cat$total[3]` with both dates being the same.
 
+## Abandoned date vs Last Production date
+
+```{r}
+abandoned_wells_df |> 
+        filter(max_abandoned_date != 0 & max_last_production_date != 0) |> 
+        mutate(diff = max_abandoned_date - max_last_production_date) |> 
+        select(diff, max_abandoned_date, max_last_production_date) |> 
+        # arrange(desc(diff))
+        # paged_table()
+        group_by(diff) |> 
+        tally() |> 
+        mutate(cat = case_when(
+                diff < 0 ~ "less",
+                diff > 0 ~ "more",
+                diff == 0 ~ "same",
+                .default = NA
+        )) |> 
+        group_by(cat) |> 
+        summarize(
+                total = sum(n)
+        )
+```
+
 ::: {.callout-important}
 Do we need to consider last production dates and abandoned dates to be earlier
 than the last reclamation date?
