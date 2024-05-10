@@ -164,5 +164,7 @@ cython_debug/
 HFI2021.gdb
 reclaimed_sites_ab.Rproj
 *.pdf
-*.html
-
+.Rhistory
+/.quarto/
+/_site/
+/docs/
