@@ -53,7 +53,13 @@ Following information is part of the file metadata:
 ```{r}
 abandoned_wells <- st_read(dsn = 'HFI2021.gdb/HFI2021.gdb',
                            layer = 'o16_WellsAbnd_HFI_2021') |> 
-        clean_names()
+        clean_names() |>
+        mutate(reclamation_status = case_when(
+               reclamation_status == 1 ~ "not_reclaimed",
+               reclamation_status == 2 ~ "reclamation_exempt",
+               reclamation_status == 3 ~ "reclaimed",
+               .default = "no_data"
+        )) 
 ```
 
 This is a dataframe with **`r nrow(abandoned_wells)` observations** and 
@@ -277,7 +283,10 @@ We have the following variables that represents a date in the dataset:
 | max_last_production_date   | latest reported year of production at a well
 | max_abandoned_date         | latest reported year a well was abandoned
 | year                       | ? (Did not find definition in documentation)
- 
+
+
+## Reclamation date
+
 We need to obtain the latest reclamation date for each of the polygons. One
 site could potentially have several reclamation dates, but we have no way to
 find out that information from this dataset. Also we are considering using just
@@ -300,9 +309,29 @@ zero_obs <- abandoned_wells_df |>
 
 ::: {.callout-important}
 From the summarized table, there are `r zero_obs` observations with a year
-reclamation **date value of 0**. This means that if reclamation date is
-an important variable for the analysis, we will loose these polygons.
+reclamation **date value of 0**.
 :::
+
+```{r}
+## Check reclamation status vs reclamation date
+date_recla_status <- abandoned_wells_df |> 
+        mutate(reclamation_0 = ifelse(reclamation_date == 0, 
+                                      "Date with 0", "Date with year")) |> 
+        group_by(reclamation_status, reclamation_0) |>
+        tally()
+```
+
+Further exploration indicates that observations with a zero in reclamation date
+are categorized as `not_reclaimed` or `reclamation_exempt`. Nonetheless, there
+are `r date_recla_status$n[4]` observations with year categorized as
+`reclamation_exempt`
+
+```{r}
+date_recla_status |>
+        ggplot(aes(x = reclamation_status, y = n, fill = reclamation_0)) + 
+        geom_bar(stat = "identity") +
+        theme_light()
+```
 
 Let's check the number of sites per year of the most recent reclamation
 certification issued:
@@ -319,7 +348,7 @@ abandoned_wells_df |>
         theme_light()
 ```
 
-## Number of observations with minimun amount of years from reclamation year
+### Number of observations with minimun amount of years from reclamation year
 
 We need to obtain polygons with a sufficient time range from the last
 reclamation year to include in the analysis. The following interactive plot
@@ -349,6 +378,46 @@ This is looking just at the reclamation year, without filtering by any other
 variable. Therefore, number of observations could be lower due to other 
 filtering criteria based on variables other than reclamation maximum year.
 :::
+
+## Abandoned date
+
+According to documentation, the variable `max_abandoned_date` is 
+__Indicates the latest (most recent) year a well was abandoned__. This is not
+the same as orphaned. Rather indicates that the wellheads and any sort of
+infrastructure was removed from the site.
+
+```{r}
+## TODO: Organize this exploration of abandoned date
+
+## Abandoned wells means that wells were removed
+## If so, there should be a number of wells when abandoned date is 0
+
+# abandoned_wells_df |> 
+#         mutate(zero = ifelse(max_abandoned_date == 0, 0, 1)) |> 
+#         group_by(zero) |> 
+#         summarise(
+#                 wellheads = sum(number_wellheads)
+#         )
+        
+## Check reclamation status in dates 
+abandoned_wells_df |> 
+        filter(reclamation_date != 0 & max_abandoned_date != 0) |> 
+        mutate(diff = reclamation_date - max_abandoned_date) |> 
+        select(diff, reclamation_date, 
+               max_abandoned_date, reclamation_status) |> 
+        glimpse()
+        
+
+abandoned_wells_df |> 
+        mutate(date_zero = ifelse(max_abandoned_date == 0, "yes", "no")) |> 
+        group_by(reclamation_status, date_zero) |> 
+        tally() |> 
+        ggplot(aes(x = reclamation_status, y = n, fill = date_zero)) + 
+        geom_bar(stat = "identity") +
+        theme_light()
+```
+
+ - Most of reclaimed sites, do not have an abandoned date zero
 
 ## Reclamation date vs Abandoned date
 
@@ -442,7 +511,7 @@ than the production date, and `r cat$total[3]` with both dates being the same.
 ## Abandoned date vs Last Production date
 
 ```{r}
-abandoned_wells_df |> 
+cat <- abandoned_wells_df |> 
         filter(max_abandoned_date != 0 & max_last_production_date != 0) |> 
         mutate(diff = max_abandoned_date - max_last_production_date) |> 
         select(diff, max_abandoned_date, max_last_production_date) |> 
@@ -462,10 +531,27 @@ abandoned_wells_df |>
         )
 ```
 
+In this case, excluding observations with dates equal to `0`, there are 
+`r cat$total[1]` polygons where the production date is more recent than
+reclamation date, `r cat$total[2]` where the reclamation date is more recent
+than the production date, and `r cat$total[3]` with both dates being the same.
+
 ::: {.callout-important}
 Do we need to consider last production dates and abandoned dates to be earlier
 than the last reclamation date?
 :::
+
+## Dates in reclaimed sites
+
+We have that some dates has some incosistencies when considering all the
+`reclaimed_status` categories. Let's check what happens when using only
+reclaimed sites
+
+```{r}
+abandoned_wells_df |> 
+        filter(reclamation_status == "reclaimed")
+```
+
 
 # Polygons characteristics
 
@@ -523,5 +609,43 @@ dist_table_area |>
  - 2066 polygons where the abandoned date is more recent than reclamation date.
  - 1111 polygons where the production date is more recent than reclamation date.
  - The area range of polygons values is 28.8200505 to 3.4045275^{5}
+
+
+<!-- ## Test polygons -->
+
+<!-- ```{r} -->
+<!-- glimpse(abandoned_wells_df) -->
+
+
+<!-- range(abandoned_wells$shape_length) -->
+
+<!-- test <- abandoned_wells |>  -->
+<!--         mutate(div = shape_area / shape_length) |>  -->
+<!--         arrange(desc(div)) |>  -->
+<!--         select(wellsite_footprint_id, div, shape_area, -->
+<!--                shape_length, Shape) -->
+
+<!-- test |>  -->
+<!--         filter(wellsite_footprint_id == 276359) |>  -->
+<!--         ggplot() + -->
+<!--         geom_sf()  -->
+
+<!-- range(test$div) -->
+<!-- range(test$shape_length) -->
+<!-- ``` -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
  
