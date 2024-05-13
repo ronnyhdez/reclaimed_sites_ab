@@ -415,10 +415,33 @@ abandoned_wells_df |>
         tally() |> 
         ggplot(aes(x = reclamation_status, y = n, fill = date_zero)) + 
         geom_bar(stat = "identity") +
+        labs(x = "Reclamation status",
+             y = "Total observations",
+             title = "Reclaimed polygons have most of the abandoned date as zero",
+             subtitle = "There are just 543 obs with a zero in the abandoned date") +
         theme_light()
 ```
 
  - Most of reclaimed sites, do not have an abandoned date zero
+
+## Production date
+
+All sites here are supposedly to be "abandoned" category. 
+
+```{r}
+abandoned_wells_df |> 
+        group_by(max_last_production_date) |> 
+        tally() |> 
+        filter(max_last_production_date != 0) |> 
+        ggplot(aes(x = max_last_production_date, y = n)) +
+        geom_col() +
+        labs(x = "Year of the most recent production date",
+             y = "Total well sites without dates with zero") +
+        theme_light()
+```
+
+
+
 
 ## Reclamation date vs Abandoned date
 
@@ -509,6 +532,25 @@ In this case, excluding observations with dates equal to `0`, there are
 reclamation date, `r cat$total[2]` where the reclamation date is more recent
 than the production date, and `r cat$total[3]` with both dates being the same.
 
+```{r}
+#| label: fig-reclamation_vs_last_production
+#| fig-cap: "Distribution of difference in years between reclamation and last production dates"
+a <- abandoned_wells_df |> 
+        filter(reclamation_date != 0 & max_last_production_date != 0) |> 
+        mutate(diff = reclamation_date - max_last_production_date) |> 
+        select(diff, reclamation_date, max_last_production_date) |> 
+        # arrange(desc(diff))
+        # paged_table()
+        group_by(diff) |> 
+        tally() |> 
+        # paged_table()
+        ggplot(aes(x = diff, y = n)) +
+        geom_col() +
+        theme_light()
+
+ggplotly(a)
+```
+
 ## Abandoned date vs Last Production date
 
 ```{r}
@@ -532,9 +574,39 @@ cat <- abandoned_wells_df |>
         )
 ```
 
+Abandoned date is sometimes zero, does this means it is still in production?
+
+There is one variable feature_ty which definition is: "The type or category of
+human footprint feature". In this dataset every observation has the category: 
+"WELL-ABAND", so all the polygons should be abandoned.
+
+When we have 0 in the abandoned date, we have:
+
+ - 4687 observation with max last production date in 0.
+ - The maximum date value in the range is 2022 (This is the maximum date value
+ found for every date variable)
+
+And then, the distribution of the last production date observations that are 
+not 0:
+
+```{r}
+a <- abandoned_wells_df |> 
+        filter(max_abandoned_date == 0) |> 
+        group_by(max_last_production_date) |> 
+        tally() |> 
+        filter(max_last_production_date != 0) |> 
+        ggplot(aes(x = max_last_production_date, y = n)) +
+        geom_bar(stat = "identity") +
+        theme_light()
+
+ggplotly(a)
+```
+
+
+
 In this case, excluding observations with dates equal to `0`, there are 
 `r cat$total[1]` polygons where the production date is more recent than
-reclamation date, `r cat$total[2]` where the reclamation date is more recent
+abandoned date, `r cat$total[2]` where the abandoned date is more recent
 than the production date, and `r cat$total[3]` with both dates being the same.
 
 ::: {.callout-important}
@@ -542,15 +614,15 @@ Do we need to consider last production dates and abandoned dates to be earlier
 than the last reclamation date?
 :::
 
-## Dates in reclaimed sites
+# Reclaimed sites
 
-We have that some dates has some incosistencies when considering all the
+We have that some dates has some inconsistencies when considering all the
 `reclaimed_status` categories. Let's check what happens when using only
 reclaimed sites
 
 ```{r}
-abandoned_wells_df |> 
-        filter(reclamation_status == "reclaimed")
+# abandoned_wells_df |> 
+#         filter(reclamation_status == "reclaimed")
 ```
 
 
@@ -610,7 +682,17 @@ dist_table_area |>
  - 2066 polygons where the abandoned date is more recent than reclamation date.
  - 1111 polygons where the production date is more recent than reclamation date.
  - The area range of polygons values is 28.8200505 to 3.4045275^{5}
+ - Most of reclaimed sites, do not have an abandoned date zero.
 
+# Filtering steps
+
+The following are the steps to be followed for the filtering process and final
+polygon selection:
+
+ - Reclamation status = reclaimed
+ - Reclamation date = not zero
+ - Reclamation date = At least 20 years record
+ - xxxxx
 
 <!-- ## Test polygons -->
 
