@@ -360,23 +360,24 @@ number of years since the last reclamation certification was issued.
 # 20 years or X since last year of reclamation
 
 at_least_20 <- abandoned_wells_df |> 
-        group_by(reclamation_date) |> 
-        tally() |> 
-        filter(reclamation_date != 0) |> 
+        filter(reclamation_status == "reclaimed",
+               reclamation_date != 0) |> 
         mutate(years = max(abandoned_wells_df$reclamation_date) -
                        reclamation_date) |> 
         filter(years >= 20) |> 
-        select(n) |> 
-        pull() |> 
-        sum()
+        nrow()
+
+
+
 ```
 
-The number of polygons with at least 20 years are `r at_least_20`
+There are `r at_least_20` polygons with at least 20 years of data. These polygons were identified after filtering out observations with zero dates and those exclusively categorized as 'reclaimed' in the reclamation status.
 
 ::: {.column-margin}
-This is looking just at the reclamation year, without filtering by any other
-variable. Therefore, number of observations could be lower due to other 
-filtering criteria based on variables other than reclamation maximum year.
+This is looking just at the reclamation year and reclamation status, without
+filtering by any other variable. Therefore, number of observations could be
+lower due to other filtering criteria based on variables other than reclamation 
+maximum year.
 :::
 
 ## Abandoned date
