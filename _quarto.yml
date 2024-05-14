@@ -1,6 +1,5 @@
 project:
   type: website
-  output-dir: docs
   render:
     - "!eda_hfi.qmd"
     - "*.qmd"
