@@ -789,51 +789,55 @@ polygons (from the `r nrow(abandoned_wells_df)` original observations)
 ## 5- Production date > reclamation date
 ## 6- Production date > Abandoned date
 
-data_4 <- abandoned_wells |> 
-        # filter(reclamation_status == "reclaimed") |>
-        filter(reclamation_date != 0 & max_abandoned_date != 0) |> 
-        mutate(reclamation_minus_abandoned =
-                       reclamation_date - max_abandoned_date) |> 
-        # select(reclamation_date, max_abandoned_date, diff) |>
-        filter(reclamation_minus_abandoned < 0) #|> glimpse()
-
-
-data_5 <- abandoned_wells |> 
-        # filter(reclamation_status == "reclaimed") |> 
-        filter(reclamation_date != 0 & max_last_production_date != 0) |> 
-        mutate(reclamation_minus_production =
-                       reclamation_date - max_last_production_date) |> 
-        # select(reclamation_date, max_last_production_date, diff) |>
-        filter(reclamation_minus_production < 0) #|> glimpse()
-
-data_6 <- abandoned_wells |> 
-        # filter(reclamation_status == "reclaimed") |> 
-        filter(max_abandoned_date != 0 & max_last_production_date != 0) |> 
-        mutate(abandoned_minus_production =
-                       max_abandoned_date - max_last_production_date) |> 
-        # select(max_abandoned_date, max_last_production_date, diff) |>
-        filter(abandoned_minus_production < 0) #|> glimpse()
-
-write_sf(obj = data_4, dsn = "data/reclamation_abandoned.gpkg")
-write_sf(obj = data_5, dsn = "data/reclamation_production.gpkg")
-write_sf(obj = data_6, dsn = "data/abandoned_production.gpkg")
-
-
-test <- tribble(
-  ~x,  ~y,
-  0, 3,
-  3, 9,
-  9, 0,
-  4, 0,
-  0, 0,
-  0, 6
-)
-
-test |> 
-        filter(x != 0 & y != 0)
-
-test |> 
-        filter(x != 0 | y != 0)
+# data_3 <- abandoned_wells |> 
+#         filter(max_abandoned_date == 0)
+# 
+# data_4 <- abandoned_wells |> 
+#         # filter(reclamation_status == "reclaimed") |>
+#         filter(reclamation_date != 0 & max_abandoned_date != 0) |> 
+#         mutate(reclamation_minus_abandoned =
+#                        reclamation_date - max_abandoned_date) |> 
+#         # select(reclamation_date, max_abandoned_date, diff) |>
+#         filter(reclamation_minus_abandoned < 0) #|> glimpse()
+# 
+# 
+# data_5 <- abandoned_wells |> 
+#         # filter(reclamation_status == "reclaimed") |> 
+#         filter(reclamation_date != 0 & max_last_production_date != 0) |> 
+#         mutate(reclamation_minus_production =
+#                        reclamation_date - max_last_production_date) |> 
+#         # select(reclamation_date, max_last_production_date, diff) |>
+#         filter(reclamation_minus_production < 0) #|> glimpse()
+# 
+# data_6 <- abandoned_wells |> 
+#         # filter(reclamation_status == "reclaimed") |> 
+#         filter(max_abandoned_date != 0 & max_last_production_date != 0) |> 
+#         mutate(abandoned_minus_production =
+#                        max_abandoned_date - max_last_production_date) |> 
+#         # select(max_abandoned_date, max_last_production_date, diff) |>
+#         filter(abandoned_minus_production < 0) #|> glimpse()
+# 
+# write_sf(obj = data_3, dsn = "data/abandoned_date_zero.gpkg")
+# write_sf(obj = data_4, dsn = "data/reclamation_abandoned.gpkg")
+# write_sf(obj = data_5, dsn = "data/reclamation_production.gpkg")
+# write_sf(obj = data_6, dsn = "data/abandoned_production.gpkg")
+# 
+# 
+# test <- tribble(
+#   ~x,  ~y,
+#   0, 3,
+#   3, 9,
+#   9, 0,
+#   4, 0,
+#   0, 0,
+#   0, 6
+# )
+# 
+# test |> 
+#         filter(x != 0 & y != 0)
+# 
+# test |> 
+#         filter(x != 0 | y != 0)
 ```
 
 
