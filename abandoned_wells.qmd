@@ -769,7 +769,7 @@ selected_polygons <- abandoned_wells |>
         filter(reclamation_date > max_last_production_date) |> 
         filter(max_abandoned_date > max_last_production_date)
 
-write_sf(obj = selected_polygons, dsn = "data/selected_polygons.gpkg")
+# write_sf(obj = selected_polygons, dsn = "data/selected_polygons.gpkg")
 ```
 
 
