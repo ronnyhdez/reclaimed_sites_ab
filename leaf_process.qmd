@@ -1,0 +1,49 @@
+---
+title: "Process one site with LEAF-toolbox"
+author: "Ronny A. Hernández Mora"
+editor: visual
+jupyter: python3
+---
+
+## Imports
+
+
+```{python}
+import ee
+from leaftoolbox import LEAF
+from leaftoolbox import SL2PV0 
+from leaftoolbox import SL2PV1
+```
+
+## GEE authentication
+
+```{python}
+ee.Authenticate()
+ee.Initialize()
+```
+
+Test if authentication was succesful
+```{python}
+print(ee.String('Hello from the Earth Engine servers!').getInfo())
+```
+
+# Process Collection of Input Images Returning GEE Collection of Output Products
+
+```{python}
+imageCollection = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED') \
+                    .filterDate('2020-08-01', '2020-08-16') \
+                    .filter(ee.Filter.eq('MGRS_TILE','18TVQ'))
+print(imageCollection.size().getInfo())
+
+products = LEAF.makeProductImageCollection(imageCollection=imageCollection,algorithm=SL2PV0,variable='LAI',inputScaleSize=40) 
+print(products.first().bandNames().getInfo())
+```
+
+# Process Sites with output as a Pandas Data Frame
+
+```{python}
+siteList = ["projects/ee-modis250/assets/HuntClub",
+            "projects/ee-modis250/assets/Nanaimo",
+			"projects/ee-modis250/assets/Karachi"]
+```
+
