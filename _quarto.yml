@@ -9,6 +9,7 @@ website:
   navbar:
     left:
       - abandoned_wells.qmd
+      - leaf_process.qmd
 
 format:
   html:

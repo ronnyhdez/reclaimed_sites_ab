@@ -5,6 +5,12 @@ name = "pypi"
 
 [packages]
 fiona = "*"
+rasterio = "*"
+gpd = "*"
+geopandas = "*"
+earthengine-api = "*"
+nbformat = "*"
+nbclient = "*"
 
 [dev-packages]
 ipykernel = "*"
