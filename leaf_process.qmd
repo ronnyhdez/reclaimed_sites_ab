@@ -10,6 +10,8 @@ jupyter: python3
 
 ```{python}
 import ee
+import matplotlib.pyplot as plt
+import pandas as pd
 ```
 
 ## GEE authentication
@@ -145,22 +147,22 @@ pixelNum = 3
 
 #Extract time series of LAI with high quality only
 site = sitesDictionaryL08V0[siteList[siteNum]]
-df=site[featureNum]['SL2PV0']
+# print(site[featureNum]['leaftoolbox.SL2PV0'])
+df=site[featureNum]['leaftoolbox.SL2PV0']
 df['utc'] =  pd.to_datetime(df['date'],unit='ms')
 pixelL08V0=df.loc[(df['longitude']==df.loc[pixelNum].longitude) & (df['latitude']==df.loc[pixelNum].latitude) & (df['QC']==0)]
 site=sitesDictionaryL09V0[siteList[siteNum]]
-df=site[featureNum]['SL2PV0']
+df=site[featureNum]['leaftoolbox.SL2PV0']
 df['utc'] =  pd.to_datetime(df['date'],unit='ms')
 pixelL09V0=df.loc[(df['longitude']==df.loc[pixelNum].longitude) & (df['latitude']==df.loc[pixelNum].latitude) & df['QC']==0]
 site=sitesDictionaryHLSV0[siteList[siteNum]]
-df=site[featureNum]['SL2PV0']
+df=site[featureNum]['leaftoolbox.SL2PV0']
 df['utc'] =  pd.to_datetime(df['date'],unit='ms')
 pixelHLSV0=df.loc[(df['longitude']==df.loc[pixelNum].longitude) & (df['latitude']==df.loc[pixelNum].latitude) & df['QC']==0]
 site=sitesDictionaryS2V0[siteList[siteNum]]
-df=site[featureNum]['SL2PV0']
+df=site[featureNum]['leaftoolbox.SL2PV0']
 df['utc'] =  pd.to_datetime(df['date'],unit='ms')
 pixelS2V0=df.loc[(df['longitude']==df.loc[pixelNum].longitude) & (df['latitude']==df.loc[pixelNum].latitude) & df['QC']==0]
-
 
 fig,ax = plt.subplots(1,1,figsize=[10,10])
 plt.plot(pixelL08V0['utc'],pixelL08V0['estimateLAI'],'ob',markerfacecolor='none', label='L08V1')

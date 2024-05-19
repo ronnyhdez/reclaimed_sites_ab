@@ -11,6 +11,7 @@ geopandas = "*"
 earthengine-api = "*"
 nbformat = "*"
 nbclient = "*"
+matplotlib = "*"
 
 [dev-packages]
 ipykernel = "*"
