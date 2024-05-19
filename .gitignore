@@ -169,3 +169,5 @@ reclaimed_sites_ab.Rproj
 /_site/
 /docs/
 data/
+data_in/
+.vscode/
