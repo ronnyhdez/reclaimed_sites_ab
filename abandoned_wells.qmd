@@ -753,7 +753,6 @@ polygon selection:
 
  - Reclamation status = reclaimed
  - Reclamation date = not zero
- - Reclamation date = At least 20 years record
  - Reclamation date more recent than abandoned date
  - Reclamation date more recent than last production date
  - Abandoned date more recent than last production date
@@ -764,7 +763,7 @@ selected_polygons <- abandoned_wells |>
         filter(reclamation_status == "reclaimed") |> 
         filter(reclamation_date != 0) |> 
         mutate(reclamation_years = max(reclamation_date) - reclamation_date) |> 
-        filter(reclamation_years >= 20) |>
+        # filter(reclamation_years >= 20) |>
         filter(reclamation_date > max_abandoned_date) |> 
         filter(reclamation_date > max_last_production_date) |> 
         filter(max_abandoned_date > max_last_production_date)
@@ -777,7 +776,12 @@ If we apply those filters, we will end up with `r nrow(selected_polygons)`
 polygons (from the `r nrow(abandoned_wells_df)` original observations)
 
 
+::: {.callout-note}
+We will extract all HLS and ETM+ and possibly S2 data for these sites so there
+is no date range to be used for filtering on the polygons data ingestion
 
+Depending on how long the extraction takes we may prioritize polygons abandoned between a certain time range (e.g. 2000 - 2024) or (2013-2024) where we know we have pre-abandoned reference measurements around the site.
+:::
 
 ```{r}
 # Subir data
