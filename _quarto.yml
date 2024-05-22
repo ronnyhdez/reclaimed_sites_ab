@@ -1,7 +1,6 @@
 project:
   type: website
   render:
-    - "!notebooks/eda_hfi.qmd"
     - "*.qmd"
   
 website:
@@ -10,7 +9,7 @@ website:
     left:
       - notebooks/abandoned_wells.qmd
       - notebooks/leaf_process.qmd
-
+      - notebooks/eda_hfi.qmd
 format:
   html:
     theme: cosmo
