@@ -1,0 +1,93 @@
+---
+title: "GEE polygons filters"
+author: Ronny A. Hernandez Mora
+execute:
+  message: false
+  warning: false
+format: 
+  html:
+    theme:
+      - flatly
+    linkcolor: "#FF5500"
+    highlight-style: tango
+    toc: true
+    toc-title: Table of contents
+    toc-location: left
+    number-sections: false
+    colorlinks: true
+    code-fold: true
+    code-line-numbers: true
+editor: visual
+jupyter: python3
+editor_options: 
+  chunk_output_type: console
+---
+
+Polygons data source is the the layer `o16_WellsAbnd_HFI_2021` from the [Wall-to-Wall Human Footprint Inventory](https://abmi.ca/home/data-analytics/da-top/da-product-overview/Human-Footprint-Products/HF-inventory.html) by the [Alberta Biodiversity Monitoring Institute](https://abmi.ca/home.html).
+
+The polygons in the data are the result of the filter applied in the `run_polygons_filter.py` 
+[script](https://github.com/ronnyhdez/reclaimed_sites_ab/blob/main/scripts/abandoned_sites_ingestion.py)
+
+```{python}
+# # Get list of assets
+
+# import ee
+
+# ee.Initialize()
+
+# path = 'users/ronnyale'
+
+# # List assets
+# assets = ee.data.listAssets({'parent': path})
+# print(assets)
+# # Extract asset names
+# asset_names = [asset['id'] for asset in assets['assets']]
+
+# # Print the asset names
+# print("List of assets:")
+# for asset in asset_names:
+#     print(asset)
+```
+
+```{python}
+import ee
+ee.Initialize()
+
+asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
+
+polygons = ee.FeatureCollection(asset_id)
+```
+
+```{python}
+# getInfo query is aborted after accumulating 5000 elements
+# print(polygons.getInfo())
+```
+
+
+```{python}
+import geemap
+
+Map = geemap.Map(center=[53.516, -113.498], zoom=5)
+Map.addLayer(polygons, {}, "Polygons")
+Map
+```
+
+
+## Create buffers in abandoned wells
+
+```{python}
+# Define a function to buffer each feature by 30 meters
+def buffer_feature(feature):
+    return feature.buffer(30)
+
+# Apply the buffer function to each feature in the FeatureCollection
+buffered_polygons = polygons.map(buffer_feature)
+
+# Add the original and buffered polygons to the map
+Map.addLayer(polygons, {}, "Original Polygons")
+Map.addLayer(buffered_polygons, {}, "Buffered Polygons")
+Map
+```
+
+
+
