@@ -24,5 +24,4 @@ date too | https://abmi.ca/home/data-analytics/da-top/da-product-overview/Human-
 
 ## Running the code
 
-...
-
+[WIP dev notes](https://github.com/ronnyhdez/reclaimed_sites_ab/wiki/Dev-notes)
