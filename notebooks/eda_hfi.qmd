@@ -22,7 +22,7 @@ polygons = ee.FeatureCollection(asset_id)
 ```{python}
 import geemap
 
-Map = geemap.Map(center=[0, 0], zoom=2)
+Map = geemap.Map(center=[53.516, -113.498], zoom=5)
 Map.addLayer(polygons, {}, "Polygons")
 Map
 ```
