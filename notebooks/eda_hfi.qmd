@@ -18,6 +18,7 @@ format:
     code-fold: true
     code-line-numbers: true
 editor: visual
+jupyter: python3
 editor_options: 
   chunk_output_type: console
 ---
@@ -72,7 +73,21 @@ Map
 ```
 
 
+## Create buffers in abandoned wells
 
+```{python}
+# Define a function to buffer each feature by 30 meters
+def buffer_feature(feature):
+    return feature.buffer(30)
+
+# Apply the buffer function to each feature in the FeatureCollection
+buffered_polygons = polygons.map(buffer_feature)
+
+# Add the original and buffered polygons to the map
+Map.addLayer(polygons, {}, "Original Polygons")
+Map.addLayer(buffered_polygons, {}, "Buffered Polygons")
+Map
+```
 
 
 
