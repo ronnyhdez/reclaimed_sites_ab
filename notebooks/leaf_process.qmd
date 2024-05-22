@@ -7,11 +7,12 @@ jupyter: python3
 
 ## Imports
 
-
 ```{python}
 import ee
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
+import sys
 ```
 
 ## GEE authentication
@@ -21,22 +22,26 @@ ee.Authenticate()
 ee.Initialize()
 ```
 
-Test if authentication was succesful
+Test if authentication was successful
+
 ```{python}
 print(ee.String('Hello from the Earth Engine servers!').getInfo())
 ```
 
 ## LEAF-toolbox imports
 
-Modules imports cannot be done before GEE authentication have been run
-succesfuly
+Modules imports cannot be done before GEE authentication have been run succesfuly
 
 ```{python}
+# Add the parent directory of leaftoolbox to the system path
+module_path = os.path.abspath(os.path.join('..'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
+    
 from leaftoolbox import LEAF
 from leaftoolbox import SL2PV0 
 from leaftoolbox import SL2PV1
 ```
-
 
 # Process Collection of Input Images Returning GEE Collection of Output Products
 
@@ -134,7 +139,6 @@ sitesDictionaryS2V0 = LEAF.sampleSites(siteList, \
 
 # Visualize Results
 
-
 ```{python}
 # Choose a site from the sitelist 
 siteNum=0
@@ -175,4 +179,3 @@ ax.set_xlabel('date')
 ax.set_ylabel('LAI')
 plt.xticks(rotation=90);
 ```
-

@@ -51,7 +51,7 @@ For the findings summary, go to [Key findings](https://ronnyhdez.github.io/recla
 Following information is part of the file metadata:
 
 ```{r}
-abandoned_wells <- st_read(dsn = 'HFI2021.gdb/HFI2021.gdb',
+abandoned_wells <- st_read(dsn = here::here('data/HFI2021.gdb/HFI2021.gdb'),
                            layer = 'o16_WellsAbnd_HFI_2021') |> 
         clean_names() |>
         mutate(reclamation_status = case_when(

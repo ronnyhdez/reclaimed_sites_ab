@@ -1,15 +1,15 @@
 project:
   type: website
   render:
-    - "!eda_hfi.qmd"
+    - "!notebooks/eda_hfi.qmd"
     - "*.qmd"
   
 website:
   title: "Reclamation"
   navbar:
     left:
-      - abandoned_wells.qmd
-      - leaf_process.qmd
+      - notebooks/abandoned_wells.qmd
+      - notebooks/leaf_process.qmd
 
 format:
   html:
