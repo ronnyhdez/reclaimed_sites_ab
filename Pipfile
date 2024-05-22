@@ -12,6 +12,9 @@ earthengine-api = "*"
 nbformat = "*"
 nbclient = "*"
 matplotlib = "*"
+janitor = "*"
+configparser = "*"
+pyjanitor = "*"
 
 [dev-packages]
 ipykernel = "*"
