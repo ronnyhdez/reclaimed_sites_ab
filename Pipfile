@@ -15,6 +15,7 @@ matplotlib = "*"
 janitor = "*"
 configparser = "*"
 pyjanitor = "*"
+geemap = "*"
 
 [dev-packages]
 ipykernel = "*"
