@@ -1,118 +1,8 @@
 ---
-title: "Wells HFI 2021"
-format: pdf
+title: "GEE polygons filters"
+format: html
 ---
 
-# EDA
-
- - Explore the layer o09_WellsActive_HFI_2021 from the [ABMI human footprint](https://abmi.ca/home/data-analytics/da-top/da-product-overview/Human-Footprint-Products/HF-inventory.html)
-
-```{python}
-import fiona
-import geopandas as gpd
-import pandas as pd
-import janitor
-```
-
-```{python}
-fiona.listlayers('data/HFI2021.gdb/HFI2021.gdb')
-```
-
-There are two layers about wells:
-
- - o09_WellsActive_HFI_2021
- - o16_WellsAbnd_HFI_2021
-
-# Wells abandoned
-
-```{python}
-abandoned_wells = gpd.read_file('data/HFI2021.gdb/HFI2021.gdb', 
-                                 driver = 'FileGDB', 
-                                 layer = 'o16_WellsAbnd_HFI_2021')
-```
-
-
-```{python}
-print(abandoned_wells.head())
-```
-
-
-```{python}
-# Clean column names
-abandoned_wells_df = abandoned_wells.clean_names()
-print(abandoned_wells_df['reclamation_status'].unique())
-# Map reclamation values
-abandoned_wells_df['reclamation_status'] = abandoned_wells_df['reclamation_status'].map({
-    1: 'not_reclaimed',
-    2: 'reclamation_exempt',
-    3: 'reclaimed'
-}).fillna('no_data')
-
-print(abandoned_wells_df['reclamation_status'].unique())
-# print(abandoned_wells_df['reclamation_status'].head())
-```
-
-```{python}
-selected_polygons = (
-    abandoned_wells_df
-    .query("reclamation_status == 'reclaimed'")  # Filter for reclaimed wells
-    .query("reclamation_date != 0")              # Filter where reclamation_date is not zero
-    .query("reclamation_date > max_abandoned_date")     # Apply further filters
-    .query("reclamation_date > max_last_production_date")
-    .query("max_abandoned_date > max_last_production_date")
-)
-
-print(selected_polygons.head())
-```
-
-
-```{python}
-print(len(selected_polygons))
-```
-
-```{python}
-# selected_polygons.to_file('selected_polygons.geojson', driver='GeoJSON')
-# 
-datetime_columns = selected_polygons.select_dtypes(include=['datetime64']).columns
-
-for col in datetime_columns:
-    selected_polygons[col] = selected_polygons[col].astype(str) 
-selected_polygons.to_file('data/selected_polygons.shp')
-```
-
-Export feature collection
-```{python}
-# import geemap
-# import ee
-# ee.Initialize()
-# ee_object = geemap.geojson_to_ee('selected_polygons.geojson')
-
-# exportTask = ee.batch.Export.table.toAsset(
-#     collection = ee_object,
-#     description = 'description',
-#     assetId = 'users/ronnyale/reclamation_ab'
-# )
-# exportTask.start()
-```
-
-```{python}
-import json
-import ee
-
-# initialize earth engine client
-ee.Initialize()
-
-# load your gemotry data (which should be in GeoJson file)
-with open("data/selected_polygons.geojson") as f:
-    geojson = json.load(f)
-
-# construct a FeatureCollection object from the json object
-fc = ee.FeatureCollection(geojson)
-```
-
-```{python}
-fc.getInfo()
-```
 
 ```{python}
 import ee
@@ -139,94 +29,23 @@ Map
 
 
 ```{python}
-import ee
+# import ee
 
-ee.Initialize()
+# ee.Initialize()
 
-path = 'users/ronnyale'
+# path = 'users/ronnyale'
 
-# List assets
-assets = ee.data.listAssets({'parent': path})
-print(assets)
-# Extract asset names
-asset_names = [asset['id'] for asset in assets['assets']]
+# # List assets
+# assets = ee.data.listAssets({'parent': path})
+# print(assets)
+# # Extract asset names
+# asset_names = [asset['id'] for asset in assets['assets']]
 
-# Print the asset names
-print("List of assets:")
-for asset in asset_names:
-    print(asset)
+# # Print the asset names
+# print("List of assets:")
+# for asset in asset_names:
+#     print(asset)
 ```
 
 
 
-## Testing cropping fires layer to Alberta
-
- - Memory not enough (16Gb) to run code below
-
-```{python}
-from osgeo import gdal
-```
-
-
-
-```{python}
-fn_in = r"data_in/CA_Forest_Fire_1985-2020/CA_Forest_Fire_1985-2020.tif"
-fn_clip = 'data/forest_test.tif'
-fn_poly = r"data_in/alberta.gpkg"
-
-
-gdal.Warp(fn_clip, fn_in, cutlineDSName=fn_poly, cutlineLayer='polygon', cropToCutline=True)
-```
-
-
-
-```{python}
-# Second try with geocomputation with python
-# import os
-# import math
-# import numpy as np
-# import matplotlib.pyplot as plt
-# import pandas as pd
-# import shapely
-import geopandas as gpd
-import rasterio
-# import rasterio.plot
-import rasterio.mask
-# import rasterio.features
-# import rasterstats
-```
-
-
-```{python}
-#src_srtm = rasterio.open('data/srtm.tif')
-#zion = gpd.read_file('data/zion.gpkg')
-
-# Both files should have same projection. It's easier to and more
-# precise to reproject vector layers compared to rasters
-
-#zion = zion.to_crs(src_srtm.crs)
-
-
-canada_fires = rasterio.open('data_in/CA_Forest_Fire_1985-2020/CA_Forest_Fire_1985-2020.tif')
-
-alberta = gpd.read_file('data_in/alberta.gpkg')
-```
-
-```{python}
-print(alberta.crs)
-print(canada_fires.crs)
-```
-
-```{python}
-alberta = alberta.to_crs(canada_fires.crs)
-```
-
-
-```{python}
-out_image_mask, out_transform_mask = rasterio.mask.mask(
-    canada_fires, 
-    alberta.geometry, 
-    crop=False, 
-    nodata=9999
-)
-```
