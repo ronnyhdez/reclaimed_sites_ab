@@ -40,3 +40,6 @@ selected_polygons = (
 
 len_polygons = len(selected_polygons)
 print("Number of observations after filtering: ", len_polygons) 
+
+# Save to geojson
+selected_polygons.to_file('data/selected_polygons.geojson', driver='GeoJSON') 
