@@ -26,7 +26,7 @@ editor_options:
 ```{python}
 import ee
 import geemap
-
+import folium
 ```
 
 After selecting the polygons from the abandoned wells, the following steps will continue with the 
@@ -64,17 +64,17 @@ ee.Initialize()
 
 asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
 
-polygons = ee.FeatureCollection(asset_id)
+abandoned_wells = ee.FeatureCollection(asset_id)
 
 # getInfo query is aborted after accumulating 5000 elements
-# print(polygons.getInfo())
+# print(abandoned_wells.getInfo())
 ```
 
 Check the polygons
 
 ```{python}
 Map = geemap.Map(center=[53.516, -113.498], zoom=5)
-Map.addLayer(polygons, {}, "Polygons")
+Map.addLayer(abandoned_wells, {}, "Polygons")
 Map
 ```
 
@@ -122,11 +122,11 @@ Nonethels, we can check this with a function.
 ```{python}
 # Function to find intersections between buffered polygons and waterbodies
 def find_intersections(feature):
-    intersection = reservoirs.filterBounds(feature.geometry())
+    intersection = abandoned_wells.filterBounds(feature.geometry())
     return ee.Feature(intersection.geometry(), feature.toDictionary())
 
 # Map the intersection function over the buffered polygons
-intersections = buffered_polygons.map(find_intersections)
+intersections = buffered_reservoirs.map(find_intersections)
 
 # Filter out empty geometries
 intersections = intersections.filter(ee.Filter.notNull(['geometry']))
@@ -136,11 +136,13 @@ Map.addLayer(intersections, {'color': 'yellow'}, "Intersecting Polygons")
 Map
 ```
 
-## Waterbodies
+# Waterbodies
 
 Using the _Land-use/Land-cover Classification of Alberta, Derived from 2020 Sentinel-2 Multispectral Data_ [here](https://ags.aer.ca/publication/dig-2021-0019), it's based on reflectance data.
 
-I need to reduce the image to obtain 
+I need to reduce the image to obtain polgyons according to the category `1` which is `Water`. 
+
+Let's check the asset info:
 
 ```{python}
 asset_id = 'projects/ee-eoagsaer/assets/LULC_2022_EE'
@@ -149,41 +151,65 @@ asset_image = ee.Image(asset_id)
 
 info = asset_image.getInfo()
 print(info)
+# print("Asset Type:", info['type'])
+# print("Bands:", info['bands'])
+# print("Properties:", info['properties'])
 ```
 
 
-```{python}
-print("Asset Type:", info['type'])
-print("Bands:", info['bands'])
-print("Properties:", info['properties'])
-```
+## The Land Cover Classification layer
 
+The asset we consumed from GEE, looks like:
 
 ```{python}
-import folium
-import geemap
-Map = geemap.Map()
-Map.addLayer(asset_image, {}, 'land cover')
+land_cover_viz = {
+    'min': 0,
+    'max': 14,
+    'palette': [
+        '000000',  
+        '1f77b4',  
+        'ff7f0e',  
+        '2ca02c',  
+        'd62728',  
+        '9467bd',  
+        '8c564b',  
+        'e377c2',  
+        '7f7f7f',  
+        'bcbd22',  
+        '17becf',  
+        '8c564b',  
+        'e377c2',  
+        '7f7f7f',   
+        '7f7f72'   
+    ]
+}
+
+Map.addLayer(asset_image, 
+            land_cover_viz,
+            'land cover')
 Map
 ```
 
+## Get just the waterbodies mask
 
 ```{python}
-water_body_value = 1  # Replace with the correct value for water bodies in your classification
-water_mask = asset_image.eq(water_body_value)
+water_mask = asset_image.eq(1)
 water_image = asset_image.updateMask(water_mask)
 ```
 
+After getting the waterbodies mask, we need to reduce the raster to a vector
 
 ```{python}
 water_bodies_vector = water_image.reduceToVectors(
     geometryType='polygon',
-    scale=10,  # Adjust the scale as needed
+    scale=10,  # LCC layer documentation states is 10m
     maxPixels=1e8,
     bestEffort=True,
-    labelProperty='water_bodie'
+    labelProperty='water_bodies'
 )
 ```
+
+We can check the waterbodies mask:
 
 ```{python}
 Map.addLayer(water_bodies_vector, {'color': 'blue'}, 'water bodies' )
@@ -193,7 +219,7 @@ Map
 
 ```{python}
 print(water_bodies_vector.size().getInfo())  # Number of water body polygons
-print(water_bodies_vector.getInfo()) 
+# print(water_bodies_vector.getInfo()) # Query exceeds the API limit
 ```
 
 
