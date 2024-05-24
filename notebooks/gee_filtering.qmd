@@ -90,4 +90,42 @@ Map
 ```
 
 
+## Check reservoirs
 
+```{python}
+asset_id = 'projects/ee-ronnyale/assets/reservoirs'
+reservoirs = ee.FeatureCollection(asset_id)
+
+Map.addLayer(reservoirs, {'color': 'blue'}, 'Reservoirs')
+Map
+```
+
+
+## Check intersections
+
+```{python}
+# Function to find intersections between buffered polygons and waterbodies
+def find_intersections(feature):
+    intersection = reservoirs.filterBounds(feature.geometry())
+    return ee.Feature(intersection.geometry(), feature.toDictionary())
+
+# Map the intersection function over the buffered polygons
+intersections = buffered_polygons.map(find_intersections)
+
+# Filter out empty geometries
+intersections = intersections.filter(ee.Filter.notNull(['geometry']))
+
+# Display the map
+Map.addLayer(intersections, {'color': 'yellow'}, "Intersecting Polygons")
+Map
+```
+
+## Waterbodies
+
+Using the _Land-use/Land-cover Classification of Alberta, Derived from 2020 Sentinel-2 Multispectral Data_ [here](https://ags.aer.ca/publication/dig-2021-0019), it's based on reflectance data.
+
+I need to reduce the image to obtain 
+
+```{python}
+
+```
