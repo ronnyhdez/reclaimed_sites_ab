@@ -92,7 +92,7 @@ According to the _HFI 2021 Metadata, Version 1.0_, reservoirs are:
 asset_id = 'projects/ee-ronnyale/assets/reservoirs'
 reservoirs = ee.FeatureCollection(asset_id)
 
-Map.addLayer(reservoirs, {'color': 'blue'}, 'Reservoirs')
+Map.addLayer(reservoirs, {'color': 'blue'}, 'reservoirs')
 Map
 ```
 
@@ -110,7 +110,7 @@ buffered_reservoirs = reservoirs.map(buffer_feature)
 Let's check the buffered reservoirs
 
 ```{python}
-Map.addLayer(buffered_reservoirs, {}, "Buffered Reservoirs")
+Map.addLayer(buffered_reservoirs, {}, "buffered_reservoirs")
 Map
 ```
 
@@ -132,7 +132,7 @@ intersections = buffered_reservoirs.map(find_intersections)
 intersections = intersections.filter(ee.Filter.notNull(['geometry']))
 
 # Display the map
-Map.addLayer(intersections, {'color': 'yellow'}, "Intersecting Polygons")
+Map.addLayer(intersections, {'color': 'yellow'}, "intersecting_polygons")
 Map
 ```
 
@@ -212,7 +212,7 @@ water_bodies_vector = water_image.reduceToVectors(
 We can check the waterbodies mask:
 
 ```{python}
-Map.addLayer(water_bodies_vector, {'color': 'blue'}, 'water bodies' )
+Map.addLayer(water_bodies_vector, {'color': 'blue'}, 'waterbodies_mask' )
 Map
 ```
 
@@ -224,12 +224,38 @@ print(water_bodies_vector.size().getInfo())  # Number of water body polygons
 
 
 ```{python}
-export_task = ee.batch.Export.table.toDrive(
-    collection=water_bodies_vector,
-    description='WaterBodiesPolygons',
-    folder='EarthEngineExports',
-    fileFormat='SHP'
-)
-export_task.start()
-print("Export started. Check your Google Drive for the results.")
+# In case I need the resulting polygons
+# export_task = ee.batch.Export.table.toDrive(
+#     collection=water_bodies_vector,
+#     description='WaterBodiesPolygons',
+#     folder='EarthEngineExports',
+#     fileFormat='SHP'
+# )
+# export_task.start()
+# print("Export started. Check your Google Drive for the results.")
 ```
+
+## Create buffers for waterbodies
+
+Based on the waterbodies resulting polygons, we are going to create a buffer area and then check
+if any of the abandoned well sites intersects them.
+
+```{python}
+buffered_waterbodies = water_bodies_vector.map(buffer_feature)
+Map.addLayer(waterbodies_buffer, {}, 'waterbodies_buffer')
+Map
+```
+
+
+```{python}
+# Map the intersection function over the buffered polygons
+intersections = buffered_waterbodies.map(find_intersections)
+
+# Filter out empty geometries
+intersections = intersections.filter(ee.Filter.notNull(['geometry']))
+
+# Display the map
+Map.addLayer(intersections, {'color': 'red'}, "intersecting_polygons")
+Map
+```
+
