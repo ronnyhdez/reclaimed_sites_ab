@@ -27,6 +27,7 @@ editor_options:
 import ee
 import geemap
 import folium
+import json
 ```
 
 After selecting the polygons from the abandoned wells, the following steps will continue with the 
@@ -101,39 +102,35 @@ Map
 ```{python}
 # Create function to buffer each feature by 30m
 def buffer_feature(feature):
-  return feature.buffer(900)
+  return feature.buffer(30)
 
 # Apply the buffer function to each of the reservoir polygons
 buffered_reservoirs = reservoirs.map(buffer_feature)
-```
 
-Let's check the buffered reservoirs
-
-```{python}
-Map.addLayer(buffered_reservoirs, {}, "buffered_reservoirs")
+# Plot the buffers in the map
+Map.addLayer(buffered_reservoirs, {'color': '#75AADB'}, "buffered_reservoirs")
 Map
 ```
 
-### Check intersections
+### Find abandoned wells intersections with waterbodies
 
 Manually, it seems that there is no abandoned well that intersects the reservoirs buffer areas.
-Nonethels, we can check this with a function.
+Nonethels, we can check this with a function that records if there is an intersection or not.
 
 ```{python}
 # Function to find intersections between buffered polygons and waterbodies
-def find_intersections(feature):
-    intersection = abandoned_wells.filterBounds(feature.geometry())
-    return ee.Feature(intersection.geometry(), feature.toDictionary())
+def define_intersection(well):
+    intersects_reservoirs = reservoirs.filterBounds(well.geometry()).size().gt(0)
+    intersects_reservoirs_buffer = buffered_reservoirs.filterBounds(well.geometry()).size().gt(0)
+    return well.set('intersects_reservoirs', intersects_reservoirs) \
+               .set('intersects_reservoirs_buffer', intersects_reservoirs_buffer)
 
-# Map the intersection function over the buffered polygons
-intersections = buffered_reservoirs.map(find_intersections)
+# Apply the intersection check to each well
+wells_with_intersections = abandoned_wells.map(define_intersection)
 
-# Filter out empty geometries
-intersections = intersections.filter(ee.Filter.notNull(['geometry']))
-
-# Display the map
-Map.addLayer(intersections, {'color': 'yellow'}, "intersecting_polygons")
-Map
+# Show a sample
+sample = wells_with_intersections.limit(6).getInfo()
+print(json.dumps(sample, indent = 2))
 ```
 
 # Waterbodies
@@ -341,7 +338,6 @@ sample.evaluate(print_result)
 
 # Code summary
 
-
 ```{python}
 # summary code
 import ee
@@ -372,6 +368,7 @@ water_bodies_vector = water_image.reduceToVectors(
 ## Create buffer of waterbodies
 def buffer_feature(feature):
   return feature.buffer(30)
+
 buffered_waterbodies = water_bodies_vector.map(buffer_feature)
 
 # Check if abandoned wells fall within the buffer area or waterbodies area
