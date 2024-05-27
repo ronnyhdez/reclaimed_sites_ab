@@ -153,7 +153,6 @@ print(info)
 # print("Properties:", info['properties'])
 ```
 
-
 ## The Land Cover Classification layer
 
 The asset we consumed from GEE, looks like:
@@ -177,7 +176,7 @@ land_cover_viz = {
         '8c564b',  
         'e377c2',  
         '7f7f7f',   
-        '7f7f72'   
+        '7AADB4'   
     ]
 }
 
@@ -187,16 +186,17 @@ Map.addLayer(asset_image,
 Map
 ```
 
-## Get just the waterbodies mask
+## Create the waterbodies mask
+
+From all the features we have, I need juts the waterbodies. This is a raster which I also need to
+reduce to a vector to create the buffer area.
 
 ```{python}
+# Water category is 1 (as seen in qgis)
 water_mask = asset_image.eq(1)
 water_image = asset_image.updateMask(water_mask)
-```
 
-After getting the waterbodies mask, we need to reduce the raster to a vector
-
-```{python}
+# Steps from raster to vector
 water_bodies_vector = water_image.reduceToVectors(
     geometryType='polygon',
     scale=10,  # LCC layer documentation states is 10m
@@ -204,29 +204,23 @@ water_bodies_vector = water_image.reduceToVectors(
     bestEffort=True,
     labelProperty='water_bodies'
 )
-```
 
-We can check the waterbodies mask:
-
-```{python}
+Map.remove_layer('land cover')
 Map.addLayer(water_bodies_vector, {'color': 'blue'}, 'waterbodies_mask' )
 Map
 ```
 
-
+How many waterbodies polygons do I have?
 ```{python}
 print(water_bodies_vector.size().getInfo())  # Number of water body polygons
 # print(water_bodies_vector.getInfo()) # Query exceeds the API limit
-```
 
-
-```{python}
 # In case I need the resulting polygons
 # export_task = ee.batch.Export.table.toDrive(
-#     collection=water_bodies_vector,
-#     description='WaterBodiesPolygons',
-#     folder='EarthEngineExports',
-#     fileFormat='SHP'
+#     collection = water_bodies_vector,
+#     description = 'water_bodies_polygons',
+#     folder = 'earth_engine_exports',
+#     fileFormat = 'SHP'
 # )
 # export_task.start()
 # print("Export started. Check your Google Drive for the results.")
