@@ -133,27 +133,9 @@ sample = wells_with_intersections.limit(6).getInfo()
 print(json.dumps(sample, indent = 2))
 ```
 
-# Waterbodies
+# The Land Cover Classification layer
 
 Using the _Land-use/Land-cover Classification of Alberta, Derived from 2020 Sentinel-2 Multispectral Data_ [here](https://ags.aer.ca/publication/dig-2021-0019), it's based on reflectance data.
-
-I need to reduce the image to obtain polgyons according to the category `1` which is `Water`. 
-
-Let's check the asset info:
-
-```{python}
-asset_id = 'projects/ee-eoagsaer/assets/LULC_2022_EE'
-
-asset_image = ee.Image(asset_id)
-
-info = asset_image.getInfo()
-print(info)
-# print("Asset Type:", info['type'])
-# print("Bands:", info['bands'])
-# print("Properties:", info['properties'])
-```
-
-## The Land Cover Classification layer
 
 The asset we consumed from GEE, looks like:
 
@@ -186,7 +168,30 @@ Map.addLayer(asset_image,
 Map
 ```
 
-## Create the waterbodies mask
+I need to reduce the raster image to obtain polgyons according to the following categories: 
+
+ - `1` == `Water`. 
+ - `3` == `Wetland trees`. 
+ - `7` == `Wetland`. 
+ - `13` == `Developed`. 
+
+Let's check the asset info:
+
+```{python}
+asset_id = 'projects/ee-eoagsaer/assets/LULC_2022_EE'
+
+asset_image = ee.Image(asset_id)
+
+info = asset_image.getInfo()
+print(info)
+# print("Asset Type:", info['type'])
+# print("Bands:", info['bands'])
+# print("Properties:", info['properties'])
+```
+
+## Waterbodies
+
+### Create the waterbodies mask
 
 From all the features we have, I need juts the waterbodies. This is a raster which I also need to
 reduce to a vector to create the buffer area.
@@ -226,7 +231,7 @@ print(water_bodies_vector.size().getInfo())  # Number of water body polygons
 # print("Export started. Check your Google Drive for the results.")
 ```
 
-## Create buffers for waterbodies
+### Create buffers for waterbodies
 
 Based on the waterbodies resulting polygons, we are going to create a buffer area and then check
 if any of the abandoned well sites intersects them.
@@ -238,7 +243,7 @@ Map.addLayer(buffered_waterbodies, {'color' : '#75AADB'}, 'waterbodies_buffer')
 Map
 ```
 
-## Find abandoned wells intersections with waterbodies
+### Find abandoned wells intersections with waterbodies
 
 ```{python}
 # Function to check if a well intersects with waterbodies or buffered waterbodies
@@ -256,83 +261,7 @@ sample = wells_with_intersections.limit(6).getInfo()
 print(json.dumps(sample, indent = 2))
 ```
 
-
-## Mapping the abandoned wells intersecting waterbodies.
-
-The filter takes too long. Probably it will be faster if I export the object as an asset.
-Probably it's because it performs or re-process all the queries.
-
-```{python}
-# First test on a filter
-# Gonna do it on a variable already in the asset
-asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
-
-abandoned_wells = ee.FeatureCollection(asset_id)
-
-# The filter
-reclaimed_filter = ee.Filter.eq("rclmtn_s", "reclaimed")
-reclaimed = abandoned_wells.filter(reclaimed_filter)
-sample = reclaimed.limit(10).getInfo()
-print(json.dumps(sample, indent=2))
-```
-
-When applied to an asset directly, the filter is super fast. 
-
-I'm going to save the asset with the new columns:
-
-```{python}
-# # Export the result as an asset for future use
-# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_waterbodies'
-# export_task = ee.batch.Export.table.toAsset(
-#     collection=wells_with_intersections,
-#     description='export_intersecting_wells_with_waterbodies',
-#     assetId=export_asset_id
-# )
-# export_task.start()
-```
-
-
-
-```{python}
-# # Filter the abandoned wells intersecting
-# intersecting_filter = ee.Filter.eq("intersects_buffer", 0)
-# intersecting_water = wells_with_intersections.filter(intersecting_filter)
-
-# sample = intersecting_water.limit(6).getInfo()
-# print(json.dumps(sample, indent = 2))
-
-intersects_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_waterbodies'
-intersects = ee.FeatureCollection(intersects_asset_id)
-
-intersecting_filter = ee.Filter.eq("intersects_buffer", 1)
-intersecting_water = intersects.filter(intersecting_filter)
-sample = intersecting_water.limit(10).getInfo()
-print(json.dumps(sample, indent=2))
-
-# Plot abandoned wells that intersect waterbodies
-wells_intersecting_map = geemap.Map(center=[53.516, -113.498], zoom=5)
-wells_intersecting_map.addLayer(
-    intersecting_water, {}, 'wells intersecting water')
-wells_intersecting_map
-
-# sample = intersecting_water.limit(20)
-
-# # Use evaluate() for asynchronous evaluation
-# def print_result(result):
-#     print(json.dumps(result, indent=2))
-
-# sample.evaluate(print_result)
-
-# print(json.dumps(sample, indent = 2))
-
-# intersecting_water.getInfo()
-
-# Map.addLayer(intersecting_water, {"color" : "blue"}, 'intersects')
-# Map
-
-```
-
-# Developed area
+## Developed area
 
  - Follow same process as waterbodies
 
@@ -352,6 +281,63 @@ Map.addLayer(developed_vector, {'color': 'red'})
 Map
 ```
 
+### Create developed area buffers
+
+```{python}
+buffered_developed_areas = developed_vector.map(buffer_feature)
+```
+
+### Find intersections with developed areas
+
+```{python}
+def define_intersection(well):
+    intersects_developed_areas = developed_vector.filterBounds(well.geometry()).size().gt(0)
+    intersects_buffer = buffered_developed_areas.filterBounds(well.geometry()).size().gt(0)
+    return well.set('intersects_developed_areas', intersects_developed_areas.toInt()) \
+               .set('intersects_buffer_developed_areas', intersects_buffer.toInt())
+
+# Apply the intersection check to each well
+wells_with_intersections_developed_areas = abandoned_wells.map(define_intersection)
+
+# Show a sample
+sample = wells_with_intersections_developed_areas.limit(6).getInfo()
+print(json.dumps(sample, indent = 2))
+```
+
+
+# Export final object
+
+```{python}
+# # Export the result as an asset for future use
+# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_waterbodies'
+# export_task = ee.batch.Export.table.toAsset(
+#     collection=wells_with_intersections,
+#     description='export_intersecting_wells_with_waterbodies',
+#     assetId=export_asset_id
+# )
+# export_task.start()
+```
+
+
+# Mapping the abandoned wells that intersects one of the categories.
+
+To review and validate abandoned wells polygons that intersect one of the categories, here is a map:
+
+```{python}
+intersects_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_waterbodies'
+intersects = ee.FeatureCollection(intersects_asset_id)
+
+intersecting_filter = ee.Filter.eq("intersects_buffer", 1)
+intersecting_water = intersects.filter(intersecting_filter)
+sample = intersecting_water.limit(10).getInfo()
+print(json.dumps(sample, indent=2))
+
+# Plot abandoned wells that intersect waterbodies
+wells_intersecting_map = geemap.Map(center=[53.516, -113.498], zoom=5)
+wells_intersecting_map.addLayer(
+    intersecting_water, {}, 'wells intersecting water')
+wells_intersecting_map
+```
 
 # Code summary
 
