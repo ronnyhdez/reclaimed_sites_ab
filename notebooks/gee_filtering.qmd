@@ -211,7 +211,7 @@ water_bodies_vector = water_image.reduceToVectors(
 )
 
 Map.remove_layer('land cover')
-Map.addLayer(water_bodies_vector, {'color': 'blue'}, 'waterbodies_mask' )
+Map.addLayer(water_bodies_vector, {'color': 'blue'}, 'waterbodies_mask')
 Map
 ```
 
