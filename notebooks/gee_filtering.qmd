@@ -112,7 +112,7 @@ Map.addLayer(buffered_reservoirs, {'color': '#75AADB'}, "buffered_reservoirs")
 Map
 ```
 
-### Find abandoned wells intersections with waterbodies
+### Find abandoned wells intersections with reservoirs
 
 Manually, it seems that there is no abandoned well that intersects the reservoirs buffer areas.
 Nonethels, we can check this with a function that records if there is an intersection or not.
@@ -232,84 +232,35 @@ Based on the waterbodies resulting polygons, we are going to create a buffer are
 if any of the abandoned well sites intersects them.
 
 ```{python}
+# Function defined above in reservoirs section
 buffered_waterbodies = water_bodies_vector.map(buffer_feature)
-Map.addLayer(buffered_waterbodies, {}, 'waterbodies_buffer')
+Map.addLayer(buffered_waterbodies, {'color' : '#75AADB'}, 'waterbodies_buffer')
 Map
 ```
 
+## Find abandoned wells intersections with waterbodies
 
 ```{python}
-# Map the intersection function over the buffered polygons
-intersections = buffered_waterbodies.map(find_intersections)
+# Function to check if a well intersects with waterbodies or buffered waterbodies
+def define_intersection(well):
+    intersects_waterbody = water_bodies_vector.filterBounds(well.geometry()).size().gt(0)
+    intersects_buffer = buffered_waterbodies.filterBounds(well.geometry()).size().gt(0)
+    return well.set('intersects_waterbody', intersects_waterbody) \
+               .set('intersects_buffer', intersects_buffer)
 
-# Filter out empty geometries
-intersections = intersections.filter(ee.Filter.notNull(['geometry']))
+# Apply the intersection check to each well
+wells_with_intersections = abandoned_wells.map(define_intersection)
 
-# Display the map
-Map.addLayer(intersections, {'color': 'red'}, "intersecting_polygons")
-Map
-```
-
-
-
-testing
-```{python}
-import json
-# Function to check intersections and flag abandoned wells
-def flag_intersections(well):
-    intersects = buffered_waterbodies.filterBounds(well.geometry()).size().gt(0)
-    return well.set('intersects', intersects)
-
-# Apply the function to the abandoned wells
-flagged_wells = abandoned_wells.map(flag_intersections)
-
-sample = flagged_wells.limit(39).getInfo()
-
+# Show a sample
+sample = wells_with_intersections.limit(6).getInfo()
 print(json.dumps(sample, indent = 2))
-
-# # Your existing assets
-# water_bodies_vector = water_bodies_vector
-# abandoned_wells = ee.FeatureCollection('projects/ee-ronnyale/assets/selected_polygons')
-
-# # Function to buffer water body features
-# def buffer_feature(feature):
-#     return feature.buffer(30)  # 30 meters buffer
-
-# # Apply the buffer to the water bodies
-# buffered_waterbodies = water_bodies_vector.map(buffer_feature)
-
-# # Function to check intersections and flag abandoned wells
-# def flag_intersections(well):
-#     intersects = buffered_waterbodies.filterBounds(well.geometry()).size().gt(0)
-#     return well.set('intersects', intersects)
-
-# # Apply the function to the abandoned wells
-# flagged_wells = abandoned_wells.map(flag_intersections)
-
-# # Add the layers to the map
-# # Map = geemap.Map()
-# # Map.addLayer(buffered_waterbodies, {}, 'Buffered Water Bodies')
-# # Map.addLayer(flagged_wells, {'color': 'blue'}, 'Flagged Abandoned Wells')
-# # Map
-
-# # Convert the flagged wells to a list of dictionaries
-# def feature_to_dict(feature):
-#     return feature.toDictionary().getInfo()
-
-# # Get the list of dictionaries
-# flagged_wells_list = flagged_wells.map(feature_to_dict).getInfo()
-
-# # Convert the list of dictionaries to a pandas DataFrame
-# df = pd.DataFrame(flagged_wells_list)
-
-# # Display the DataFrame
-# print(df.head())
 ```
+
 
 
 ```{python}
 # Filter the abandoned wells intersecting
-intersecting_filter = ee.Filter.eq("intersects", 1)
+intersecting_filter = ee.Filter.eq("intersects_buffer", 1)
 
 intersecting_water = flagged_wells.filter(intersecting_filter)
 
