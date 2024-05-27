@@ -261,7 +261,7 @@ sample = wells_with_intersections.limit(6).getInfo()
 print(json.dumps(sample, indent = 2))
 ```
 
-# Developed area
+## Developed area
 
  - Follow same process as waterbodies
 
@@ -281,11 +281,31 @@ Map.addLayer(developed_vector, {'color': 'red'})
 Map
 ```
 
+### Create developed area buffers
+
+```{python}
+buffered_developed_areas = developed_vector.map(buffer_feature)
+```
+
+### Find intersections with developed areas
+
+```{python}
+def define_intersection(well):
+    intersects_developed_areas = developed_vector.filterBounds(well.geometry()).size().gt(0)
+    intersects_buffer = buffered_developed_areas.filterBounds(well.geometry()).size().gt(0)
+    return well.set('intersects_developed_areas', intersects_developed_areas.toInt()) \
+               .set('intersects_buffer_developed_areas', intersects_buffer.toInt())
+
+# Apply the intersection check to each well
+wells_with_intersections_developed_areas = abandoned_wells.map(define_intersection)
+
+# Show a sample
+sample = wells_with_intersections_developed_areas.limit(6).getInfo()
+print(json.dumps(sample, indent = 2))
+```
 
 
 # Export final object
-
-
 
 ```{python}
 # # Export the result as an asset for future use
