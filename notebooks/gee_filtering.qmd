@@ -263,17 +263,17 @@ The filter takes too long. Probably it will be faster if I export the object as 
 Probably it's because it performs or re-process all the queries.
 
 ```{python}
-# # First test on a filter
-# ## Gonna do it on a variable already in the asset
-# asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
+# First test on a filter
+# Gonna do it on a variable already in the asset
+asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
 
-# abandoned_wells = ee.FeatureCollection(asset_id)
+abandoned_wells = ee.FeatureCollection(asset_id)
 
-# # The filter
-# reclaimed_filter = ee.Filter.eq("rclmtn_s", "reclaimed")
-# reclaimed = abandoned_wells.filter(reclaimed_filter)
-# sample = reclaimed.limit(10).getInfo()
-# print(json.dumps(sample, indent = 2))
+# The filter
+reclaimed_filter = ee.Filter.eq("rclmtn_s", "reclaimed")
+reclaimed = abandoned_wells.filter(reclaimed_filter)
+sample = reclaimed.limit(10).getInfo()
+print(json.dumps(sample, indent=2))
 ```
 
 When applied to an asset directly, the filter is super fast. 
