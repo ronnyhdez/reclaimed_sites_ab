@@ -301,10 +301,19 @@ I'm going to save the asset with the new columns:
 # sample = intersecting_water.limit(6).getInfo()
 # print(json.dumps(sample, indent = 2))
 
-# # Plot abandoned wells that intersect waterbodies
-# wells_intersecting_map = geemap.Map(center=[53.516, -113.498], zoom = 5)
-# wells_intersecting_map.addLayer(intersecting_water, {}, 'wells intersecting water')
-# wells_intersecting_map
+intersects_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_waterbodies'
+intersects = ee.FeatureCollection(intersects_asset_id)
+
+intersecting_filter = ee.Filter.eq("intersects_buffer", 1)
+intersecting_water = intersects.filter(intersecting_filter)
+sample = intersecting_water.limit(10).getInfo()
+print(json.dumps(sample, indent=2))
+
+# Plot abandoned wells that intersect waterbodies
+wells_intersecting_map = geemap.Map(center=[53.516, -113.498], zoom=5)
+wells_intersecting_map.addLayer(
+    intersecting_water, {}, 'wells intersecting water')
+wells_intersecting_map
 
 # sample = intersecting_water.limit(20)
 
@@ -322,6 +331,27 @@ I'm going to save the asset with the new columns:
 # Map
 
 ```
+
+# Developed area
+
+ - Follow same process as waterbodies
+
+```{python}
+developed_mask = asset_image.eq(13)
+developed_image = asset_image.updateMask(developed_mask)
+
+developed_vector = developed_image.reduceToVectors(
+  geometryType = 'polygon',
+  scale = 10,
+  maxPixels=1e8,
+  bestEffort = True,
+  labelProperty = 'developed_areas'
+)
+
+Map.addLayer(developed_vector, {'color': 'red'})
+Map
+```
+
 
 # Code summary
 
@@ -360,14 +390,14 @@ I'm going to save the asset with the new columns:
 
 # # Check if abandoned wells fall within the buffer area or waterbodies area
 # # Function to check if a well intersects with waterbodies or buffered waterbodies
-# def check_intersection(well):
+# def define_intersection(well):
 #     intersects_waterbody = water_bodies_vector.filterBounds(well.geometry()).size().gt(0)
 #     intersects_buffer = buffered_waterbodies.filterBounds(well.geometry()).size().gt(0)
 #     return well.set('intersects_waterbody', intersects_waterbody) \
 #                .set('intersects_buffer', intersects_buffer)
 
 # # Apply the intersection check to each well
-# wells_with_intersections = abandoned_wells.map(check_intersection)
+# wells_with_intersections = abandoned_wells.map(define_intersection)
 
 # # Show a sample
 # sample = wells_with_intersections.limit(39).getInfo()
