@@ -304,21 +304,6 @@ sample = wells_with_intersections_developed_areas.limit(6).getInfo()
 print(json.dumps(sample, indent = 2))
 ```
 
-
-# Export final object
-
-```{python}
-# # Export the result as an asset for future use
-# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_waterbodies'
-# export_task = ee.batch.Export.table.toAsset(
-#     collection=wells_with_intersections,
-#     description='export_intersecting_wells_with_waterbodies',
-#     assetId=export_asset_id
-# )
-# export_task.start()
-```
-
-
 # Mapping the abandoned wells that intersects one of the categories.
 
 To review and validate abandoned wells polygons that intersect one of the categories, here is a map:
@@ -339,65 +324,4 @@ wells_intersecting_map.addLayer(
 wells_intersecting_map
 ```
 
-# Code summary
-
-```{python}
-# # summary code
-# import ee
-# import geemap
-# import json
-
-# ee.Initialize()
-
-# # Abandoned wells
-# asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
-# abandoned_wells = ee.FeatureCollection(asset_id)
-
-# # Waterbodies
-# asset_id = 'projects/ee-eoagsaer/assets/LULC_2022_EE'
-# asset_image = ee.Image(asset_id)
-
-# ## Mask for waterbodies
-# water_mask = asset_image.eq(1)
-# water_image = asset_image.updateMask(water_mask)
-# ## Reduce to vector to obtain polygons from raster
-# water_bodies_vector = water_image.reduceToVectors(
-#     geometryType='polygon',
-#     scale=10,  # LCC layer documentation states is 10m
-#     maxPixels=1e8,
-#     bestEffort=True,
-#     labelProperty='water_bodies'
-# )
-# ## Create buffer of waterbodies
-# def buffer_feature(feature):
-#   return feature.buffer(30)
-
-# buffered_waterbodies = water_bodies_vector.map(buffer_feature)
-
-# # Check if abandoned wells fall within the buffer area or waterbodies area
-# # Function to check if a well intersects with waterbodies or buffered waterbodies
-# def define_intersection(well):
-#     intersects_waterbody = water_bodies_vector.filterBounds(well.geometry()).size().gt(0)
-#     intersects_buffer = buffered_waterbodies.filterBounds(well.geometry()).size().gt(0)
-#     return well.set('intersects_waterbody', intersects_waterbody) \
-#                .set('intersects_buffer', intersects_buffer)
-
-# # Apply the intersection check to each well
-# wells_with_intersections = abandoned_wells.map(define_intersection)
-
-# # Show a sample
-# sample = wells_with_intersections.limit(39).getInfo()
-# print(json.dumps(sample, indent = 2))
-```
-
-
-```{python}
-# # Export to validate later observations
-# export_drive_task = ee.batch.Export.table.toDrive(
-#     collection=wells_with_intersections,
-#     description='abandoned_wells_with_intersections_30m',
-#     fileFormat='CSV'
-# )
-# export_drive_task.start()
-```
 
