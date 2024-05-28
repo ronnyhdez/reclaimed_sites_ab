@@ -137,44 +137,6 @@ print(json.dumps(sample, indent = 2))
 
 Using the _Land-use/Land-cover Classification of Alberta, Derived from 2020 Sentinel-2 Multispectral Data_ [here](https://ags.aer.ca/publication/dig-2021-0019), it's based on reflectance data.
 
-The asset we consumed from GEE, looks like:
-
-```{python}
-land_cover_viz = {
-    'min': 0,
-    'max': 14,
-    'palette': [
-        '000000',  
-        '1f77b4',  
-        'ff7f0e',  
-        '2ca02c',  
-        'd62728',  
-        '9467bd',  
-        '8c564b',  
-        'e377c2',  
-        '7f7f7f',  
-        'bcbd22',  
-        '17becf',  
-        '8c564b',  
-        'e377c2',  
-        '7f7f7f',   
-        '7AADB4'   
-    ]
-}
-
-Map.addLayer(asset_image, 
-            land_cover_viz,
-            'land cover')
-Map
-```
-
-I need to reduce the raster image to obtain polgyons according to the following categories: 
-
- - `1` == `Water`. 
- - `3` == `Wetland trees`. 
- - `7` == `Wetland`. 
- - `13` == `Developed`. 
-
 Let's check the asset info:
 
 ```{python}
@@ -188,6 +150,44 @@ print(info)
 # print("Bands:", info['bands'])
 # print("Properties:", info['properties'])
 ```
+
+The asset we consumed from GEE, looks like:
+
+```{python}
+land_cover_viz = {
+    'min': 0,
+    'max': 14,
+    'palette': [
+        '000000',
+        '1f77b4',
+        'ff7f0e',
+        '2ca02c',
+        'd62728',
+        '9467bd',
+        '8c564b',
+        'e377c2',
+        '7f7f7f',
+        'bcbd22',
+        '17becf',
+        '8c564b',
+        'e377c2',
+        '7f7f7f',
+        '7AADB4'
+    ]
+}
+
+Map.addLayer(asset_image,
+             land_cover_viz,
+             'land cover')
+Map
+```
+
+I need to reduce the raster image to obtain polgyons according to the following categories: 
+
+ - `1` == `Water`. 
+ - `3` == `Wetland trees`. 
+ - `7` == `Wetland`. 
+ - `13` == `Developed`. 
 
 ## Waterbodies
 
@@ -321,6 +321,7 @@ print(json.dumps(sample, indent=2))
 wells_intersecting_map = geemap.Map(center=[53.516, -113.498], zoom=5)
 wells_intersecting_map.addLayer(
     intersecting_water, {}, 'wells intersecting water')
+wells_intersecting_map.addLayer(water_bodies_vector, {'color':'blue'}, 'waterbodies_mask')
 wells_intersecting_map
 ```
 
