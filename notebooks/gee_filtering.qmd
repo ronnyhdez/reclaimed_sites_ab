@@ -137,6 +137,20 @@ print(json.dumps(sample, indent = 2))
 
 Using the _Land-use/Land-cover Classification of Alberta, Derived from 2020 Sentinel-2 Multispectral Data_ [here](https://ags.aer.ca/publication/dig-2021-0019), it's based on reflectance data.
 
+Let's check the asset info:
+
+```{python}
+asset_id = 'projects/ee-eoagsaer/assets/LULC_2022_EE'
+
+asset_image = ee.Image(asset_id)
+
+info = asset_image.getInfo()
+print(info)
+# print("Asset Type:", info['type'])
+# print("Bands:", info['bands'])
+# print("Properties:", info['properties'])
+```
+
 The asset we consumed from GEE, looks like:
 
 ```{python}
@@ -174,20 +188,6 @@ I need to reduce the raster image to obtain polgyons according to the following 
  - `3` == `Wetland trees`. 
  - `7` == `Wetland`. 
  - `13` == `Developed`. 
-
-Let's check the asset info:
-
-```{python}
-asset_id = 'projects/ee-eoagsaer/assets/LULC_2022_EE'
-
-asset_image = ee.Image(asset_id)
-
-info = asset_image.getInfo()
-print(info)
-# print("Asset Type:", info['type'])
-# print("Bands:", info['bands'])
-# print("Properties:", info['properties'])
-```
 
 ## Waterbodies
 
@@ -321,6 +321,7 @@ print(json.dumps(sample, indent=2))
 wells_intersecting_map = geemap.Map(center=[53.516, -113.498], zoom=5)
 wells_intersecting_map.addLayer(
     intersecting_water, {}, 'wells intersecting water')
+wells_intersecting_map.addLayer(water_bodies_vector, {'color':'blue'}, 'waterbodies_mask')
 wells_intersecting_map
 ```
 

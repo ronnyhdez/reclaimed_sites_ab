@@ -179,3 +179,98 @@ print(json.dumps(sample, indent=2))
 # )
 # export_drive_task.start()
 ```
+
+
+
+```{python}
+# Still exceeds memory limit
+# import ee
+# import geemap
+# import json
+
+# ee.Initialize()
+
+# # Define function for buffers
+# def buffer_feature(feature):
+#     return feature.buffer(30)
+
+# # Abandoned wells
+# wells_asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
+# abandoned_wells = ee.FeatureCollection(wells_asset_id)
+
+# # Reservoirs (already vector)
+# reservoirs_asset_id = 'projects/ee-ronnyale/assets/reservoirs'
+# reservoirs = ee.FeatureCollection(reservoirs_asset_id)
+# buffered_reservoirs = reservoirs.map(buffer_feature)
+
+# # Waterbodies
+# waterbodies_asset_id = 'projects/ee-eoagsaer/assets/LULC_2022_EE'
+# waterbodies_image = ee.Image(waterbodies_asset_id)
+
+# # Mask for waterbodies
+# water_mask = waterbodies_image.eq(1)
+# water_image = waterbodies_image.updateMask(water_mask)
+
+# # Reduce to vector to obtain polygons from raster
+# water_bodies_vector = water_image.reduceToVectors(
+#     geometryType='polygon',
+#     scale=10,  # LCC layer documentation states is 10m
+#     maxPixels=1e8,
+#     bestEffort=True,
+#     labelProperty='water_bodies'
+# )
+
+# # Create buffer of waterbodies
+# buffered_waterbodies = water_bodies_vector.map(buffer_feature)
+
+# # Mask for wetland-treed
+# wetland_treed_mask = waterbodies_image.eq(3)
+# wetland_treed_image = waterbodies_image.updateMask(wetland_treed_mask)
+
+# # Reduce to vector
+# wetland_treed_vector = wetland_treed_image.reduceToVectors(
+#     geometryType='polygon',
+#     scale=10,
+#     maxPixels=1e8,
+#     bestEffort=True,
+#     labelProperty='wetland_treed'
+# )
+
+# # Create buffer wetland treed
+# buffered_wetland_treed = wetland_treed_vector.map(buffer_feature)
+
+# # Function to check if a well intersects with waterbodies or buffered waterbodies
+# def define_intersection(well):
+#     intersects_reservoirs = reservoirs.geometry().intersects(well.geometry(), ee.ErrorMargin(1))
+#     intersects_reservoirs_buffer = buffered_reservoirs.geometry().intersects(well.geometry(), ee.ErrorMargin(1))
+#     intersects_waterbodies = water_bodies_vector.geometry().intersects(well.geometry(), ee.ErrorMargin(1))
+#     intersects_waterbodies_buffer = buffered_waterbodies.geometry().intersects(well.geometry(), ee.ErrorMargin(1))
+#     intersects_wetland_treed = wetland_treed_vector.geometry().intersects(well.geometry(), ee.ErrorMargin(1))
+#     intersects_wetland_treed_buffer = buffered_wetland_treed.geometry().intersects(well.geometry(), ee.ErrorMargin(1))
+#     return well.set('intersects_waterbodies', intersects_waterbodies) \
+#                .set('intersects_waterbody_buffer', intersects_waterbodies_buffer) \
+#                .set('intersects_reservoirs', intersects_reservoirs) \
+#                .set('intersects_reservoirs_buffer', intersects_reservoirs_buffer) \
+#                .set('intersects_wetland_treed', intersects_wetland_treed) \
+#                .set('intersects_wetland_treed_buffer', intersects_wetland_treed_buffer)
+
+# # Apply the intersection check to each well in batches
+# batch_size = 1000  # Adjust batch size as needed
+# abandoned_wells_list = abandoned_wells.toList(abandoned_wells.size())
+# num_batches = ee.Number(abandoned_wells.size()).divide(batch_size).ceil().toInt()
+
+# # Function to process a batch of wells
+# def process_batch(batch_number):
+#     start = ee.Number(batch_number).multiply(batch_size)
+#     end = start.add(batch_size)
+#     batch = abandoned_wells_list.slice(start, end)
+#     return ee.FeatureCollection(batch).map(define_intersection)
+
+# # Process each batch and merge the results
+# batches = ee.List.sequence(0, num_batches.subtract(1)).map(process_batch)
+# merged_results = ee.FeatureCollection(batches).flatten()
+
+# # Show a sample
+# sample = merged_results.limit(39).getInfo()
+# print(json.dumps(sample, indent=2))
+```
