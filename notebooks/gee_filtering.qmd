@@ -368,11 +368,63 @@ print(intersecting_features.size().getInfo())
 ## Visualization of intersecting abandoned wells
 
 ```{python}
+# ABMI vector layers
+asset_flagged = "projects/ee-ronnyale/assets/intersecting_wells_flags"
+abandoned_wells = ee.FeatureCollection(asset_flagged)
+
+## Industrial ABMI
+asset_id = "projects/ee-ronnyale/assets/industrial"
+asset_industrial = ee.FeatureCollection(asset_id)
+
+## Residential ABMI
+asset_id = "projects/ee-ronnyale/assets/residentials"
+asset_residential = ee.FeatureCollection(asset_id)
+
+## Roads ABMI
+asset_id = "projects/ee-ronnyale/assets/roads"
+asset_roads = ee.FeatureCollection(asset_id)
+
+## Create buffer industrial-residential-roads
+buffered_industrial = asset_industrial.map(buffer_feature)
+buffered_residential = asset_residential.map(buffer_feature)
+buffered_roads = asset_roads.map(buffer_feature)
+
 # Plot abandoned wells that intersect waterbodies
 wells_intersecting_map = geemap.Map(center=[53.516, -113.498], zoom=5)
+
+## Reservoirs
+wells_intersecting_map.addLayer(reservoirs, {"color": "blue"}, "reservoirs")
 wells_intersecting_map.addLayer(
-    intersecting_features, {}, 'wells intersecting water')
-wells_intersecting_map.addLayer(water_bodies_vector, {'color':'blue'}, 'waterbodies_mask')
+    buffered_reservoirs, {"color": "#75AADB"}, "reservoirs_buffer"
+)
+
+## Waterbodies
+wells_intersecting_map.addLayer(
+    water_bodies_vector, {"color": "blue"}, "waterbodies_mask"
+)
+wells_intersecting_map.addLayer(
+    buffered_waterbodies, {"color": "#75AADB"}, "waterbodies_buffer"
+)
+
+## Industrial
+wells_intersecting_map.addLayer(asset_industrial, {"color": "#2B2D42"}, "industrial")
+wells_intersecting_map.addLayer(
+    buffered_industrial, {"color": "#8D99AE"}, "industrial_buffer"
+)
+
+## Residential
+wells_intersecting_map.addLayer(asset_residential, {"color": "#F77F00"}, "residential")
+wells_intersecting_map.addLayer(
+    buffered_residential, {"color": "#FCBF49"}, "residential_buffer"
+)
+
+## Roads
+wells_intersecting_map.addLayer(asset_roads, {"color": "#212529"}, "roads")
+wells_intersecting_map.addLayer(buffered_roads, {"color": "#343A40"}, "rodas_buffer")
+
+wells_intersecting_map.addLayer(
+    intersecting_features, {"color": "#FBFF12"}, "abandoned_wells"
+)
 wells_intersecting_map
 ```
 
