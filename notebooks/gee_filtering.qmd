@@ -334,6 +334,7 @@ intersecting_features = intersects.filter(combined_filter)
 
 sample = intersecting_features.limit(10).getInfo()
 print(json.dumps(sample, indent=2))
+print(intersecting_features.size().getInfo())
 ```
 
 ```{python}
@@ -345,11 +346,33 @@ wells_intersecting_map.addLayer(water_bodies_vector, {'color':'blue'}, 'waterbod
 wells_intersecting_map
 ```
 
-
-
 # Non-intersecting observations
 
 
 ```{python}
+# Get all polygons without an intersetion
+filters = [
+    ee.Filter.eq("intersects_industrial", 0),
+    ee.Filter.eq("intersects_industrial_buffer", 0),
+    ee.Filter.eq("intersects_reservoirs", 0),
+    ee.Filter.eq("intersects_reservoirs_buffer", 0),
+    ee.Filter.eq("intersects_residential", 0),
+    ee.Filter.eq("intersects_residential_buffer", 0),
+    ee.Filter.eq("intersects_roads", 0),
+    ee.Filter.eq("intersects_roads_buffer", 0),
+    ee.Filter.eq("intersects_waterbodies", 0),
+    ee.Filter.eq("intersects_waterbody_buffer", 0)
+]
 
+# Combine the filters using ee.Filter.or
+combined_filter = ee.Filter.And(*filters)
+
+# Apply the combined filter to the feature collection
+intersecting_features = intersects.filter(combined_filter)
+
+sample = intersecting_features.limit(10).getInfo()
+print(json.dumps(sample, indent=2))
+total = intersecting_features.size().getInfo()
 ```
+
+The total number of elements without an intersection: `python print(total)`
