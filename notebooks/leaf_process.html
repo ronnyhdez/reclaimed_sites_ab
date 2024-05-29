@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ronny A. Hernández Mora">
+
+<title>Reclamation - Process one site with LEAF-toolbox</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Reclamation</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../notebooks/abandoned_wells.html" rel="" target="">
+ <span class="menu-text">Abandoned wells data exploration</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../notebooks/leaf_process.html" rel="" target="" aria-current="page">
+ <span class="menu-text">Process one site with LEAF-toolbox</span></a>
+  </li>  
+  <li class="dropdown-header">
+ <span class="menu-text">notebooks/eda_hfi.qmd</span></li>
+</ul>
+            <div class="quarto-navbar-tools ms-auto">
+</div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#imports" id="toc-imports" class="nav-link active" data-scroll-target="#imports">Imports</a></li>
+  <li><a href="#gee-authentication" id="toc-gee-authentication" class="nav-link" data-scroll-target="#gee-authentication">GEE authentication</a></li>
+  <li><a href="#leaf-toolbox-imports" id="toc-leaf-toolbox-imports" class="nav-link" data-scroll-target="#leaf-toolbox-imports">LEAF-toolbox imports</a></li>
+  <li><a href="#process-collection-of-input-images-returning-gee-collection-of-output-products" id="toc-process-collection-of-input-images-returning-gee-collection-of-output-products" class="nav-link" data-scroll-target="#process-collection-of-input-images-returning-gee-collection-of-output-products">Process Collection of Input Images Returning GEE Collection of Output Products</a></li>
+  <li><a href="#process-sites-with-output-as-a-pandas-data-frame" id="toc-process-sites-with-output-as-a-pandas-data-frame" class="nav-link" data-scroll-target="#process-sites-with-output-as-a-pandas-data-frame">Process Sites with output as a Pandas Data Frame</a></li>
+  <li><a href="#sample-surface-reflectance-from-various-sensors-over-sites" id="toc-sample-surface-reflectance-from-various-sensors-over-sites" class="nav-link" data-scroll-target="#sample-surface-reflectance-from-various-sensors-over-sites">Sample Surface Reflectance from various sensors over sites</a></li>
+  <li><a href="#visualize-results" id="toc-visualize-results" class="nav-link" data-scroll-target="#visualize-results">Visualize Results</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Process one site with LEAF-toolbox</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ronny A. Hernández Mora </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="imports" class="level2">
+<h2 class="anchored" data-anchor-id="imports">Imports</h2>
+<div class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> ee</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="gee-authentication" class="level2">
+<h2 class="anchored" data-anchor-id="gee-authentication">GEE authentication</h2>
+<div class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>ee.Authenticate()</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>ee.Initialize()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Test if authentication was successful</p>
+<div class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ee.String(<span class="st">'Hello from the Earth Engine servers!'</span>).getInfo())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Hello from the Earth Engine servers!</code></pre>
+</div>
+</div>
+</section>
+<section id="leaf-toolbox-imports" class="level2">
+<h2 class="anchored" data-anchor-id="leaf-toolbox-imports">LEAF-toolbox imports</h2>
+<p>Modules imports cannot be done before GEE authentication have been run succesfuly</p>
+<div class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add the parent directory of leaftoolbox to the system path</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>module_path <span class="op">=</span> os.path.abspath(os.path.join(<span class="st">'..'</span>))</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> module_path <span class="kw">not</span> <span class="kw">in</span> sys.path:</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    sys.path.append(module_path)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> leaftoolbox <span class="im">import</span> LEAF</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> leaftoolbox <span class="im">import</span> SL2PV0 </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> leaftoolbox <span class="im">import</span> SL2PV1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/ronny/.local/share/virtualenvs/reclaimed_sites_ab-QXta-KJo/lib/python3.10/site-packages/ee/deprecation.py:202: DeprecationWarning:
+
+
+
+Attention required for JRC/GSW1_0/GlobalSurfaceWater! You are using a deprecated asset.
+To ensure continued functionality, please update it.
+Learn more: https://developers.google.com/earth-engine/datasets/catalog/JRC_GSW1_0_GlobalSurfaceWater
+
+</code></pre>
+</div>
+</div>
+</section>
+<section id="process-collection-of-input-images-returning-gee-collection-of-output-products" class="level1">
+<h1>Process Collection of Input Images Returning GEE Collection of Output Products</h1>
+<div class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>imageCollection <span class="op">=</span> ee.ImageCollection(<span class="st">'COPERNICUS/S2_SR_HARMONIZED'</span>) <span class="op">\</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>                    .filterDate(<span class="st">'2020-08-01'</span>, <span class="st">'2020-08-16'</span>) <span class="op">\</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                    .<span class="bu">filter</span>(ee.Filter.eq(<span class="st">'MGRS_TILE'</span>,<span class="st">'18TVQ'</span>))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(imageCollection.size().getInfo())</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>products <span class="op">=</span> LEAF.makeProductImageCollection(imageCollection<span class="op">=</span>imageCollection,algorithm<span class="op">=</span>SL2PV0,variable<span class="op">=</span><span class="st">'LAI'</span>,inputScaleSize<span class="op">=</span><span class="dv">40</span>) </span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(products.first().bandNames().getInfo())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>6
+reprojecting
+['date', 'QC', 'longitude', 'latitude', 'estimateLAI', 'partition', 'networkID', 'errorLAI']</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/ronny/.local/share/virtualenvs/reclaimed_sites_ab-QXta-KJo/lib/python3.10/site-packages/ee/deprecation.py:202: DeprecationWarning:
+
+
+
+Attention required for COPERNICUS/Landcover/100m/Proba-V/Global! You are using a deprecated asset.
+To ensure continued functionality, please update it.
+Learn more: https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_Landcover_100m_Proba-V_Global
+
+</code></pre>
+</div>
+</div>
+</section>
+<section id="process-sites-with-output-as-a-pandas-data-frame" class="level1">
+<h1>Process Sites with output as a Pandas Data Frame</h1>
+<div class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>siteList <span class="op">=</span> [<span class="st">"projects/ee-modis250/assets/HuntClub"</span>,</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>            <span class="st">"projects/ee-modis250/assets/Nanaimo"</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>            <span class="st">"projects/ee-modis250/assets/Karachi"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="sample-surface-reflectance-from-various-sensors-over-sites" class="level1">
+<h1>Sample Surface Reflectance from various sensors over sites</h1>
+<div class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Landsat 8</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>sitesDictionaryL08SR <span class="op">=</span> LEAF.sampleSites(siteList, <span class="op">\</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                                                imageCollectionName<span class="op">=</span><span class="st">'LANDSAT/LC08/C02/T1_L2'</span>,<span class="op">\</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                                                algorithm<span class="op">=</span>SL2PV0, </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                                                variableName<span class="op">=</span><span class="st">"Surface_Reflectance"</span>,<span class="op">\</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>                                                maxCloudcover<span class="op">=</span><span class="dv">90</span>,<span class="op">\</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>                                                outputScaleSize<span class="op">=</span><span class="dv">30</span>,<span class="op">\</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>                                                inputScaleSize<span class="op">=</span><span class="dv">30</span>,<span class="op">\</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>                                                bufferSpatialSize <span class="op">=</span> <span class="dv">0</span>,<span class="op">\</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>                                                bufferTemporalSize <span class="op">=</span>[<span class="st">"2021-04-01"</span>,<span class="st">"2022-10-01"</span>],  <span class="op">\</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                                                subsamplingFraction <span class="op">=</span> <span class="fl">0.99</span>) </span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Landsat 9</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>sitesDictionaryL09SR <span class="op">=</span> LEAF.sampleSites(siteList, <span class="op">\</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>                                                imageCollectionName<span class="op">=</span><span class="st">'LANDSAT/LC09/C02/T1_L2'</span>,<span class="op">\</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>                                                algorithm<span class="op">=</span>SL2PV0, </span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>                                                variableName<span class="op">=</span><span class="st">"Surface_Reflectance"</span>,<span class="op">\</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>                                                outputScaleSize<span class="op">=</span><span class="dv">30</span>,<span class="op">\</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>                                                inputScaleSize<span class="op">=</span><span class="dv">30</span>,<span class="op">\</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>                                                bufferSpatialSize <span class="op">=</span> <span class="dv">0</span>,<span class="op">\</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>                                                bufferTemporalSize <span class="op">=</span>[<span class="st">"2021-04-01"</span>,<span class="st">"2022-10-01"</span>],  <span class="op">\</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>                                                subsamplingFraction <span class="op">=</span> <span class="fl">0.99</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+STARTING LEAF IMAGE for  LANDSAT/LC08/C02/T1_L2 
+ 
+Site:  projects/ee-modis250/assets/HuntClub  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Nanaimo  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+No images found.
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Karachi  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+
+DONE LEAF SITE
+
+
+STARTING LEAF IMAGE for  LANDSAT/LC09/C02/T1_L2 
+ 
+Site:  projects/ee-modis250/assets/HuntClub  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Nanaimo  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Karachi  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+
+DONE LEAF SITE
+</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+</code></pre>
+</div>
+</div>
+<div class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a> <span class="co">#Landsat 8</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>sitesDictionaryL08V0 <span class="op">=</span> LEAF.sampleSites(siteList, <span class="op">\</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                                                 imageCollectionName<span class="op">=</span><span class="st">'LANDSAT/LC08/C02/T1_L2'</span>,<span class="op">\</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                                                 algorithm<span class="op">=</span>SL2PV0, </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>                                                 variableName<span class="op">=</span><span class="st">"LAI"</span>,<span class="op">\</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>                                                 maxCloudcover<span class="op">=</span><span class="dv">90</span>,<span class="op">\</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>                                                 outputScaleSize<span class="op">=</span><span class="dv">30</span>,<span class="op">\</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>                                                 inputScaleSize<span class="op">=</span><span class="dv">30</span>,<span class="op">\</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>                                                 bufferSpatialSize <span class="op">=</span> <span class="dv">0</span>,<span class="op">\</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>                                                 bufferTemporalSize <span class="op">=</span>[<span class="st">"2021-04-01"</span>,<span class="st">"2022-10-01"</span>],  <span class="op">\</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>                                                 subsamplingFraction <span class="op">=</span> <span class="fl">0.99</span>) </span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Landsat 9</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>sitesDictionaryL09V0 <span class="op">=</span> LEAF.sampleSites(siteList, <span class="op">\</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>                                                imageCollectionName<span class="op">=</span><span class="st">'LANDSAT/LC09/C02/T1_L2'</span>,<span class="op">\</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>                                                algorithm<span class="op">=</span>SL2PV0, </span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>                                                variableName<span class="op">=</span><span class="st">"LAI"</span>,<span class="op">\</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>                                                maxCloudcover<span class="op">=</span><span class="dv">90</span>,<span class="op">\</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>                                                outputScaleSize<span class="op">=</span><span class="dv">30</span>,<span class="op">\</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>                                                inputScaleSize<span class="op">=</span><span class="dv">30</span>,<span class="op">\</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>                                                bufferSpatialSize <span class="op">=</span> <span class="dv">0</span>,<span class="op">\</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>                                                bufferTemporalSize <span class="op">=</span>[<span class="st">"2021-04-01"</span>,<span class="st">"2022-10-01"</span>],  <span class="op">\</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>                                                subsamplingFraction <span class="op">=</span> <span class="fl">0.99</span>)</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co">#HLS</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>sitesDictionaryHLSV0 <span class="op">=</span> LEAF.sampleSites(siteList, <span class="op">\</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>                                                imageCollectionName<span class="op">=</span><span class="st">"NASA/HLS/HLSL30/v002"</span>,<span class="op">\</span></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>                                                algorithm<span class="op">=</span>SL2PV0, </span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>                                                variableName<span class="op">=</span><span class="st">"LAI"</span>,<span class="op">\</span></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>                                                maxCloudcover<span class="op">=</span><span class="dv">90</span>,<span class="op">\</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>                                                outputScaleSize<span class="op">=</span><span class="dv">30</span>,<span class="op">\</span></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>                                                inputScaleSize<span class="op">=</span><span class="dv">30</span>,<span class="op">\</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>                                                bufferSpatialSize <span class="op">=</span> <span class="dv">0</span>,<span class="op">\</span></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>                                                bufferTemporalSize <span class="op">=</span>[<span class="st">"2021-04-01"</span>,<span class="st">"2022-10-01"</span>],  <span class="op">\</span></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>                                                subsamplingFraction <span class="op">=</span> <span class="fl">0.99</span>)         </span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a><span class="co"># S2</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>sitesDictionaryS2V0 <span class="op">=</span> LEAF.sampleSites(siteList, <span class="op">\</span></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>                                                imageCollectionName<span class="op">=</span><span class="st">"COPERNICUS/S2_SR_HARMONIZED"</span>,<span class="op">\</span></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>                                                algorithm<span class="op">=</span>SL2PV0, </span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>                                                variableName<span class="op">=</span><span class="st">"LAI"</span>,<span class="op">\</span></span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>                                                maxCloudcover<span class="op">=</span><span class="dv">90</span>,<span class="op">\</span></span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>                                                outputScaleSize<span class="op">=</span><span class="dv">20</span>,<span class="op">\</span></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>                                                inputScaleSize<span class="op">=</span><span class="dv">20</span>,<span class="op">\</span></span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>                                                bufferSpatialSize <span class="op">=</span> <span class="dv">0</span>,<span class="op">\</span></span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>                                                bufferTemporalSize <span class="op">=</span>[<span class="st">"2021-04-01"</span>,<span class="st">"2022-10-01"</span>],  <span class="op">\</span></span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>                                                subsamplingFraction <span class="op">=</span> <span class="fl">0.99</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+STARTING LEAF IMAGE for  LANDSAT/LC08/C02/T1_L2 
+ 
+Site:  projects/ee-modis250/assets/HuntClub  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Nanaimo  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+No images found.
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Karachi  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+
+DONE LEAF SITE
+
+
+STARTING LEAF IMAGE for  LANDSAT/LC09/C02/T1_L2 
+ 
+Site:  projects/ee-modis250/assets/HuntClub  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Nanaimo  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Karachi  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+No images found.
+
+DONE LEAF SITE
+
+
+STARTING LEAF IMAGE for  NASA/HLS/HLSL30/v002 
+ 
+Site:  projects/ee-modis250/assets/HuntClub  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+No images found.
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Nanaimo  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+No images found.
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Karachi  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+No images found.
+
+DONE LEAF SITE
+
+
+STARTING LEAF IMAGE for  COPERNICUS/S2_SR_HARMONIZED 
+ 
+Site:  projects/ee-modis250/assets/HuntClub  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Nanaimo  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+
+DONE LEAF SITE
+
+Site:  projects/ee-modis250/assets/Karachi  with  1  features.
+Processing feature: 0  from  2021-04-01 00:00:00  to  2022-10-01 00:00:00
+
+DONE LEAF SITE
+</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:308: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+
+/home/ronny/Documents/repos/github/reclaimed_sites_ab/leaftoolbox/LEAF.py:309: FutureWarning:
+
+'m' is deprecated and will be removed in a future version, please use 'ME' instead.
+</code></pre>
+</div>
+</div>
+</section>
+<section id="visualize-results" class="level1">
+<h1>Visualize Results</h1>
+<div class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Choose a site from the sitelist </span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>siteNum<span class="op">=</span><span class="dv">0</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Select the first feature </span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>featureNum <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="co">#Select one sampled pixel from each feature </span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>pixelNum <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="co">#Extract time series of LAI with high quality only</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>site <span class="op">=</span> sitesDictionaryL08V0[siteList[siteNum]]</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="co"># print(site[featureNum]['leaftoolbox.SL2PV0'])</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>df<span class="op">=</span>site[featureNum][<span class="st">'leaftoolbox.SL2PV0'</span>]</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'utc'</span>] <span class="op">=</span>  pd.to_datetime(df[<span class="st">'date'</span>],unit<span class="op">=</span><span class="st">'ms'</span>)</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>pixelL08V0<span class="op">=</span>df.loc[(df[<span class="st">'longitude'</span>]<span class="op">==</span>df.loc[pixelNum].longitude) <span class="op">&amp;</span> (df[<span class="st">'latitude'</span>]<span class="op">==</span>df.loc[pixelNum].latitude) <span class="op">&amp;</span> (df[<span class="st">'QC'</span>]<span class="op">==</span><span class="dv">0</span>)]</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>site<span class="op">=</span>sitesDictionaryL09V0[siteList[siteNum]]</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>df<span class="op">=</span>site[featureNum][<span class="st">'leaftoolbox.SL2PV0'</span>]</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'utc'</span>] <span class="op">=</span>  pd.to_datetime(df[<span class="st">'date'</span>],unit<span class="op">=</span><span class="st">'ms'</span>)</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>pixelL09V0<span class="op">=</span>df.loc[(df[<span class="st">'longitude'</span>]<span class="op">==</span>df.loc[pixelNum].longitude) <span class="op">&amp;</span> (df[<span class="st">'latitude'</span>]<span class="op">==</span>df.loc[pixelNum].latitude) <span class="op">&amp;</span> df[<span class="st">'QC'</span>]<span class="op">==</span><span class="dv">0</span>]</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>site<span class="op">=</span>sitesDictionaryHLSV0[siteList[siteNum]]</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>df<span class="op">=</span>site[featureNum][<span class="st">'leaftoolbox.SL2PV0'</span>]</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'utc'</span>] <span class="op">=</span>  pd.to_datetime(df[<span class="st">'date'</span>],unit<span class="op">=</span><span class="st">'ms'</span>)</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>pixelHLSV0<span class="op">=</span>df.loc[(df[<span class="st">'longitude'</span>]<span class="op">==</span>df.loc[pixelNum].longitude) <span class="op">&amp;</span> (df[<span class="st">'latitude'</span>]<span class="op">==</span>df.loc[pixelNum].latitude) <span class="op">&amp;</span> df[<span class="st">'QC'</span>]<span class="op">==</span><span class="dv">0</span>]</span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>site<span class="op">=</span>sitesDictionaryS2V0[siteList[siteNum]]</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>df<span class="op">=</span>site[featureNum][<span class="st">'leaftoolbox.SL2PV0'</span>]</span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'utc'</span>] <span class="op">=</span>  pd.to_datetime(df[<span class="st">'date'</span>],unit<span class="op">=</span><span class="st">'ms'</span>)</span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>pixelS2V0<span class="op">=</span>df.loc[(df[<span class="st">'longitude'</span>]<span class="op">==</span>df.loc[pixelNum].longitude) <span class="op">&amp;</span> (df[<span class="st">'latitude'</span>]<span class="op">==</span>df.loc[pixelNum].latitude) <span class="op">&amp;</span> df[<span class="st">'QC'</span>]<span class="op">==</span><span class="dv">0</span>]</span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>fig,ax <span class="op">=</span> plt.subplots(<span class="dv">1</span>,<span class="dv">1</span>,figsize<span class="op">=</span>[<span class="dv">10</span>,<span class="dv">10</span>])</span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a>plt.plot(pixelL08V0[<span class="st">'utc'</span>],pixelL08V0[<span class="st">'estimateLAI'</span>],<span class="st">'ob'</span>,markerfacecolor<span class="op">=</span><span class="st">'none'</span>, label<span class="op">=</span><span class="st">'L08V1'</span>)</span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a>plt.plot(pixelL09V0[<span class="st">'utc'</span>],pixelL09V0[<span class="st">'estimateLAI'</span>],<span class="st">'ok'</span>,markerfacecolor<span class="op">=</span><span class="st">'none'</span>, label<span class="op">=</span><span class="st">'L09V1'</span>)</span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a>plt.plot(pixelHLSV0[<span class="st">'utc'</span>],pixelHLSV0[<span class="st">'estimateLAI'</span>],<span class="st">'oc'</span>,markerfacecolor<span class="op">=</span><span class="st">'none'</span>, label<span class="op">=</span><span class="st">'HLSV1'</span>)</span>
+<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a>plt.plot(pixelS2V0[<span class="st">'utc'</span>],pixelS2V0[<span class="st">'estimateLAI'</span>],<span class="st">'or'</span>,markerfacecolor<span class="op">=</span><span class="st">'none'</span>,label<span class="op">=</span><span class="st">'S2V1'</span>)</span>
+<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
+<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">'date'</span>)</span>
+<span id="cb17-37"><a href="#cb17-37" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">'LAI'</span>)</span>
+<span id="cb17-38"><a href="#cb17-38" aria-hidden="true" tabindex="-1"></a>plt.xticks(rotation<span class="op">=</span><span class="dv">90</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="leaf_process_files/figure-html/cell-10-output-1.png" width="799" height="842"></p>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
