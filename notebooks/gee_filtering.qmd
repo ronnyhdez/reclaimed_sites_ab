@@ -309,20 +309,47 @@ print(json.dumps(sample, indent = 2))
 To review and validate abandoned wells polygons that intersect one of the categories, here is a map:
 
 ```{python}
-intersects_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_waterbodies'
+intersects_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v2'
 intersects = ee.FeatureCollection(intersects_asset_id)
 
-intersecting_filter = ee.Filter.eq("intersects_buffer", 1)
-intersecting_water = intersects.filter(intersecting_filter)
-sample = intersecting_water.limit(10).getInfo()
-print(json.dumps(sample, indent=2))
+# Get all polygons with an intersetion
+filters = [
+    ee.Filter.eq("intersects_industrial", 1),
+    ee.Filter.eq("intersects_industrial_buffer", 1),
+    ee.Filter.eq("intersects_reservoirs", 1),
+    ee.Filter.eq("intersects_reservoirs_buffer", 1),
+    ee.Filter.eq("intersects_residential", 1),
+    ee.Filter.eq("intersects_residential_buffer", 1),
+    ee.Filter.eq("intersects_roads", 1),
+    ee.Filter.eq("intersects_roads_buffer", 1),
+    ee.Filter.eq("intersects_waterbodies", 1),
+    ee.Filter.eq("intersects_waterbody_buffer", 1)
+]
 
+# Combine the filters using ee.Filter.or
+combined_filter = ee.Filter.Or(*filters)
+
+# Apply the combined filter to the feature collection
+intersecting_features = intersects.filter(combined_filter)
+
+sample = intersecting_features.limit(10).getInfo()
+print(json.dumps(sample, indent=2))
+```
+
+```{python}
 # Plot abandoned wells that intersect waterbodies
 wells_intersecting_map = geemap.Map(center=[53.516, -113.498], zoom=5)
 wells_intersecting_map.addLayer(
-    intersecting_water, {}, 'wells intersecting water')
+    intersecting_features, {}, 'wells intersecting water')
 wells_intersecting_map.addLayer(water_bodies_vector, {'color':'blue'}, 'waterbodies_mask')
 wells_intersecting_map
 ```
 
 
+
+# Non-intersecting observations
+
+
+```{python}
+
+```
