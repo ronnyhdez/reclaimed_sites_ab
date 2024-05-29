@@ -1,61 +1,34 @@
----
-title: "Intersections flagging"
-author: Ronny A. Hernandez Mora
-execute:
-  message: false
-  warning: false
-format: 
-  html:
-    theme:
-      - flatly
-    linkcolor: "#FF5500"
-    highlight-style: tango
-    toc: true
-    toc-title: Table of contents
-    toc-location: left
-    number-sections: false
-    colorlinks: true
-    code-fold: true
-    code-line-numbers: true
-editor: visual
-jupyter: python3
-editor_options: 
-  chunk_output_type: console
----
 
-# ABMI reservoirs + AER waterbodies
 
-```{python}
-# summary code
 import ee
 import geemap
 import json
 
 ee.Initialize()
 
-
-# Define function for buffers
+## Define function for buffers
 def buffer_feature(feature):
     return feature.buffer(30)
 
+# First Asset | ABMI reservoirs + AER waterbodies ----
 
-# Abandoned wells
+## Abandoned wells
 asset_id = "projects/ee-ronnyale/assets/selected_polygons"
 abandoned_wells = ee.FeatureCollection(asset_id)
 
-# Reservoirs (already vector)
+## Reservoirs (already vector)
 asset_id = "projects/ee-ronnyale/assets/reservoirs"
 reservoirs = ee.FeatureCollection(asset_id)
 buffered_reservoirs = reservoirs.map(buffer_feature)
 
-# LULC asset
+## LULC asset
 asset_id = "projects/ee-eoagsaer/assets/LULC_2022_EE"
 asset_image = ee.Image(asset_id)
 
-# Mask for waterbodies
+## Mask for waterbodies
 water_mask = asset_image.eq(1)
 water_image = asset_image.updateMask(water_mask)
-# Reduce to vector to obtain polygons from raster
+## Reduce to vector to obtain polygons from raster
 water_bodies_vector = water_image.reduceToVectors(
     geometryType="polygon",
     scale=10,  # LCC layer documentation states is 10m
@@ -64,7 +37,7 @@ water_bodies_vector = water_image.reduceToVectors(
     labelProperty="water_bodies",
 )
 
-# Create buffer of waterbodies
+## Create buffer of waterbodies
 buffered_waterbodies = water_bodies_vector.map(buffer_feature)
 
 
@@ -91,13 +64,11 @@ def define_intersection(well):
 # Apply the intersection check to each well
 wells_with_intersections = abandoned_wells.map(define_intersection)
 
-# Show a sample
-sample = wells_with_intersections.limit(6).getInfo()
-# sample = merged_results.limit(6).getInfo()
-print(json.dumps(sample, indent=2))
-```
+# # Show a sample
+# sample = wells_with_intersections.limit(6).getInfo()
+# # sample = merged_results.limit(6).getInfo()
+# print(json.dumps(sample, indent=2))
 
-```{python}
 # # Export the result with waterbodies and reservoirs
 # export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags'
 # export_task = ee.batch.Export.table.toAsset(
@@ -106,47 +77,34 @@ print(json.dumps(sample, indent=2))
 #     assetId=export_asset_id
 # )
 # export_task.start()
-```
-
-# Industrial + Residential + Industrial
-
-```{python}
-# summary code
-import ee
-import geemap
-import json
-
-ee.Initialize()
 
 
-# Define function for buffers
-def buffer_feature(feature):
-    return feature.buffer(30)
+# Second Asset | ABMI Industrial + Residential + Roads ----
 
 
-# This would be the next step after the other asset import
+## This would be the next step after the other asset import
 asset_flagged = "projects/ee-ronnyale/assets/intersecting_wells_flags"
 abandoned_wells = ee.FeatureCollection(asset_flagged)
 
-# Industrial ABMI
+## Industrial ABMI
 asset_id = "projects/ee-ronnyale/assets/industrial"
 asset_industrial = ee.FeatureCollection(asset_id)
 
-# Residential ABMI
+## Residential ABMI
 asset_id = "projects/ee-ronnyale/assets/residentials"
 asset_residential = ee.FeatureCollection(asset_id)
 
-# Roads ABMI
+## Roads ABMI
 asset_id = "projects/ee-ronnyale/assets/roads"
 asset_roads = ee.FeatureCollection(asset_id)
 
-# Create buffer industrial-residential-roads
+## Create buffer industrial-residential-roads
 buffered_industrial = asset_industrial.map(buffer_feature)
 buffered_residential = asset_residential.map(buffer_feature)
 buffered_roads = asset_roads.map(buffer_feature)
 
 
-# Function to add values
+## Function to add values
 def define_intersection(well):
     intersects_industrial = asset_industrial.filterBounds(well.geometry()).size().gt(0)
     intersects_industrial_buffer = (
@@ -170,19 +128,17 @@ def define_intersection(well):
     )
 
 
-# Apply the intersection check to each well
+## Apply the intersection check to each well
 wells_with_intersections = abandoned_wells.map(define_intersection)
 
-# Apply the intersection check to each well
+## Apply the intersection check to each well
 test = wells_with_intersections.map(define_intersection)
 
-# Show a sample
+## Show a sample
 sample = test.limit(6).getInfo()
-# sample = merged_results.limit(6).getInfo()
+## sample = merged_results.limit(6).getInfo()
 print(json.dumps(sample, indent=2))
-```
 
-```{python}
 # # Export the result with roads+residential+industrial
 # export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v2'
 # export_task = ee.batch.Export.table.toAsset(
@@ -191,24 +147,8 @@ print(json.dumps(sample, indent=2))
 #     assetId=export_asset_id
 # )
 # export_task.start()
-```
 
-# AER wetland_treed + wetland
-
-```{python}
-# summary code
-import ee
-import geemap
-import json
-
-ee.Initialize()
-
-# Define function for buffers
-
-
-def buffer_feature(feature):
-    return feature.buffer(30)
-
+# Third Asset | AER wetland_treed + wetland ----
 
 # Abandoned wells
 asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
@@ -280,7 +220,3 @@ test = wells_with_intersections.map(define_intersection)
 sample = test.limit(6).getInfo()
 # sample = merged_results.limit(6).getInfo()
 print(json.dumps(sample, indent=2))
-
-```
-
-
