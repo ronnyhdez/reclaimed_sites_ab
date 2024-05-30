@@ -1,0 +1,82 @@
+---
+title: "Intersections flagged"
+author: Ronny A. Hernandez Mora
+execute:
+  message: false
+  warning: false
+format: 
+  html:
+    theme:
+      - flatly
+    linkcolor: "#FF5500"
+    highlight-style: tango
+    toc: true
+    toc-title: Table of contents
+    toc-location: left
+    number-sections: false
+    colorlinks: true
+    code-fold: true
+    code-line-numbers: true
+editor: visual
+jupyter: python3
+editor_options: 
+  chunk_output_type: console
+---
+
+# Explore  
+
+```{python}
+import ee
+import geemap
+import json
+import matplotlib.pyplot as plt
+import pandas as pd
+import os
+import sys
+
+ee.Initialize()
+```
+
+Here I'm using just the non-intersecting abandoned wells polygons
+
+```{python}
+flagged_asset = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v2'
+abandoned_wells = ee.FeatureCollection(flagged_asset)
+
+# Get all polygons without an intersetion
+filters = [
+    ee.Filter.eq("intersects_industrial", 0),
+    ee.Filter.eq("intersects_industrial_buffer", 0),
+    ee.Filter.eq("intersects_reservoirs", 0),
+    ee.Filter.eq("intersects_reservoirs_buffer", 0),
+    ee.Filter.eq("intersects_residential", 0),
+    ee.Filter.eq("intersects_residential_buffer", 0),
+    ee.Filter.eq("intersects_roads", 0),
+    ee.Filter.eq("intersects_roads_buffer", 0),
+    ee.Filter.eq("intersects_waterbodies", 0),
+    ee.Filter.eq("intersects_waterbody_buffer", 0),
+]
+
+combined_filter = ee.Filter.And(*filters)
+
+features = abandoned_wells.filter(combined_filter)
+```
+
+Import the local LEAF-toolbox modules
+
+```{python}
+module_path = os.path.abspath(os.path.join('..'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
+    
+from leaftoolbox import LEAF
+from leaftoolbox import SL2PV0 
+from leaftoolbox import SL2PV1
+```
+
+
+```{python}
+
+```
+
+
