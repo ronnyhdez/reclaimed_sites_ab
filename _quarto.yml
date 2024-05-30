@@ -7,9 +7,9 @@ website:
   title: "Reclamation"
   navbar:
     left:
-      - notebooks/abandoned_wells.qmd
-      - notebooks/leaf_process.qmd
-      - notebooks/eda_hfi.qmd
+      - abandoned_wells.qmd
+      - leaf_process.qmd
+      - gee_filtering.qmd
 format:
   html:
     theme: cosmo
