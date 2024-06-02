@@ -77,24 +77,75 @@ from leaftoolbox import SL2PV1
 Get a sample from the all the selected polygons
 
 ```{python}
-site_list = features.limit(10)
-# print(site_list.getInfo())
+sample = features.limit(10)
+print(sample.getInfo())
+```
 
+First attemp:
+
+ - Using the sample from the FeatureCollection directly.
+ - `TypeError: 'FeatureCollection' object is not iterable`
+```{python}
+# Landsat 8
+sitesDictionaryL08V0 = LEAF.sampleSites(
+    sample,
+    imageCollectionName="LANDSAT/LC08/C02/T1_L2",
+    algorithm=SL2PV0,
+    variableName="LAI",
+    maxCloudcover=90,
+    outputScaleSize=30,
+    inputScaleSize=30,
+    bufferSpatialSize=0,
+    bufferTemporalSize=["2021-06-01", "2022-09-01"],
+    subsamplingFraction=0.99,
+) 
+```
+
+Second attemp:
+
+ - Given that a FeatureCollection cannot be iterable, probably a List will do it
+```{python}
 # Convert to list: (I guess we just need the geometries)
-small_site_list = site_list.toList(10)
+sample_list = sample.toList(10)
+print(sample_list)
 
-test = ee.Geometry(small_site_list)
+
+
+# Add date properties (emulating RF notebook example that works)
+properties = {
+    'system:time_start': ee.Date('2021-01-01').millis(),
+    'system:time_end': ee.Date('2021-12-01').millis()
+}
+
+# Function to set properties for each feature
+def set_properties(feature):
+    return feature.set(properties)
+
+# Map the function over the FeatureCollection
+updated_feature_collection = small_site_list.map(set_properties)
 
 ```
 
+Third attempt
+
+ - If a list does not make it, let's try to use just the geometris
+
 ```{python}
-#
-LEAF.makeProductImageCollection(
-    imageCollection=small_site_list,
-    algorithm="SL2PV0",
-    variable="LAI",
-    inputScaleSize=20,
-)
+test = ee.Geometry(sample_list)
+print(test)
+```
+
+```{python}
+# Using deprecated function (changes introduced in RF repo)
+# LEAF.makeProductImageCollection(
+#     imageCollection=small_site_list,
+#     algorithm="SL2PV0",
+#     variable="LAI",
+#     inputScaleSize=20,
+# )
+
+
+
 
 # Landsat 8
 sitesDictionaryL08V0 = LEAF.sampleSites(
