@@ -74,9 +74,41 @@ from leaftoolbox import SL2PV0
 from leaftoolbox import SL2PV1
 ```
 
+Get a sample from the all the selected polygons
 
 ```{python}
+site_list = features.limit(10)
+# print(site_list.getInfo())
 
+# Convert to list: (I guess we just need the geometries)
+small_site_list = site_list.toList(10)
+
+test = ee.Geometry(small_site_list)
+
+```
+
+```{python}
+#
+LEAF.makeProductImageCollection(
+    imageCollection=small_site_list,
+    algorithm="SL2PV0",
+    variable="LAI",
+    inputScaleSize=20,
+)
+
+# Landsat 8
+sitesDictionaryL08V0 = LEAF.sampleSites(
+    test,
+    imageCollectionName="LANDSAT/LC08/C02/T1_L2",
+    algorithm=SL2PV0,
+    variableName="LAI",
+    maxCloudcover=90,
+    outputScaleSize=30,
+    inputScaleSize=30,
+    bufferSpatialSize=0,
+    bufferTemporalSize=["2021-06-01", "2022-09-01"],
+    subsamplingFraction=0.99,
+) 
 ```
 
 
