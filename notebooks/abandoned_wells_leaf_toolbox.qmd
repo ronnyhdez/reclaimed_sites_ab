@@ -37,7 +37,9 @@ import sys
 ee.Initialize()
 ```
 
-Here I'm using just the non-intersecting abandoned wells polygons
+## Filter the abandoned wells polygons
+
+Here I'm using just the non-intersecting abandoned wells polygons. The asset is already created in GEE
 
 ```{python}
 flagged_asset = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v2'
@@ -62,7 +64,7 @@ combined_filter = ee.Filter.And(*filters)
 features = abandoned_wells.filter(combined_filter)
 ```
 
-Import the local LEAF-toolbox modules
+## Import the local LEAF-toolbox modules
 
 ```{python}
 module_path = os.path.abspath(os.path.join('..'))
@@ -74,14 +76,16 @@ from leaftoolbox import SL2PV0
 from leaftoolbox import SL2PV1
 ```
 
-Get a sample from the all the selected polygons
+## Get a sample from the all the selected polygons
+
+Just using 10 to test the function
 
 ```{python}
 sample = features.limit(10)
 print(sample.getInfo())
 ```
 
-First attemp:
+## First attemp:
 
  - Using the sample from the FeatureCollection directly.
  - `TypeError: 'FeatureCollection' object is not iterable`
@@ -101,7 +105,7 @@ sitesDictionaryL08V0 = LEAF.sampleSites(
 ) 
 ```
 
-Second attemp:
+## Second attemp:
 
  - Given that a FeatureCollection cannot be iterable, probably a List will do it.
  - `TypeError: 'List' object is not iterable`
@@ -126,10 +130,10 @@ sitesDictionaryL08V0 = LEAF.sampleSites(
 ) 
 ```
 
-Third attempt
+## Third attempt
 
  - If a list does not make it, let's try to use just the geometries
- - `TypeError: 'List' object is not iterable`
+ - `EEException: Cannot convert a computed geometry to GeoJSON. Wrap a getInfo() call in json.dumps instead.`
 
 ```{python}
 test = ee.Geometry(sample_list)
@@ -150,24 +154,7 @@ sitesDictionaryL08V0 = LEAF.sampleSites(
 ) 
 ```
 
-
-
-```{python}
-# Add date properties (emulating RF notebook example that works)
-properties = {
-    'system:time_start': ee.Date('2021-01-01').millis(),
-    'system:time_end': ee.Date('2021-12-01').millis()
-}
-
-# Function to set properties for each feature
-def set_properties(feature):
-    return feature.set(properties)
-
-# Map the function over the FeatureCollection
-updated_feature_collection = small_site_list.map(set_properties)
-```
-
-Fourth attemp
+## Fourth attemp
 
  - Do not call directly the feature collecion
  - This one runs fine. 
@@ -188,7 +175,24 @@ sitesDictionaryL08SR = LEAF.sampleSites(site, \
                                                 subsamplingFraction = 0.99) 
 ```
 
-Other notes:
+## Other notes:
 
- - LEAF-toolbox functions do not have documentation. It's hard to know inputs options and requirements
- - 
+ - LEAF-toolbox functions lack documentation, making it difficult to understand the input options and 
+ requirements.
+ - Should the dates be a property for each feature, or can they be specified as a parameter in the function?
+ - Which functions in the LEAF-toolbox are the main ones for obtaining metrics?
+
+```{python}
+# Add date properties (emulating RF notebook example that works)
+properties = {
+    'system:time_start': ee.Date('2021-01-01').millis(),
+    'system:time_end': ee.Date('2021-12-01').millis()
+}
+
+# Function to set properties for each feature
+def set_properties(feature):
+    return feature.set(properties)
+
+# Map the function over the FeatureCollection
+updated_feature_collection = small_site_list.map(set_properties)
+```
