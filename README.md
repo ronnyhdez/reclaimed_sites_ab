@@ -3,6 +3,7 @@
 ![GitHub release (with filter)](https://img.shields.io/github/v/release/ronnyhdez/reclaimed_sites_ab) 
 
 :warning: This is a work in progress. Expect frequent changes to the code and functionality.
+
 :globe_with_meridians: https://ronnyhdez.github.io/reclaimed_sites_ab/
 
 
@@ -22,7 +23,7 @@
 
 ## Filtering steps
 
-
+![Data flow diagram](img/reclamation_diagram.jpg)
 
 ## Running the code
 
