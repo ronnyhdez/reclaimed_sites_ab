@@ -196,3 +196,61 @@ def set_properties(feature):
 # Map the function over the FeatureCollection
 updated_feature_collection = small_site_list.map(set_properties)
 ```
+
+## Fifth attemp
+
+For this one, I run in GEE the filters and save the 100 biggest polygons as an asset.
+
+```{python}
+site = ["projects/ee-ronnyale/assets/largest_100_non_intersecting_polygons"]
+
+sitesDictionaryL08SR = LEAF.sampleSites(
+    site,
+    imageCollectionName="LANDSAT/LC08/C02/T1_L2",
+    algorithm=SL2PV0,
+    variableName="Surface_Reflectance",
+    maxCloudcover=90,
+    outputScaleSize=30,
+    inputScaleSize=30,
+    bufferSpatialSize=0,
+    bufferTemporalSize=["2021-04-01", "2022-10-01"],
+    subsamplingFraction=0.99,
+) 
+```
+
+
+```{python}
+print(type(sitesDictionaryL08SR))
+print(len(sitesDictionaryL08SR))
+
+print(sitesDictionaryL08SR.keys())
+print(sitesDictionaryL08SR.values())
+
+```
+
+```{python}
+# # Choose a site from the sitelist
+# siteNum=0
+
+# # Select the first feature
+# featureNum = 0
+
+# #Select one sampled pixel from each feature
+# pixelNum = 3
+
+# #Extract time series of LAI with high quality only
+# site = sitesDictionaryL08SR[siteList[siteNum]]
+# # print(site[featureNum]['leaftoolbox.SL2PV0'])
+# df=site[featureNum]['leaftoolbox.SL2PV0']
+# df['utc'] =  pd.to_datetime(df['date'],unit='ms')
+# pixelL08V0=df.loc[(df['longitude']==df.loc[pixelNum].longitude) & (df['latitude']==df.loc[pixelNum].latitude) & (df['QC']==0)]
+
+
+# fig,ax = plt.subplots(1,1,figsize=[10,10])
+# plt.plot(pixelL08V0['utc'],pixelL08V0['estimateLAI'],'ob',markerfacecolor='none', label='L08V1')
+
+# ax.legend()
+# ax.set_xlabel('date')
+# ax.set_ylabel('LAI')
+# plt.xticks(rotation=90);
+```
