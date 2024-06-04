@@ -39,7 +39,10 @@ ee.Initialize()
 
 ## Filter the abandoned wells polygons
 
-Here I'm using just the non-intersecting abandoned wells polygons. The asset is already created in GEE
+ - The asset contains all the polygons posterior to the first filtering steps (reclaimed and dates).
+ - LEAF-toolbox `sampleSites` functions needs an asset as an input, not a FeatureCollection.
+ - Intersections filtering needs to be done in GEE console and save result as a new asset.
+ - Here is the code to demonstrate the intersection filtering needed.
 
 ```{python}
 flagged_asset = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v2'
@@ -62,6 +65,10 @@ filters = [
 combined_filter = ee.Filter.And(*filters)
 
 features = abandoned_wells.filter(combined_filter)
+
+# Check a sample
+sample = features.limit(10)
+print(sample.getInfo())
 ```
 
 ## Import the local LEAF-toolbox modules
@@ -76,128 +83,7 @@ from leaftoolbox import SL2PV0
 from leaftoolbox import SL2PV1
 ```
 
-## Get a sample from the all the selected polygons
-
-Just using 10 to test the function
-
-```{python}
-sample = features.limit(10)
-print(sample.getInfo())
-```
-
-## First attemp:
-
- - Using the sample from the FeatureCollection directly.
- - `TypeError: 'FeatureCollection' object is not iterable`
-```{python}
-# Landsat 8
-sitesDictionaryL08V0 = LEAF.sampleSites(
-    sample,
-    imageCollectionName="LANDSAT/LC08/C02/T1_L2",
-    algorithm=SL2PV0,
-    variableName="LAI",
-    maxCloudcover=90,
-    outputScaleSize=30,
-    inputScaleSize=30,
-    bufferSpatialSize=0,
-    bufferTemporalSize=["2021-06-01", "2022-09-01"],
-    subsamplingFraction=0.99,
-) 
-```
-
-## Second attemp:
-
- - Given that a FeatureCollection cannot be iterable, probably a List will do it.
- - `TypeError: 'List' object is not iterable`
-
-```{python}
-# Convert to list: (I guess we just need the geometries)
-sample_list = sample.toList(10)
-print(sample_list)
-
-# Landsat 8
-sitesDictionaryL08V0 = LEAF.sampleSites(
-    sample_list,
-    imageCollectionName="LANDSAT/LC08/C02/T1_L2",
-    algorithm=SL2PV0,
-    variableName="LAI",
-    maxCloudcover=90,
-    outputScaleSize=30,
-    inputScaleSize=30,
-    bufferSpatialSize=0,
-    bufferTemporalSize=["2021-06-01", "2022-09-01"],
-    subsamplingFraction=0.99,
-) 
-```
-
-## Third attempt
-
- - If a list does not make it, let's try to use just the geometries
- - `EEException: Cannot convert a computed geometry to GeoJSON. Wrap a getInfo() call in json.dumps instead.`
-
-```{python}
-test = ee.Geometry(sample_list)
-print(test)
-
-# Landsat 8
-sitesDictionaryL08V0 = LEAF.sampleSites(
-    test,
-    imageCollectionName="LANDSAT/LC08/C02/T1_L2",
-    algorithm=SL2PV0,
-    variableName="LAI",
-    maxCloudcover=90,
-    outputScaleSize=30,
-    inputScaleSize=30,
-    bufferSpatialSize=0,
-    bufferTemporalSize=["2021-06-01", "2022-09-01"],
-    subsamplingFraction=0.99,
-) 
-```
-
-## Fourth attemp
-
- - Do not call directly the feature collecion
- - This one runs fine. 
- - Problem is I cannot filter the polygons because asset contains all observations
-
-```{python}
-site = ["projects/ee-ronnyale/assets/intersecting_wells_flags_v2"]
-
-sitesDictionaryL08SR = LEAF.sampleSites(site, \
-                                                imageCollectionName='LANDSAT/LC08/C02/T1_L2',\
-                                                algorithm=SL2PV0, 
-                                                variableName="Surface_Reflectance",\
-                                                maxCloudcover=90,\
-                                                outputScaleSize=30,\
-                                                inputScaleSize=30,\
-                                                bufferSpatialSize = 0,\
-                                                bufferTemporalSize =["2021-04-01","2022-10-01"],  \
-                                                subsamplingFraction = 0.99) 
-```
-
-## Other notes:
-
- - LEAF-toolbox functions lack documentation, making it difficult to understand the input options and 
- requirements.
- - Should the dates be a property for each feature, or can they be specified as a parameter in the function?
- - Which functions in the LEAF-toolbox are the main ones for obtaining metrics?
-
-```{python}
-# Add date properties (emulating RF notebook example that works)
-properties = {
-    'system:time_start': ee.Date('2021-01-01').millis(),
-    'system:time_end': ee.Date('2021-12-01').millis()
-}
-
-# Function to set properties for each feature
-def set_properties(feature):
-    return feature.set(properties)
-
-# Map the function over the FeatureCollection
-updated_feature_collection = small_site_list.map(set_properties)
-```
-
-## Fifth attemp
+## Run LEAF-toolbox on biggest abandoned well polygons 
 
 For this one, I run in GEE the filters and save the 100 biggest polygons as an asset.
 
@@ -241,42 +127,42 @@ end_time = time.time()
 execution_time = end_time - start_time
 print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
 
-# Landsat 8
-start_time = time.time()
-sitesDictionaryL08V0 = LEAF.sampleSites(
-    site,
-    imageCollectionName="LANDSAT/LC08/C02/T1_L2",
-    algorithm=SL2PV0,
-    variableName="LAI",
-    maxCloudcover=90,
-    outputScaleSize=30,
-    inputScaleSize=30,
-    bufferSpatialSize=0,
-    bufferTemporalSize=["2021-04-01", "2022-10-01"],
-    subsamplingFraction=0.99,
-)
-end_time = time.time()
-execution_time = end_time - start_time
-print(f"Execution time sitesDictionaryL08V0: {execution_time} seconds")
+# # Landsat 8
+# start_time = time.time()
+# sitesDictionaryL08V0 = LEAF.sampleSites(
+#     site,
+#     imageCollectionName="LANDSAT/LC08/C02/T1_L2",
+#     algorithm=SL2PV0,
+#     variableName="LAI",
+#     maxCloudcover=90,
+#     outputScaleSize=30,
+#     inputScaleSize=30,
+#     bufferSpatialSize=0,
+#     bufferTemporalSize=["2021-04-01", "2022-10-01"],
+#     subsamplingFraction=0.99,
+# )
+# end_time = time.time()
+# execution_time = end_time - start_time
+# print(f"Execution time sitesDictionaryL08V0: {execution_time} seconds")
 
 
-# Landsat 9
-start_time = time.time()
-sitesDictionaryL09V0 = LEAF.sampleSites(
-    site,
-    imageCollectionName="LANDSAT/LC09/C02/T1_L2",
-    algorithm=SL2PV0,
-    variableName="LAI",
-    maxCloudcover=90,
-    outputScaleSize=30,
-    inputScaleSize=30,
-    bufferSpatialSize=0,
-    bufferTemporalSize=["2021-04-01", "2022-10-01"],
-    subsamplingFraction=0.99,
-)
-end_time = time.time()
-execution_time = end_time - start_time
-print(f"Execution time sitesDictionaryL09V0: {execution_time} seconds")
+# # Landsat 9
+# start_time = time.time()
+# sitesDictionaryL09V0 = LEAF.sampleSites(
+#     site,
+#     imageCollectionName="LANDSAT/LC09/C02/T1_L2",
+#     algorithm=SL2PV0,
+#     variableName="LAI",
+#     maxCloudcover=90,
+#     outputScaleSize=30,
+#     inputScaleSize=30,
+#     bufferSpatialSize=0,
+#     bufferTemporalSize=["2021-04-01", "2022-10-01"],
+#     subsamplingFraction=0.99,
+# )
+# end_time = time.time()
+# execution_time = end_time - start_time
+# print(f"Execution time sitesDictionaryL09V0: {execution_time} seconds")
 ```
 
 
@@ -287,6 +173,36 @@ print(len(sitesDictionaryL08SR))
 print(sitesDictionaryL08SR.keys())
 print(sitesDictionaryL08SR.values())
 ```
+
+
+
+## Other notes:
+
+ - LEAF-toolbox functions lack documentation, making it difficult to understand the input options and 
+ requirements.
+ - Should the dates be a property for each feature, or can they be specified as a parameter in the function?
+ - Which functions in the LEAF-toolbox are the main ones for obtaining metrics?
+
+```{python}
+# Add date properties (emulating RF notebook example that works)
+properties = {
+    'system:time_start': ee.Date('2021-01-01').millis(),
+    'system:time_end': ee.Date('2021-12-01').millis()
+}
+
+# Function to set properties for each feature
+def set_properties(feature):
+    return feature.set(properties)
+
+# Map the function over the FeatureCollection
+updated_feature_collection = small_site_list.map(set_properties)
+```
+
+
+
+
+
+
 
 
 ```{python}
