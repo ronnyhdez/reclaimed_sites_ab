@@ -204,6 +204,10 @@ For this one, I run in GEE the filters and save the 100 biggest polygons as an a
 ```{python}
 site = ["projects/ee-ronnyale/assets/largest_100_non_intersecting_polygons"]
 
+import time
+
+# Landsat 8
+start_time = time.time()
 sitesDictionaryL08SR = LEAF.sampleSites(
     site,
     imageCollectionName="LANDSAT/LC08/C02/T1_L2",
@@ -215,7 +219,64 @@ sitesDictionaryL08SR = LEAF.sampleSites(
     bufferSpatialSize=0,
     bufferTemporalSize=["2021-04-01", "2022-10-01"],
     subsamplingFraction=0.99,
-) 
+)
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time} seconds")
+
+# Landsat 9
+start_time = time.time()
+sitesDictionaryL09SR = LEAF.sampleSites(
+    site,
+    imageCollectionName="LANDSAT/LC09/C02/T1_L2",
+    algorithm=SL2PV0,
+    variableName="Surface_Reflectance",
+    outputScaleSize=30,
+    inputScaleSize=30,
+    bufferSpatialSize=0,
+    bufferTemporalSize=["2021-04-01", "2022-10-01"],
+    subsamplingFraction=0.99,
+)
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time} seconds")
+
+# Landsat 8
+start_time = time.time()
+sitesDictionaryL08V0 = LEAF.sampleSites(
+    site,
+    imageCollectionName="LANDSAT/LC08/C02/T1_L2",
+    algorithm=SL2PV0,
+    variableName="LAI",
+    maxCloudcover=90,
+    outputScaleSize=30,
+    inputScaleSize=30,
+    bufferSpatialSize=0,
+    bufferTemporalSize=["2021-04-01", "2022-10-01"],
+    subsamplingFraction=0.99,
+)
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time} seconds")
+
+
+# Landsat 9
+start_time = time.time()
+sitesDictionaryL09V0 = LEAF.sampleSites(
+    site,
+    imageCollectionName="LANDSAT/LC09/C02/T1_L2",
+    algorithm=SL2PV0,
+    variableName="LAI",
+    maxCloudcover=90,
+    outputScaleSize=30,
+    inputScaleSize=30,
+    bufferSpatialSize=0,
+    bufferTemporalSize=["2021-04-01", "2022-10-01"],
+    subsamplingFraction=0.99,
+)
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time: {execution_time} seconds")
 ```
 
 
@@ -227,6 +288,7 @@ print(sitesDictionaryL08SR.keys())
 print(sitesDictionaryL08SR.values())
 
 ```
+
 
 ```{python}
 # # Choose a site from the sitelist
@@ -254,3 +316,4 @@ print(sitesDictionaryL08SR.values())
 # ax.set_ylabel('LAI')
 # plt.xticks(rotation=90);
 ```
+
