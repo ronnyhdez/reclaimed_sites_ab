@@ -222,7 +222,7 @@ sitesDictionaryL08SR = LEAF.sampleSites(
 )
 end_time = time.time()
 execution_time = end_time - start_time
-print(f"Execution time: {execution_time} seconds")
+print(f"Execution time sitesDictionaryL08SR: {execution_time} seconds")
 
 # Landsat 9
 start_time = time.time()
@@ -239,7 +239,7 @@ sitesDictionaryL09SR = LEAF.sampleSites(
 )
 end_time = time.time()
 execution_time = end_time - start_time
-print(f"Execution time: {execution_time} seconds")
+print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
 
 # Landsat 8
 start_time = time.time()
@@ -257,7 +257,7 @@ sitesDictionaryL08V0 = LEAF.sampleSites(
 )
 end_time = time.time()
 execution_time = end_time - start_time
-print(f"Execution time: {execution_time} seconds")
+print(f"Execution time sitesDictionaryL08V0: {execution_time} seconds")
 
 
 # Landsat 9
@@ -276,7 +276,7 @@ sitesDictionaryL09V0 = LEAF.sampleSites(
 )
 end_time = time.time()
 execution_time = end_time - start_time
-print(f"Execution time: {execution_time} seconds")
+print(f"Execution time sitesDictionaryL09V0: {execution_time} seconds")
 ```
 
 
@@ -286,7 +286,6 @@ print(len(sitesDictionaryL08SR))
 
 print(sitesDictionaryL08SR.keys())
 print(sitesDictionaryL08SR.values())
-
 ```
 
 
