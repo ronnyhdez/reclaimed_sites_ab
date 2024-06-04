@@ -1,0 +1,233 @@
+---
+title: "Intersections flagged"
+author: Ronny A. Hernandez Mora
+execute:
+  message: false
+  warning: false
+format: 
+  html:
+    theme:
+      - flatly
+    linkcolor: "#FF5500"
+    highlight-style: tango
+    toc: true
+    toc-title: Table of contents
+    toc-location: left
+    number-sections: false
+    colorlinks: true
+    code-fold: true
+    code-line-numbers: true
+editor: visual
+jupyter: python3
+editor_options: 
+  chunk_output_type: console
+---
+
+# Explore  
+
+```{python}
+import ee
+import geemap
+import json
+import matplotlib.pyplot as plt
+import pandas as pd
+import os
+import sys
+
+ee.Initialize()
+```
+
+## Filter the abandoned wells polygons
+
+ - The asset contains all the polygons posterior to the first filtering steps (reclaimed and dates).
+ - LEAF-toolbox `sampleSites` functions needs an asset as an input, not a FeatureCollection.
+ - Intersections filtering needs to be done in GEE console and save result as a new asset.
+ - Here is the code to demonstrate the intersection filtering needed.
+
+```{python}
+flagged_asset = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v2'
+abandoned_wells = ee.FeatureCollection(flagged_asset)
+
+# Get all polygons without an intersetion
+filters = [
+    ee.Filter.eq("intersects_industrial", 0),
+    ee.Filter.eq("intersects_industrial_buffer", 0),
+    ee.Filter.eq("intersects_reservoirs", 0),
+    ee.Filter.eq("intersects_reservoirs_buffer", 0),
+    ee.Filter.eq("intersects_residential", 0),
+    ee.Filter.eq("intersects_residential_buffer", 0),
+    ee.Filter.eq("intersects_roads", 0),
+    ee.Filter.eq("intersects_roads_buffer", 0),
+    ee.Filter.eq("intersects_waterbodies", 0),
+    ee.Filter.eq("intersects_waterbody_buffer", 0),
+]
+
+combined_filter = ee.Filter.And(*filters)
+
+features = abandoned_wells.filter(combined_filter)
+
+# Check a sample
+sample = features.limit(10)
+print(sample.getInfo())
+```
+
+## Import the local LEAF-toolbox modules
+
+```{python}
+module_path = os.path.abspath(os.path.join('..'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
+    
+from leaftoolbox import LEAF
+from leaftoolbox import SL2PV0 
+from leaftoolbox import SL2PV1
+```
+
+## Run LEAF-toolbox on biggest abandoned well polygons 
+
+For this one, I run in GEE the filters and save the 100 biggest polygons as an asset.
+
+```{python}
+site = ["projects/ee-ronnyale/assets/largest_100_non_intersecting_polygons"]
+
+import time
+
+# Landsat 8
+start_time = time.time()
+sitesDictionaryL08SR = LEAF.sampleSites(
+    site,
+    imageCollectionName="LANDSAT/LC08/C02/T1_L2",
+    algorithm=SL2PV0,
+    variableName="Surface_Reflectance",
+    maxCloudcover=90,
+    outputScaleSize=30,
+    inputScaleSize=30,
+    bufferSpatialSize=0,
+    bufferTemporalSize=["2021-04-01", "2022-10-01"],
+    subsamplingFraction=0.99,
+)
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time sitesDictionaryL08SR: {execution_time} seconds")
+
+# Landsat 9
+start_time = time.time()
+sitesDictionaryL09SR = LEAF.sampleSites(
+    site,
+    imageCollectionName="LANDSAT/LC09/C02/T1_L2",
+    algorithm=SL2PV0,
+    variableName="Surface_Reflectance",
+    outputScaleSize=30,
+    inputScaleSize=30,
+    bufferSpatialSize=0,
+    bufferTemporalSize=["2021-04-01", "2022-10-01"],
+    subsamplingFraction=0.99,
+)
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
+
+# # Landsat 8
+# start_time = time.time()
+# sitesDictionaryL08V0 = LEAF.sampleSites(
+#     site,
+#     imageCollectionName="LANDSAT/LC08/C02/T1_L2",
+#     algorithm=SL2PV0,
+#     variableName="LAI",
+#     maxCloudcover=90,
+#     outputScaleSize=30,
+#     inputScaleSize=30,
+#     bufferSpatialSize=0,
+#     bufferTemporalSize=["2021-04-01", "2022-10-01"],
+#     subsamplingFraction=0.99,
+# )
+# end_time = time.time()
+# execution_time = end_time - start_time
+# print(f"Execution time sitesDictionaryL08V0: {execution_time} seconds")
+
+
+# # Landsat 9
+# start_time = time.time()
+# sitesDictionaryL09V0 = LEAF.sampleSites(
+#     site,
+#     imageCollectionName="LANDSAT/LC09/C02/T1_L2",
+#     algorithm=SL2PV0,
+#     variableName="LAI",
+#     maxCloudcover=90,
+#     outputScaleSize=30,
+#     inputScaleSize=30,
+#     bufferSpatialSize=0,
+#     bufferTemporalSize=["2021-04-01", "2022-10-01"],
+#     subsamplingFraction=0.99,
+# )
+# end_time = time.time()
+# execution_time = end_time - start_time
+# print(f"Execution time sitesDictionaryL09V0: {execution_time} seconds")
+```
+
+
+```{python}
+# Check dictionay characteristics
+# print(type(sitesDictionaryL08SR))
+# print(len(sitesDictionaryL08SR))
+
+# print(sitesDictionaryL08SR.keys())
+# print(sitesDictionaryL08SR.values())
+```
+
+## Other notes:
+
+ - SR results will be used with these functions.
+ - LAI results will be obtained with functions to be imported.
+ - Need to include start & end dates to each feature.
+
+```{python}
+# Test adding dates to each feature.
+# Add date properties (emulating RF notebook example that works)
+# properties = {
+#     'system:time_start': ee.Date('2021-01-01').millis(),
+#     'system:time_end': ee.Date('2021-12-01').millis()
+# }
+
+# # Function to set properties for each feature
+# def set_properties(feature):
+#     return feature.set(properties)
+
+# # Map the function over the FeatureCollection
+# updated_feature_collection = small_site_list.map(set_properties)
+```
+
+
+
+
+
+
+
+
+```{python}
+# # Choose a site from the sitelist
+# siteNum=0
+
+# # Select the first feature
+# featureNum = 0
+
+# #Select one sampled pixel from each feature
+# pixelNum = 3
+
+# #Extract time series of LAI with high quality only
+# site = sitesDictionaryL08SR[siteList[siteNum]]
+# # print(site[featureNum]['leaftoolbox.SL2PV0'])
+# df=site[featureNum]['leaftoolbox.SL2PV0']
+# df['utc'] =  pd.to_datetime(df['date'],unit='ms')
+# pixelL08V0=df.loc[(df['longitude']==df.loc[pixelNum].longitude) & (df['latitude']==df.loc[pixelNum].latitude) & (df['QC']==0)]
+
+
+# fig,ax = plt.subplots(1,1,figsize=[10,10])
+# plt.plot(pixelL08V0['utc'],pixelL08V0['estimateLAI'],'ob',markerfacecolor='none', label='L08V1')
+
+# ax.legend()
+# ax.set_xlabel('date')
+# ax.set_ylabel('LAI')
+# plt.xticks(rotation=90);
+```
+
