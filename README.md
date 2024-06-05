@@ -24,6 +24,7 @@
 
 Repository is organize in: 
 
+```
 reclaimed_sites_ab/
 ├── leaftoolbox/
 │   ├── __init__.py
@@ -45,7 +46,7 @@ reclaimed_sites_ab/
 ├── .gitignore
 ├── README.md
 └── requirements.txt
-
+```
  - leaftoolbox: Modules
  - notebooks: Documented analysis and data exploration
  - scripts: Code to generate assets in GEE
