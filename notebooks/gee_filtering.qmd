@@ -462,3 +462,54 @@ wells_map = geemap.Map(center=[53.516, -113.498], zoom=5)
 wells_map.addLayer(non_intersecting_features, {"color": "black"}, "abandoned_wells")
 wells_map
 ```
+
+# Polygons size
+
+```{python}
+asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
+
+abandoned_wells = ee.FeatureCollection(asset)
+
+pixels = (
+    ee.Image.constant(1)
+    .clip(abandoned_wells)
+    .rename("pixels")
+    .reproject(
+        crs="EPSG:32512",  # UTM zone 12N
+        scale=30,
+    )
+)
+
+pixel_count = pixels.reduceRegions(
+    collection=abandoned_wells, reducer=ee.Reducer.count(), scale=30
+)
+
+# Check results
+print("Pixel counts: ", pixel_count.limit(2).getInfo())
+```
+
+
+## Check 30x30m pixels within polygons
+
+```{python}
+Map = geemap.Map(center=[52.82361173778549, -112.2608045090065], zoom=10)
+Map.addLayer(abandoned_wells, {}, 'Polygons')
+Map.addLayer(pixels, {'min': 0, 'max': 1, 'palette': ['white', 'blue']}, 'pixels')
+Map
+```
+
+## Check numerb of pixels within polygons distributions 
+
+```{python}
+import matplotlib.pyplot as plt
+
+# Count pixels
+pixel_count_list = pixel_count.aggregate_array('count').getInfo()
+
+plt.hist(pixel_count_list, bins=200, color='#1d6b99')
+plt.title('Histogram of # pixels')
+plt.xlabel('# pixels')
+plt.ylabel('Frequency')
+plt.show()
+```
+
