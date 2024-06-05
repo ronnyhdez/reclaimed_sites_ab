@@ -10,7 +10,7 @@ ee.Initialize()
 def buffer_feature(feature):
     return feature.buffer(30)
 
-# First Asset | ABMI reservoirs + AER waterbodies ----
+# First Asset | ABMI reservoirs + AER waterbodies ==========================================
 
 ## Abandoned wells
 asset_id = "projects/ee-ronnyale/assets/selected_polygons"
@@ -79,7 +79,7 @@ wells_with_intersections = abandoned_wells.map(define_intersection)
 # export_task.start()
 
 
-# Second Asset | ABMI Industrial + Residential + Roads ----
+# Second Asset | ABMI Industrial + Residential + Roads ==========================================
 
 
 ## This would be the next step after the other asset import
@@ -148,34 +148,38 @@ print(json.dumps(sample, indent=2))
 # )
 # export_task.start()
 
-# Third Asset | AER wetland_treed + wetland ----
+# Third Asset | AER wetland_treed + wetland ==========================================
 
-# Abandoned wells
-asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
-abandoned_wells = ee.FeatureCollection(asset_id)
+#########################################
+### NOT USED ON FLAGGING OR FILTERING ###
+#########################################
 
-# LULC asset
-asset_id = 'projects/ee-eoagsaer/assets/LULC_2022_EE'
-asset_image = ee.Image(asset_id)
+# # Abandoned wells
+# asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
+# abandoned_wells = ee.FeatureCollection(asset_id)
 
-# # This would be the next step after the other asset import
-# asset_flagged = 'projects/ee-ronnyale/assets/intersecting_wells_flags'
-# abandoned_wells = ee.FeatureCollection(asset_flagged)
+# # LULC asset
+# asset_id = 'projects/ee-eoagsaer/assets/LULC_2022_EE'
+# asset_image = ee.Image(asset_id)
 
-# Mask for wetland-treed
-wetland_treed_mask = asset_image.eq(3)
-wetland_treed_image = asset_image.updateMask(wetland_treed_mask)
-# Reduce to vector
-wetland_treed_vector = wetland_treed_image.reduceToVectors(
-    geometryType='polygon',
-    scale=10,
-    maxPixels=1e8,
-    bestEffort=True,
-    labelProperty='wetland_treed'
-)
+# # # This would be the next step after the other asset import
+# # asset_flagged = 'projects/ee-ronnyale/assets/intersecting_wells_flags'
+# # abandoned_wells = ee.FeatureCollection(asset_flagged)
 
-# Create buffer wetland treed
-buffered_wetland_treed = wetland_treed_vector.map(buffer_feature)
+# # Mask for wetland-treed
+# wetland_treed_mask = asset_image.eq(3)
+# wetland_treed_image = asset_image.updateMask(wetland_treed_mask)
+# # Reduce to vector
+# wetland_treed_vector = wetland_treed_image.reduceToVectors(
+#     geometryType='polygon',
+#     scale=10,
+#     maxPixels=1e8,
+#     bestEffort=True,
+#     labelProperty='wetland_treed'
+# )
+
+# # Create buffer wetland treed
+# buffered_wetland_treed = wetland_treed_vector.map(buffer_feature)
 
 # # Mask for wetland
 # wetland_mask = asset_image.eq(7)
@@ -192,37 +196,35 @@ buffered_wetland_treed = wetland_treed_vector.map(buffer_feature)
 # # Create buffer wetland
 # buffered_wetland = wetland_vector.map(buffer_feature)
 
-# Function to add values
+# # Function to add values
+# def define_intersection(well):
+#     intersects_wetland_treed = wetland_treed_vector.filterBounds(
+#         well.geometry()).size().gt(0)
+#     intersects_wetland_treed_buffer = buffered_wetland_treed.filterBounds(
+#         well.geometry()).size().gt(0)
+#     # intersects_wetland = wetland_vector.filterBounds(
+#     #     well.geometry()).size().gt(0)
+#     # intersects_wetland_buffer = buffered_wetland.filterBounds(
+#     #     well.geometry()).size().gt(0)
+#     return well.set('intersects_wetland_treed', intersects_wetland_treed) \
+#                .set('intersects_wetland_treed_buffer', intersects_wetland_treed_buffer)  # \
+#     #    .set('intersects_wetland', intersects_wetland) \
+#     #    .set('intersects_wetland_buffer', intersects_wetland_buffer)
 
 
-def define_intersection(well):
-    intersects_wetland_treed = wetland_treed_vector.filterBounds(
-        well.geometry()).size().gt(0)
-    intersects_wetland_treed_buffer = buffered_wetland_treed.filterBounds(
-        well.geometry()).size().gt(0)
-    # intersects_wetland = wetland_vector.filterBounds(
-    #     well.geometry()).size().gt(0)
-    # intersects_wetland_buffer = buffered_wetland.filterBounds(
-    #     well.geometry()).size().gt(0)
-    return well.set('intersects_wetland_treed', intersects_wetland_treed) \
-               .set('intersects_wetland_treed_buffer', intersects_wetland_treed_buffer)  # \
-    #    .set('intersects_wetland', intersects_wetland) \
-    #    .set('intersects_wetland_buffer', intersects_wetland_buffer)
+# # Apply the intersection check to each well
+# wells_with_intersections = abandoned_wells.map(define_intersection)
+
+# # Apply the intersection check to each well
+# test = wells_with_intersections.map(define_intersection)
+
+# # Show a sample
+# sample = test.limit(6).getInfo()
+# # sample = merged_results.limit(6).getInfo()
+# print(json.dumps(sample, indent=2))
 
 
-# Apply the intersection check to each well
-wells_with_intersections = abandoned_wells.map(define_intersection)
-
-# Apply the intersection check to each well
-test = wells_with_intersections.map(define_intersection)
-
-# Show a sample
-sample = test.limit(6).getInfo()
-# sample = merged_results.limit(6).getInfo()
-print(json.dumps(sample, indent=2))
-
-
-# Fourth Asset | Pixels within polygons ----
+# Fourth Asset | Pixels within polygons ==========================================
 
 asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
 
