@@ -513,3 +513,36 @@ plt.ylabel('Frequency')
 plt.show()
 ```
 
+# Non-intersecting wells and non-empty pixels polygons
+
+
+```{python}
+# Read new asset
+asset_id = "projects/ee-ronnyale/assets/intersecting_wells_flags_v3"
+abandoned_wells = ee.FeatureCollection(asset_id)
+
+# Get all polygons without an intersetion
+filters = [
+    ee.Filter.eq("intersects_industrial", 0),
+    ee.Filter.eq("intersects_industrial_buffer", 0),
+    ee.Filter.eq("intersects_reservoirs", 0),
+    ee.Filter.eq("intersects_reservoirs_buffer", 0),
+    ee.Filter.eq("intersects_residential", 0),
+    ee.Filter.eq("intersects_residential_buffer", 0),
+    ee.Filter.eq("intersects_roads", 0),
+    ee.Filter.eq("intersects_roads_buffer", 0),
+    ee.Filter.eq("intersects_waterbodies", 0),
+    ee.Filter.eq("intersects_waterbody_buffer", 0),
+    ee.Filter.greaterThan("count", 0),
+]
+
+# Combine the filters using ee.Filter.or
+combined_filter = ee.Filter.And(*filters)
+
+# Apply the combined filter to the feature collection
+non_intersecting_features = abandoned_wells.filter(combined_filter)
+
+sample = non_intersecting_features.limit(2).getInfo()
+print(json.dumps(sample, indent=2))
+print("# polygons after filtering: ", non_intersecting_features.size().getInfo())
+```
