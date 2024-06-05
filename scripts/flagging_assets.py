@@ -220,3 +220,35 @@ test = wells_with_intersections.map(define_intersection)
 sample = test.limit(6).getInfo()
 # sample = merged_results.limit(6).getInfo()
 print(json.dumps(sample, indent=2))
+
+
+# Fourth Asset | Pixels within polygons ----
+
+asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
+
+abandoned_wells = ee.FeatureCollection(asset)
+
+pixels = (
+    ee.Image.constant(1)
+    .clip(abandoned_wells)
+    .rename("pixels")
+    .reproject(
+        crs="EPSG:32512",  # UTM zone 12N
+        scale=30,
+    )
+)
+
+pixel_count = pixels.reduceRegions(
+    collection=abandoned_wells, reducer=ee.Reducer.count(), scale=30
+)
+
+# Export the result with roads+residential+industrial
+export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3'
+export_task = ee.batch.Export.table.toAsset(
+    collection=pixel_count,
+    description='export_intersecting_wells_flags_v3',
+    assetId=export_asset_id
+)
+export_task.start()
+
+
