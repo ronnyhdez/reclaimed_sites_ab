@@ -462,3 +462,29 @@ wells_map = geemap.Map(center=[53.516, -113.498], zoom=5)
 wells_map.addLayer(non_intersecting_features, {"color": "black"}, "abandoned_wells")
 wells_map
 ```
+
+# Polygons size
+
+```{python}
+asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
+
+abandoned_wells = ee.FeatureCollection(asset)
+
+pixels = (
+    ee.Image.constant(1)
+    .clip(abandoned_wells)
+    .rename("pixels")
+    .reproject(
+        crs="EPSG:32512",  # UTM zone 12N
+        scale=30,
+    )
+)
+
+pixel_count = pixels.reduceRegions(
+    collection=abandoned_wells, reducer=ee.Reducer.count(), scale=30
+)
+
+
+# Check results
+print("Pixel counts: ", pixel_count.limit(2).getInfo())
+```
