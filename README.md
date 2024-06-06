@@ -20,6 +20,36 @@
 | National fire database | https://cwfis.cfs.nrcan.gc.ca/ha/nfdb | 
 | much more recent Alberta Wetland Inventory dataset (based largely on Sentinel), which maps wetland classes across the province | https://abmi.ca/home/data-analytics/da-top/da-product-overview/Advanced-Landcover-Prediction-and-Habitat-Assessment--ALPHA--Products/ABMI-Wetland-Inventory.html |
 
+## Repository structure
+
+Repository is organize in: 
+
+```
+reclaimed_sites_ab/
+├── leaftoolbox/
+│   ├── __init__.py
+│   ├── leaf.py
+│   ├── module1.py
+│   ├── module2.py
+├── notebooks/
+│   └── abandoned_wells_leaf_toolbox.qmd
+│   └── abandoned_wells.qmd
+│   └── gee_filtering.qmd
+│   └── leaf_process.qmd
+│   └── other.qmd
+├── data/
+│   └── dataset.csv
+├── scripts/
+│   └── flagging_assets.py
+│   └── run_polygons_date_filter.py
+│   └── shp_exports_for_assets.py
+├── .gitignore
+├── README.md
+└── requirements.txt
+```
+ - leaftoolbox: Modules
+ - notebooks: Documented analysis and data exploration
+ - scripts: Code to generate assets in GEE
 
 ## Filtering steps
 
