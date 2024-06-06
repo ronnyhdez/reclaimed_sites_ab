@@ -39,3 +39,34 @@ industrials <- st_read(dsn = here::here('data/HFI2021.gdb/HFI2021.gdb'),
 
 # Write shp for GEE
 # write_sf(obj = industrials, dsn = "data/industrials.shp")
+
+
+# Fires shp for GEE
+fires <- st_read(dsn = here::here('data/NFDB_poly/NFDB_poly_20210707.shp')) |> 
+        clean_names() |> 
+        filter(src_agency == "AB")
+
+# Need to drop elevation, GDAL error if not
+fires_2d <- st_zm(fires, drop = TRUE, what = "ZM")
+
+# Write shp for GEE
+# write_sf(obj = fires_2d, dsn = "data/fires.shp")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
