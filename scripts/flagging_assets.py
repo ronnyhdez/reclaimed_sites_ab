@@ -244,13 +244,68 @@ pixel_count = pixels.reduceRegions(
     collection=abandoned_wells, reducer=ee.Reducer.count(), scale=30
 )
 
-# Export the result with roads+residential+industrial
-export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3'
-export_task = ee.batch.Export.table.toAsset(
-    collection=pixel_count,
-    description='export_intersecting_wells_flags_v3',
-    assetId=export_asset_id
-)
-export_task.start()
+# # Export the result with roads+residential+industrial
+# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3'
+# export_task = ee.batch.Export.table.toAsset(
+#     collection=pixel_count,
+#     description='export_intersecting_wells_flags_v3',
+#     assetId=export_asset_id
+# )
+# export_task.start()
 
 
+# Fifth Asset | Disturbed polygons ==========================================
+abandoned_wells = ee.FeatureCollection(
+    'projects/ee-ronnyale/assets/intersecting_wells_flags_v3')
+fires = ee.FeatureCollection('projects/ee-ronnyale/assets/fires')
+
+# Function to set the fire year for each abandoned well
+def set_fire_year(well):
+    well_year = ee.Number(well.get('mx_bnd_'))
+    well_geom = well.geometry()
+
+    # Get fires intersecting with the well
+    intersecting_fires = fires.filterBounds(well_geom)
+
+    # Count the number of intersecting fire polygons
+    intersecting_count = intersecting_fires.size()
+
+    # If there are intersecting fires
+    fire_year = ee.Algorithms.If(intersecting_count.gt(0),
+                                 # More than one intersecting fire polygon
+                                 ee.Algorithms.If(intersecting_count.gt(1),
+                                                  # Get the fire year that is closest and after the well year
+                                                  ee.Algorithms.If(
+                                     intersecting_fires.filter(ee.Filter.gte(
+                                         'year', well_year)).size().gt(0),
+                                     intersecting_fires.filter(
+                                         ee.Filter.gte('year', well_year))
+                                     .sort('year')
+                                     .first()
+                                     .get('year'),
+                                     intersecting_fires.sort(
+                                         'year', False).first().get('year')
+                                 ),
+        # If there is exactly one intersecting fire polygon, get its year
+        intersecting_fires.first().get('year')
+    ),
+        # If there are no intersecting fire polygons, set the year to 9999
+        9999
+    )
+
+    # Return properties
+    return well.set('fire_year', fire_year) \
+               .set('intersecting_fires', intersecting_count)
+
+# Map the function over the abandoned wells collection
+disturbed_wells = abandoned_wells.map(set_fire_year)
+
+
+# # Export the result with roads+residential+industrial
+# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v4'
+# export_task = ee.batch.Export.table.toAsset(
+#     collection=disturbed_wells,
+#     description='export_intersecting_wells_flags_v4',
+#     assetId=export_asset_id
+# )
+# export_task.start()
