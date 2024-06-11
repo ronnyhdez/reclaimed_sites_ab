@@ -552,5 +552,57 @@ print("# polygons after filtering: ", non_intersecting_features.size().getInfo()
 fires = ee.FeatureCollection('projects/ee-ronnyale/assets/fires')
 ```
 
+```{python}
+abandoned_wells = ee.FeatureCollection(
+    'projects/ee-ronnyale/assets/selected_polygons')
+fires = ee.FeatureCollection('projects/ee-ronnyale/assets/fires')
 
+# Function to set the fire year for each abandoned well
+
+
+def set_fire_year(well):
+    well_year = ee.Number(well.get('mx_bnd_'))
+    well_geom = well.geometry()
+
+    # Get fires intersecting with the well
+    intersecting_fires = fires.filterBounds(well_geom)
+
+    # Count the number of intersecting fire polygons
+    intersecting_count = intersecting_fires.size()
+
+    # If there are intersecting fires
+    fire_year = ee.Algorithms.If(intersecting_count.gt(0),
+                                 # More than one intersecting fire polygon
+                                 ee.Algorithms.If(intersecting_count.gt(1),
+                                                  # Get the fire year that is closest and after the well year
+                                                  ee.Algorithms.If(
+                                     intersecting_fires.filter(ee.Filter.gte(
+                                         'year', well_year)).size().gt(0),
+                                     intersecting_fires.filter(
+                                         ee.Filter.gte('year', well_year))
+                                     .sort('year')
+                                     .first()
+                                     .get('year'),
+                                     intersecting_fires.sort(
+                                         'year', False).first().get('year')
+                                 ),
+        # If there is exactly one intersecting fire polygon, get its year
+        intersecting_fires.first().get('year')
+    ),
+        # If there are no intersecting fire polygons, set the year to 9999
+        9999
+    )
+
+    # Return properties
+    return well.set('fire_year', fire_year) \
+               .set('intersecting_fires', intersecting_count)
+
+
+# Map the function over the abandoned wells collection
+updated_wells = abandoned_wells.map(set_fire_year)
+
+# Check results (limited to avoid memory issues)
+results = updated_wells.limit(2).getInfo()
+print('Updated Abandoned Wells:', json.dumps(results, indent=2))
+```
 
