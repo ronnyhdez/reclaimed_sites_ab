@@ -31,7 +31,11 @@ import json
 ```
 
 After selecting the polygons from the abandoned wells, the following steps will continue with the 
-filtering in GEE.
+filtering in GEE. For this, we need first to flag each of the feature accordingly.
+
+In this document, I have the steps that are used to create the flags, export the asset to GEE, and then
+visualize or print results as an example of the desired output. For the most updated steps and functional
+code, please check the `scrpts/flagging_assets.py`
 
 # Abandoned wells polygons
 
@@ -558,8 +562,6 @@ abandoned_wells = ee.FeatureCollection(
 fires = ee.FeatureCollection('projects/ee-ronnyale/assets/fires')
 
 # Function to set the fire year for each abandoned well
-
-
 def set_fire_year(well):
     well_year = ee.Number(well.get('mx_bnd_'))
     well_geom = well.geometry()
@@ -596,7 +598,6 @@ def set_fire_year(well):
     # Return properties
     return well.set('fire_year', fire_year) \
                .set('intersecting_fires', intersecting_count)
-
 
 # Map the function over the abandoned wells collection
 updated_wells = abandoned_wells.map(set_fire_year)
