@@ -552,24 +552,5 @@ print("# polygons after filtering: ", non_intersecting_features.size().getInfo()
 fires = ee.FeatureCollection('projects/ee-ronnyale/assets/fires')
 ```
 
-```{python}
-# Check intersections abandoned_wells and fires
-# Function to find intersections between buffered polygons and waterbodies
-def define_intersection(well):
-    intersects_fires = fires.filterBounds(well.geometry()).size().gt(0)
-    return well.set('intersects_firess', intersects_fires) 
-
-# Apply the intersection check to each well
-wells_with_intersections = abandoned_wells.map(define_intersection)
-
-# Show a sample
-sample = wells_with_intersections.limit(2).getInfo()
-print(json.dumps(sample, indent = 2))
-```
 
 
-```{python}
-check = wells_with_intersections.filter(ee.Filter.eq("intersects_firess", 1))
-sample = check.limit(2).getInfo()
-print(json.dumps(sample, indent = 2))
-```
