@@ -607,3 +607,11 @@ results = updated_wells.limit(2).getInfo()
 print('Updated Abandoned Wells:', json.dumps(results, indent=2))
 ```
 
+
+```{python}
+# Using the created asset
+flagged_fires = ee.FeatureCollection('projects/ee-ronnyale/assets/intersecting_wells_flags_v4')
+
+
+```
+
