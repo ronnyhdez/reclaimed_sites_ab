@@ -517,44 +517,7 @@ plt.ylabel('Frequency')
 plt.show()
 ```
 
-# Non-intersecting wells and non-empty pixels polygons
-
-```{python}
-# Read new asset
-asset_id = "projects/ee-ronnyale/assets/intersecting_wells_flags_v3"
-abandoned_wells = ee.FeatureCollection(asset_id)
-
-# Get all polygons without an intersetion
-filters = [
-    ee.Filter.eq("intersects_industrial", 0),
-    ee.Filter.eq("intersects_industrial_buffer", 0),
-    ee.Filter.eq("intersects_reservoirs", 0),
-    ee.Filter.eq("intersects_reservoirs_buffer", 0),
-    ee.Filter.eq("intersects_residential", 0),
-    ee.Filter.eq("intersects_residential_buffer", 0),
-    ee.Filter.eq("intersects_roads", 0),
-    ee.Filter.eq("intersects_roads_buffer", 0),
-    ee.Filter.eq("intersects_waterbodies", 0),
-    ee.Filter.eq("intersects_waterbody_buffer", 0),
-    ee.Filter.greaterThan("count", 0),
-]
-
-# Combine the filters using ee.Filter.or
-combined_filter = ee.Filter.And(*filters)
-
-# Apply the combined filter to the feature collection
-non_intersecting_features = abandoned_wells.filter(combined_filter)
-
-sample = non_intersecting_features.limit(2).getInfo()
-print(json.dumps(sample, indent=2))
-print("# polygons after filtering: ", non_intersecting_features.size().getInfo())
-```
-
 # Fires polygons
-
-```{python}
-fires = ee.FeatureCollection('projects/ee-ronnyale/assets/fires')
-```
 
 ```{python}
 abandoned_wells = ee.FeatureCollection(
@@ -602,8 +565,58 @@ def set_fire_year(well):
 # Map the function over the abandoned wells collection
 updated_wells = abandoned_wells.map(set_fire_year)
 
+
+```
+
+
+```{python}
+# Using the created asset
+flagged_fires = ee.FeatureCollection('projects/ee-ronnyale/assets/intersecting_wells_flags_v4')
+
+filtered_fires = flagged_fires.filter(ee.Filter.neq('fire_year', 9999))
+
 # Check results (limited to avoid memory issues)
-results = updated_wells.limit(2).getInfo()
+results = filtered_fires.limit(2).getInfo()
 print('Updated Abandoned Wells:', json.dumps(results, indent=2))
 ```
 
+```{python}
+Map = geemap.Map(center=[52.82361173778549, -112.2608045090065], zoom=10)
+Map.addLayer(filtered_fires, {'color': 'blue'}, 'Polygons')
+Map.addLayer(fires, {'color': 'red'}, 'fires')
+Map
+```
+
+# Non-intersecting wells - non-empty pixels polygons - not disturbed polygons
+
+```{python}
+# Read new asset
+asset_id = "projects/ee-ronnyale/assets/intersecting_wells_flags_v4"
+abandoned_wells = ee.FeatureCollection(asset_id)
+
+# Get all polygons without an intersetion
+filters = [
+    ee.Filter.eq("intersects_industrial", 0),
+    ee.Filter.eq("intersects_industrial_buffer", 0),
+    ee.Filter.eq("intersects_reservoirs", 0),
+    ee.Filter.eq("intersects_reservoirs_buffer", 0),
+    ee.Filter.eq("intersects_residential", 0),
+    ee.Filter.eq("intersects_residential_buffer", 0),
+    ee.Filter.eq("intersects_roads", 0),
+    ee.Filter.eq("intersects_roads_buffer", 0),
+    ee.Filter.eq("intersects_waterbodies", 0),
+    ee.Filter.eq("intersects_waterbody_buffer", 0),
+    ee.Filter.greaterThan("count", 0),
+    ee.Filter.eq("fire_year", 9999),
+]
+
+# Combine the filters using ee.Filter.or
+combined_filter = ee.Filter.And(*filters)
+
+# Apply the combined filter to the feature collection
+non_intersecting_features = abandoned_wells.filter(combined_filter)
+
+sample = non_intersecting_features.limit(2).getInfo()
+print(json.dumps(sample, indent=2))
+print("# polygons after filtering: ", non_intersecting_features.size().getInfo())
+```
