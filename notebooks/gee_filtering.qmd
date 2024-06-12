@@ -607,6 +607,7 @@ filters = [
     ee.Filter.eq("intersects_waterbodies", 0),
     ee.Filter.eq("intersects_waterbody_buffer", 0),
     ee.Filter.greaterThan("count", 0),
+    ee.Filter.eq("fire_year", 9999),
 ]
 
 # Combine the filters using ee.Filter.or
