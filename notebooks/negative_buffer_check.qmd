@@ -1,0 +1,146 @@
+---
+title: "Untitled"
+format: html
+---
+
+File to fix for documentation about creating buffers
+
+```{python}
+# Imports
+import fiona
+import geopandas as gpd
+import pandas as pd
+import os
+import sys
+import janitor
+import matplotlib.pyplot as plt
+
+# Read data
+sys.path.append(os.path.abspath(os.path.join('..')))
+
+data_directory = os.path.join(sys.path[-1], 'data/HFI2021.gdb/HFI2021.gdb')
+
+abandoned_wells = gpd.read_file(data_directory,
+                                driver = 'FileGDB',
+                                layer = 'o16_WellsAbnd_HFI_2021')
+```
+
+```{python}
+fiona.listlayers(data_directory)
+```
+```{python}
+one_test = abandoned_wells.iloc[:1]
+
+one_test.plot()
+
+one_test_buffer = one_test['geometry'].buffer(-30)
+one_test_buffer.plot()
+```
+
+```{python}
+one_test_buffer = one_test.copy()
+one_test_buffer['geometry'] = one_test_buffer['geometry'].buffer(-30)
+
+# Create a plot
+fig, ax = plt.subplots()
+
+# Plot the original polygon
+one_test.plot(ax=ax, color='blue', edgecolor='black', alpha=0.5)
+
+# Plot the buffered polygon
+one_test_buffer.plot(ax=ax, color='red', edgecolor='black', alpha=0.5)
+
+# Add a legend
+legend_elements = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=10, label='Original Polygon'),
+                   plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=10, label='Buffered Polygon')]
+ax.legend(handles=legend_elements)
+
+# Display the plot
+plt.show()
+```
+
+
+```{python}
+second_test = abandoned_wells[abandoned_wells['WELLSITE_FOOTPRINT_ID'] == 149236.0]
+
+second_test_buffer = second_test.copy()
+second_test_buffer['geometry'] = second_test_buffer['geometry'].buffer(-30, 1)
+
+fig, ax = plt.subplots()
+
+second_test.plot(ax = ax, color = 'blue', edgecolor = 'black', alpha = 0.5)
+second_test_buffer.plot(ax = ax, color = 'red', edgecolor = 'black', alpha = 0.5)
+
+plt.show()
+```
+
+
+```{python}
+# Check negative buffers
+original_test = abandoned_wells.iloc[:100]
+
+test = original_test.copy()
+
+buffer_geometries = test['geometry'].buffer(-30)
+buffer_gdf = gpd.GeoDataFrame(test.drop(columns='geometry'), geometry=buffer_geometries)
+buffer_gdf = buffer_gdf.drop(columns='FIRST_SPUD_DATE')
+test.to_file("buffers_gdf.shp", driver='ESRI Shapefile')
+
+
+# import ee
+
+# ee.Initialize() 
+
+# # Convert the GeoDataFrame to an Earth Engine FeatureCollection
+# ee_fc = ee.FeatureCollection(buffer_gdf.__geo_interface__)
+
+# # Export the FeatureCollection to an Asset in GEE
+# export_asset_id = 'projects/ee-ronnyale/assets/test_buffer'  # Change to your desired asset path
+# export_task = ee.batch.Export.table.toAsset(
+#     collection=ee_fc,
+#     description='export_test_buffers',
+#     assetId=export_asset_id
+# )
+# export_task.start()
+
+
+# # Export the result with roads+residential+industrial
+# export_asset_id = 'projects/ee-ronnyale/assets/test_buffer'
+# export_task = ee.batch.Export.table.toAsset(
+#     collection=buffer_gdf,
+#     description='export_test_buffers',
+#     assetId=export_asset_id
+# )
+# export_task.start()
+
+```
+
+
+```{python}
+from ipyleaflet import Map, GeoData, basemaps, LayersControl
+import geopandas as gpd
+
+original_test = abandoned_wells.iloc[:100]
+
+buffer_geometries = original_test["geometry"].buffer(30)
+
+buffer_gdf = gpd.GeoDataFrame(
+    original_test.drop(columns="geometry"), geometry=buffer_geometries
+)
+buffer_gdf = buffer_gdf.drop(columns="FIRST_SPUD_DATE")
+
+m = Map(
+    center=[
+        buffer_gdf.geometry.iloc[0].centroid.y,
+        buffer_gdf.geometry.iloc[0].centroid.x,
+    ],
+    zoom=10,
+    basemap=basemaps.OpenStreetMap.Mapnik,
+)
+
+geo_data = GeoData(geo_dataframe=buffer_gdf, name="Buffers")
+m.add_layer(geo_data)
+m.add_control(LayersControl())
+m
+```
+
