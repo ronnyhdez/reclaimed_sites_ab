@@ -469,6 +469,57 @@ wells_map
 
 # Polygons size
 
+For the number of pixels that fit inside the abandoned well polygons calculation, we want to avoid the edges. For this
+I'm going to create a negative buffer of 30m and use those dilated polygons to count the number of pixels.
+
+```{python}
+import ee
+ee.Initialize()
+
+feature_collection = ee.FeatureCollection(
+    "projects/ee-ronnyale/assets/intersecting_wells_flags_v4"
+)
+
+# Function to apply inward buffer to each feature
+def apply_inward_dilation(feature):
+    buffered_feature = feature.buffer(-30, 1)
+    # dilated_feature = feature.difference(buffered_feature)
+    return buffered_feature
+    # return dilated_feature
+
+# Apply the function to each feature in the collection
+dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
+
+import folium
+import geemap
+
+Map = geemap.Map(center=[53.516, -113.498], zoom=5)
+Map.addLayer(feature_collection, {"color": "blue"}, "Original FeatureCollection")
+Map.addLayer(dilated_abandoned_wells, {"color": "red"}, "Dilated FeatureCollection")
+Map
+```
+
+## Number of pixels in dilated abandoned well polygons
+```{python}
+pixels = (
+    ee.Image.constant(1)
+    .clip(dilated_abandoned_wells)
+    .rename("pixels")
+    .reproject(
+        crs="EPSG:32512",  # UTM zone 12N
+        scale=30,
+    )
+)
+
+pixel_count = pixels.reduceRegions(
+    collection=dilated_abandoned_wells, reducer=ee.Reducer.count(), scale=30
+)
+
+# Check results
+print("Pixel counts: ", pixel_count.limit(2).getInfo())
+```
+
+## Number of pixels in abandoned well polygons
 ```{python}
 asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
 
@@ -490,8 +541,16 @@ pixel_count = pixels.reduceRegions(
 
 # Check results
 print("Pixel counts: ", pixel_count.limit(2).getInfo())
-```
 
+# Export the result with roads+residential+industrial
+# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_dilated'
+# export_task = ee.batch.Export.table.toAsset(
+#     collection=pixel_count,
+#     description='export_intersecting_wells_flags_v3_dilated',
+#     assetId=export_asset_id
+# )
+# export_task.start()
+```
 
 ## Check 30x30m pixels within polygons
 
@@ -564,8 +623,6 @@ def set_fire_year(well):
 
 # Map the function over the abandoned wells collection
 updated_wells = abandoned_wells.map(set_fire_year)
-
-
 ```
 
 
