@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Megative buffers and pixel count"
 format: html
 ---
 
@@ -20,14 +20,16 @@ sys.path.append(os.path.abspath(os.path.join('..')))
 
 data_directory = os.path.join(sys.path[-1], 'data/HFI2021.gdb/HFI2021.gdb')
 
+fiona.listlayers(data_directory)
+
 abandoned_wells = gpd.read_file(data_directory,
                                 driver = 'FileGDB',
                                 layer = 'o16_WellsAbnd_HFI_2021')
 ```
 
-```{python}
-fiona.listlayers(data_directory)
-```
+# Test buffer function in 1 polygon
+
+## Square polygon
 ```{python}
 one_test = abandoned_wells.iloc[:1]
 
@@ -37,6 +39,7 @@ one_test_buffer = one_test['geometry'].buffer(-30)
 one_test_buffer.plot()
 ```
 
+## Not square polygon
 ```{python}
 one_test_buffer = one_test.copy()
 one_test_buffer['geometry'] = one_test_buffer['geometry'].buffer(-30)
@@ -74,7 +77,9 @@ second_test_buffer.plot(ax = ax, color = 'red', edgecolor = 'black', alpha = 0.5
 plt.show()
 ```
 
+## Trying to export results
 
+This is not working, results loose the CRS
 ```{python}
 # Check negative buffers
 original_test = abandoned_wells.iloc[:100]
@@ -112,7 +117,6 @@ test.to_file("buffers_gdf.shp", driver='ESRI Shapefile')
 #     assetId=export_asset_id
 # )
 # export_task.start()
-
 ```
 
 
@@ -144,3 +148,36 @@ m.add_control(LayersControl())
 m
 ```
 
+# GEE
+
+```{python}
+import ee
+ee.Initialize()
+
+feature_collection = ee.FeatureCollection(
+    "projects/ee-ronnyale/assets/intersecting_wells_flags_v4"
+)
+
+# Function to apply inward buffer to each feature
+def apply_inward_dilation(feature):
+    buffered_feature = feature.buffer(-30, 1)
+    # dilated_feature = feature.difference(buffered_feature)
+    return buffered_feature
+    # return dilated_feature
+
+# Apply the function to each feature in the collection
+dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
+
+import folium
+import geemap
+
+Map = geemap.Map(center=[53.516, -113.498], zoom=5)
+Map.addLayer(feature_collection, {"color": "blue"}, "Original FeatureCollection")
+Map.addLayer(dilated_abandoned_wells, {"color": "red"}, "Dilated FeatureCollection")
+Map
+```
+
+So, from here I can
+```{python}
+
+```
