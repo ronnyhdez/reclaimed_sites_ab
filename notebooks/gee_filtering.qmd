@@ -477,7 +477,7 @@ import ee
 ee.Initialize()
 
 feature_collection = ee.FeatureCollection(
-    "projects/ee-ronnyale/assets/intersecting_wells_flags_v4"
+    "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
 )
 
 # Function to apply inward buffer to each feature
@@ -542,7 +542,7 @@ pixel_count = pixels.reduceRegions(
 # Check results
 print("Pixel counts: ", pixel_count.limit(2).getInfo())
 
-# Export the result with roads+residential+industrial
+# # Export the result with roads+residential+industrial
 # export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_dilated'
 # export_task = ee.batch.Export.table.toAsset(
 #     collection=pixel_count,
@@ -550,6 +550,18 @@ print("Pixel counts: ", pixel_count.limit(2).getInfo())
 #     assetId=export_asset_id
 # )
 # export_task.start()
+
+
+# check the empty geometries from error in tasks
+def is_geometry_empty(feature):
+    return feature.geometry().isEmpty()
+
+
+# Filter the feature collection for empty geometries
+empty_geometries = pixel_count.filter(is_geometry_empty)
+
+# Get the count of features with empty geometries
+empty_count = empty_geometries.size().getInfo()
 ```
 
 ## Check 30x30m pixels within polygons
