@@ -1,9 +1,12 @@
 ---
-title: "Megative buffers and pixel count"
+title: "Negative buffers and pixel count"
 format: html
 ---
 
-File to fix for documentation about creating buffers
+File to fix for documentation about creating buffers. 
+
+The first section is working with files locally and with python tools only.
+The second sections is the same process but in GEE
 
 ```{python}
 # Imports
@@ -179,5 +182,149 @@ Map
 
 So, from here I can
 ```{python}
+results = dilated_abandoned_wells.limit(2).getInfo()
+print('Updated Abandoned Wells:', json.dumps(results, indent=2))
+```
 
+Probably there are features without geometries after the negative buffer. We can try to check this.
+
+```{python}
+def check_empty_coordinates(feature):
+    coordinates = feature.geometry().coordinates()
+    is_empty = coordinates.size().eq(0)
+    return feature.set('empty_buffer', is_empty)
+
+check_empty_dilated = dilated_abandoned_wells.map(check_empty_coordinates)
+results = check_empty_dilated.limit(2).getInfo()
+print(json.dumps(results, indent = 2))
+```
+
+That chunk before is working. Now, probably I will have to export it as an asset and then do
+something with the ones that are empty. Actually, the problem will persist because no empty
+geometries can be exported. The difference in here is that the result just contains the geometry
+of the buffer and not the original polygon (as far as I can see)
+
+I will have to try to run the filter:
+
+```{python}
+
+```
+
+
+
+
+
+Let's check some features characteristics comparing the original feature collection and
+the dilated collection.
+
+```{python}
+collection_size = feature_collection.size().getInfo()
+print(f"Feature collection size: {collection_size}")
+
+collection_size = dilated_abandoned_wells.size().getInfo()
+print(f"Dilated abandoned wells size: {collection_size}")
+
+collection_bounds = feature_collection.geometry().bounds().getInfo()
+print(f"Collection bounds: {collection_bounds}")
+
+collection_bounds = dilated_abandoned_wells.geometry().bounds().getInfo()
+print(f"Dilated abandoned wells bounds: {collection_bounds}")
+```
+
+This one almost run, but nonetheless, it looks like all the features have a geometry.
+```{python}
+# Function to add a property indicating whether geometry exists
+def add_geometry_exists_property(feature):
+    return feature.set('hasGeometry', feature.geometry().geometries().size().gt(0))
+
+# Apply the function to each feature in the collection
+features_with_geometry = feature_collection.map(add_geometry_exists_property)
+
+results = features_with_geometry.limit(2).getInfo()
+print(json.dumps(results, indent = 2))
+
+# Filter out features with empty geometries
+filtered_features = features_with_geometry.filter(ee.Filter.eq('hasGeometry', 0))
+
+results = filtered_features.limit(2).getInfo()
+print(json.dumps(results, indent = 2))
+
+# Count the number of features with empty geometries
+empty_geometry_count = features_with_geometry.size().subtract(filtered_features.size()).getInfo()
+
+print(f"Number of features with empty geometries: {empty_geometry_count}")
+```
+
+Probably, to avoid problems with geometries, it will be better to run the negative buffer, 
+count the number of pixels, and then pass the number of pixels to the original asset.
+
+
+```{python}
+# Define the asset ID
+asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
+
+# Load the feature collection
+feature_collection = ee.FeatureCollection(asset)
+
+# Function to apply inward buffer to each feature
+def apply_inward_dilation(feature):
+    buffered_feature = feature.buffer(-30, 1)
+    return ee.Feature(buffered_feature).copyProperties(feature)
+
+# Apply the function to each feature in the collection
+dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
+
+# Filter out any features with empty geometries (optional but recommended)
+dilated_abandoned_wells = dilated_abandoned_wells.filter(ee.Filter.geometry())
+
+# Create a constant image to count pixels
+pixels = (
+    ee.Image.constant(1)
+    .clip(dilated_abandoned_wells)
+    .rename("pixels")
+    .reproject(
+        crs="EPSG:32512",  # UTM zone 12N
+        scale=30,
+    )
+)
+
+# Reduce regions to count pixels within each polygon
+pixel_count = pixels.reduceRegions(
+    collection=dilated_abandoned_wells, reducer=ee.Reducer.count(), scale=30
+)
+
+# Function to add the pixel count to the original feature
+def add_pixel_count(original_feature):
+    well_id = original_feature.get('WELLSITE_FOOTPRINT_ID')  # Assuming this is the unique ID
+    matching_count_feature = pixel_count.filter(ee.Filter.eq('WELLSITE_FOOTPRINT_ID', well_id)).first()
+    pixel_count_value = ee.Number(matching_count_feature.get('count')).int()
+    return original_feature.set('pixel_count', pixel_count_value)
+
+# Map the function over the original feature collection
+updated_feature_collection = feature_collection.map(add_pixel_count)
+
+# # Export the updated feature collection
+# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_with_pixel_count'
+# export_task = ee.batch.Export.table.toAsset(
+#     collection=updated_feature_collection,
+#     description='export_intersecting_wells_flags_v3_with_pixel_count',
+#     assetId=export_asset_id
+# )
+# export_task.start()
+
+# print("Export task started.")
+
+```
+
+
+Before doing the above, probably its happening that in the smallest polygons there is no way to create a
+negative buffer. But, what comes out after the operation?
+
+
+```{python}
+test = dilated_abandoned_wells.filter(ee.Filter.eq('wllst__', 287438))
+results = test.limit(2).getInfo()
+print(json.dumps(results, indent  = 2))
+
+print(test.getInfo())
 ```
