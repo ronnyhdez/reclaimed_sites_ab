@@ -226,8 +226,12 @@ print(json.dumps(sample, indent=2))
 
 # Fourth Asset | Pixels within polygons ==========================================
 
+# First, we need the negative buffers to avoid edges:
 asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
 
+
+
+# Second, we need the # of pixels within those reduced polygons
 abandoned_wells = ee.FeatureCollection(asset)
 
 pixels = (
