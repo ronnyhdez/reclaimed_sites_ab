@@ -383,3 +383,4 @@ export_task = ee.batch.Export.table.toAsset(
     assetId=export_asset_id
 )
 export_task.start()
+
