@@ -6,10 +6,14 @@ import pandas as pd
 import os
 import sys
 import janitor
+import ee
 
 # Read data
 sys.path.append(os.path.abspath(os.path.join('..')))
-abandoned_wells = gpd.read_file('data/HFI2021.gdb/HFI2021.gdb',
+
+data_directory = os.path.join(sys.path[-1], 'data/HFI2021.gdb/HFI2021.gdb')
+
+abandoned_wells = gpd.read_file(data_directory,
                                 driver = 'FileGDB',
                                 layer = 'o16_WellsAbnd_HFI_2021')
 
@@ -41,5 +45,15 @@ selected_polygons = (
 len_polygons = len(selected_polygons)
 print("Number of observations after filtering: ", len_polygons) 
 
-# Save to geojson
-selected_polygons.to_file('data/selected_polygons.geojson', driver='GeoJSON') 
+# # Save to geojson
+# selected_polygons.to_file('data/selected_polygons.geojson', driver='GeoJSON') 
+
+ee.Initialize()
+
+export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_check_names'
+export_task = ee.batch.Export.table.toAsset(
+    collection=selected_polygons,
+    description='export_intersecting_wells_flags_check_names',
+    assetId=export_asset_id
+)
+export_task.start()
