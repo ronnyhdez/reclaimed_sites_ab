@@ -64,10 +64,10 @@ def define_intersection(well):
 # Apply the intersection check to each well
 wells_with_intersections = abandoned_wells.map(define_intersection)
 
-# # Show a sample
-# sample = wells_with_intersections.limit(6).getInfo()
-# # sample = merged_results.limit(6).getInfo()
-# print(json.dumps(sample, indent=2))
+# Show a sample
+sample = wells_with_intersections.limit(6).getInfo()
+# sample = merged_results.limit(6).getInfo()
+print(json.dumps(sample, indent=2))
 
 # # Export the result with waterbodies and reservoirs
 # export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags'
@@ -148,7 +148,7 @@ print(json.dumps(sample, indent=2))
 # )
 # export_task.start()
 
-# Third Asset | AER wetland_treed + wetland ==========================================
+# XXXX Asset | AER wetland_treed + wetland ==========================================
 
 #########################################
 ### NOT USED ON FLAGGING OR FILTERING ###
@@ -223,7 +223,7 @@ print(json.dumps(sample, indent=2))
 # # sample = merged_results.limit(6).getInfo()
 # print(json.dumps(sample, indent=2))
 
-# Fourth Asset | Disturbed polygons ==========================================
+# Third Asset | Disturbed polygons ==========================================
 abandoned_wells = ee.FeatureCollection(
     'projects/ee-ronnyale/assets/intersecting_wells_flags_v2')
 fires = ee.FeatureCollection('projects/ee-ronnyale/assets/fires')
@@ -279,7 +279,12 @@ disturbed_wells = abandoned_wells.map(set_fire_year)
 # )
 # export_task.start()
 
-# Fifth Asset | Pixels within polygons ==========================================
+# Fourth Asset | Pixels within polygons ==========================================
+
+# This steps will create an asset with less than the original observations
+# Because the negative buffer returns some small abandoned_wells polygons
+# without coordinates. Nonetheless, this asset works to join the pixel
+# count to the entire flagged asset.
 
 # First, we need the negative buffers to avoid edges: ==== 
 asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v3"
@@ -297,8 +302,6 @@ dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
 # There is no need to export results. Next step can be run withou memory problems
 
 # Second, we need the # of pixels within those reduced polygons ====
-# abandoned_wells = ee.FeatureCollection(asset)
-
 pixels = (
     ee.Image.constant(1)
     .clip(dilated_abandoned_wells)
@@ -313,14 +316,70 @@ pixel_count = pixels.reduceRegions(
     collection=dilated_abandoned_wells, reducer=ee.Reducer.count(), scale=30
 )
 
+# Function to flag empty geometries (based on the coordinates of the geometry)
+def check_empty_coordinates(feature):
+    coordinates = feature.geometry().coordinates()
+    is_empty = coordinates.size().eq(0)
+    return feature.set('empty_buffer', is_empty)
+
+# Apply function
+pixel_count_geom_flag = pixel_count.map(check_empty_coordinates)
+
+# Filter out empty geometries (otherwise GEE will have an error exporting asset)
+pixel_count_complete = pixel_count_geom_flag.filter(
+    ee.Filter.eq('empty_buffer', 0))
+
+
 # Export the result with roads+residential+industrial
 export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v4'
 export_task = ee.batch.Export.table.toAsset(
-    collection=pixel_count,
+    collection=pixel_count_complete,
     description='export_intersecting_wells_flags_v4',
     assetId=export_asset_id
 )
 export_task.start()
 
 
+# Fifth Asset | Pixel count in entire asset ==========================================
+# TODO: This one have to be projects/ee-ronnyale/assets/intersecting_wells_flags_v4
+pixel_count = ee.FeatureCollection("projects/ee-ronnyale/assets/intersecting_wells_flags_v3_reduced")
 
+# TODO: Temporal flagged (probably later will have to be v3)
+abandoned_wells = ee.FeatureCollection("projects/ee-ronnyale/assets/intersecting_wells_flags_v2")
+
+pixel_count_selected = pixel_count.select('count', 'wllst__')
+primaryKey = 'wllst__'
+secondaryKey = 'wllst__'
+
+# Define a filter that matches features based on the keys
+join_filter = ee.Filter.equals(leftField=primaryKey, rightField=secondaryKey)
+
+# Define the join
+inner_join = ee.Join.saveAll(matchesKey='matches', outer=True)
+
+# Apply the join
+joined = inner_join.apply(primary=abandoned_wells, secondary=pixel_count_selected, condition=join_filter)
+# print(joined.limit(1).getInfo())
+# result = joined.limit(2).getInfo()
+# print(json.dumps(merged, indent = 2))
+
+# Function to merge properties and handle missing matches
+def merge_properties(feature):
+    matches = ee.List(feature.get('matches'))
+    count = ee.Algorithms.If(matches.size().eq(0), 0, ee.Feature(matches.get(0)).get('count'))
+    return feature.set('count', count).set('matches', None) 
+
+# Map the function over the joined FeatureCollection
+merged = joined.map(merge_properties)
+# print(merged.limit(1).getInfo())
+# result = merged.limit(2).getInfo()
+# print(json.dumps(merged, indent = 2))
+
+
+export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v5'
+export_task = ee.batch.Export.table.toAsset(
+    collection=merged,
+    description='export_intersecting_wells_flags_v5',
+    assetId=export_asset_id
+)
+export_task.start()
