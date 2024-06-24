@@ -215,7 +215,10 @@ print(json.dumps(results, indent = 2))
 ```
 
 
-IT WORKS! The filter didn't get stuck! Now, having the 
+IT WORKS! The filter didn't get stuck! Now, having the features that do not contain coordinates after
+the negative buffer, I can remove them and export the asset.
+
+
 
 
 Let's check some features characteristics comparing the original feature collection and
