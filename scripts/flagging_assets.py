@@ -223,40 +223,9 @@ print(json.dumps(sample, indent=2))
 # # sample = merged_results.limit(6).getInfo()
 # print(json.dumps(sample, indent=2))
 
-
-# Fourth Asset | Pixels within polygons ==========================================
-
-asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
-
-abandoned_wells = ee.FeatureCollection(asset)
-
-pixels = (
-    ee.Image.constant(1)
-    .clip(abandoned_wells)
-    .rename("pixels")
-    .reproject(
-        crs="EPSG:32512",  # UTM zone 12N
-        scale=30,
-    )
-)
-
-pixel_count = pixels.reduceRegions(
-    collection=abandoned_wells, reducer=ee.Reducer.count(), scale=30
-)
-
-# # Export the result with roads+residential+industrial
-# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3'
-# export_task = ee.batch.Export.table.toAsset(
-#     collection=pixel_count,
-#     description='export_intersecting_wells_flags_v3',
-#     assetId=export_asset_id
-# )
-# export_task.start()
-
-
-# Fifth Asset | Disturbed polygons ==========================================
+# Fourth Asset | Disturbed polygons ==========================================
 abandoned_wells = ee.FeatureCollection(
-    'projects/ee-ronnyale/assets/intersecting_wells_flags_v3')
+    'projects/ee-ronnyale/assets/intersecting_wells_flags_v2')
 fires = ee.FeatureCollection('projects/ee-ronnyale/assets/fires')
 
 # Function to set the fire year for each abandoned well
@@ -302,10 +271,56 @@ disturbed_wells = abandoned_wells.map(set_fire_year)
 
 
 # # Export the result with roads+residential+industrial
-# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v4'
+# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3'
 # export_task = ee.batch.Export.table.toAsset(
 #     collection=disturbed_wells,
-#     description='export_intersecting_wells_flags_v4',
+#     description='export_intersecting_wells_flags_v3',
 #     assetId=export_asset_id
 # )
 # export_task.start()
+
+# Fifth Asset | Pixels within polygons ==========================================
+
+# First, we need the negative buffers to avoid edges: ==== 
+asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v3"
+
+feature_collection = ee.FeatureCollection(asset)
+
+# Function to apply inward buffer to each feature
+def apply_inward_dilation(feature):
+    buffered_feature = feature.buffer(-30, 1)
+    return buffered_feature
+
+# Apply the function to each feature in the collection
+dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
+
+# There is no need to export results. Next step can be run withou memory problems
+
+# Second, we need the # of pixels within those reduced polygons ====
+# abandoned_wells = ee.FeatureCollection(asset)
+
+pixels = (
+    ee.Image.constant(1)
+    .clip(dilated_abandoned_wells)
+    .rename("pixels")
+    .reproject(
+        crs="EPSG:32512",  # UTM zone 12N
+        scale=30,
+    )
+)
+
+pixel_count = pixels.reduceRegions(
+    collection=dilated_abandoned_wells, reducer=ee.Reducer.count(), scale=30
+)
+
+# Export the result with roads+residential+industrial
+export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v4'
+export_task = ee.batch.Export.table.toAsset(
+    collection=pixel_count,
+    description='export_intersecting_wells_flags_v4',
+    assetId=export_asset_id
+)
+export_task.start()
+
+
+

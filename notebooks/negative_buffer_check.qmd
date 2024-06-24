@@ -1,0 +1,478 @@
+---
+title: "Negative buffers and pixel count"
+format: html
+---
+
+File to fix for documentation about creating buffers. 
+
+The first section is working with files locally and with python tools only.
+The second sections is the same process but in GEE
+
+```{python}
+# Imports
+import fiona
+import geopandas as gpd
+import pandas as pd
+import os
+import sys
+import janitor
+import matplotlib.pyplot as plt
+
+# Read data
+sys.path.append(os.path.abspath(os.path.join('..')))
+
+data_directory = os.path.join(sys.path[-1], 'data/HFI2021.gdb/HFI2021.gdb')
+
+fiona.listlayers(data_directory)
+
+abandoned_wells = gpd.read_file(data_directory,
+                                driver = 'FileGDB',
+                                layer = 'o16_WellsAbnd_HFI_2021')
+```
+
+# Test buffer function in 1 polygon
+
+## Square polygon
+```{python}
+one_test = abandoned_wells.iloc[:1]
+
+one_test.plot()
+
+one_test_buffer = one_test['geometry'].buffer(-30)
+one_test_buffer.plot()
+```
+
+## Not square polygon
+```{python}
+one_test_buffer = one_test.copy()
+one_test_buffer['geometry'] = one_test_buffer['geometry'].buffer(-30)
+
+# Create a plot
+fig, ax = plt.subplots()
+
+# Plot the original polygon
+one_test.plot(ax=ax, color='blue', edgecolor='black', alpha=0.5)
+
+# Plot the buffered polygon
+one_test_buffer.plot(ax=ax, color='red', edgecolor='black', alpha=0.5)
+
+# Add a legend
+legend_elements = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=10, label='Original Polygon'),
+                   plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=10, label='Buffered Polygon')]
+ax.legend(handles=legend_elements)
+
+# Display the plot
+plt.show()
+```
+
+
+```{python}
+second_test = abandoned_wells[abandoned_wells['WELLSITE_FOOTPRINT_ID'] == 149236.0]
+
+second_test_buffer = second_test.copy()
+second_test_buffer['geometry'] = second_test_buffer['geometry'].buffer(-30, 1)
+
+fig, ax = plt.subplots()
+
+second_test.plot(ax = ax, color = 'blue', edgecolor = 'black', alpha = 0.5)
+second_test_buffer.plot(ax = ax, color = 'red', edgecolor = 'black', alpha = 0.5)
+
+plt.show()
+```
+
+## Trying to export results
+
+This is not working, results loose the CRS
+```{python}
+# Check negative buffers
+original_test = abandoned_wells.iloc[:100]
+
+test = original_test.copy()
+
+buffer_geometries = test['geometry'].buffer(-30)
+buffer_gdf = gpd.GeoDataFrame(test.drop(columns='geometry'), geometry=buffer_geometries)
+buffer_gdf = buffer_gdf.drop(columns='FIRST_SPUD_DATE')
+test.to_file("buffers_gdf.shp", driver='ESRI Shapefile')
+
+
+# import ee
+
+# ee.Initialize() 
+
+# # Convert the GeoDataFrame to an Earth Engine FeatureCollection
+# ee_fc = ee.FeatureCollection(buffer_gdf.__geo_interface__)
+
+# # Export the FeatureCollection to an Asset in GEE
+# export_asset_id = 'projects/ee-ronnyale/assets/test_buffer'  # Change to your desired asset path
+# export_task = ee.batch.Export.table.toAsset(
+#     collection=ee_fc,
+#     description='export_test_buffers',
+#     assetId=export_asset_id
+# )
+# export_task.start()
+
+
+# # Export the result with roads+residential+industrial
+# export_asset_id = 'projects/ee-ronnyale/assets/test_buffer'
+# export_task = ee.batch.Export.table.toAsset(
+#     collection=buffer_gdf,
+#     description='export_test_buffers',
+#     assetId=export_asset_id
+# )
+# export_task.start()
+```
+
+
+```{python}
+from ipyleaflet import Map, GeoData, basemaps, LayersControl
+import geopandas as gpd
+
+original_test = abandoned_wells.iloc[:100]
+
+buffer_geometries = original_test["geometry"].buffer(30)
+
+buffer_gdf = gpd.GeoDataFrame(
+    original_test.drop(columns="geometry"), geometry=buffer_geometries
+)
+buffer_gdf = buffer_gdf.drop(columns="FIRST_SPUD_DATE")
+
+m = Map(
+    center=[
+        buffer_gdf.geometry.iloc[0].centroid.y,
+        buffer_gdf.geometry.iloc[0].centroid.x,
+    ],
+    zoom=10,
+    basemap=basemaps.OpenStreetMap.Mapnik,
+)
+
+geo_data = GeoData(geo_dataframe=buffer_gdf, name="Buffers")
+m.add_layer(geo_data)
+m.add_control(LayersControl())
+m
+```
+
+# GEE
+
+```{python}
+import ee
+ee.Initialize()
+
+feature_collection = ee.FeatureCollection(
+    "projects/ee-ronnyale/assets/intersecting_wells_flags_v4"
+)
+
+# Function to apply inward buffer to each feature
+def apply_inward_dilation(feature):
+    buffered_feature = feature.buffer(-30, 1)
+    # dilated_feature = feature.difference(buffered_feature)
+    return buffered_feature
+    # return dilated_feature
+
+# Apply the function to each feature in the collection
+dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
+
+import folium
+import geemap
+
+Map = geemap.Map(center=[53.516, -113.498], zoom=5)
+Map.addLayer(feature_collection, {"color": "blue"}, "Original FeatureCollection")
+Map.addLayer(dilated_abandoned_wells, {"color": "red"}, "Dilated FeatureCollection")
+Map
+```
+
+So, from here I can
+```{python}
+results = dilated_abandoned_wells.limit(2).getInfo()
+print('Updated Abandoned Wells:', json.dumps(results, indent=2))
+```
+
+Probably there are features without geometries after the negative buffer. We can try to check this.
+
+```{python}
+def check_empty_coordinates(feature):
+    coordinates = feature.geometry().coordinates()
+    is_empty = coordinates.size().eq(0)
+    return feature.set('empty_buffer', is_empty)
+
+check_empty_dilated = dilated_abandoned_wells.map(check_empty_coordinates)
+results = check_empty_dilated.limit(2).getInfo()
+print(json.dumps(results, indent = 2))
+```
+
+That chunk before is working. Now, probably I will have to export it as an asset and then do
+something with the ones that are empty. Actually, the problem will persist because no empty
+geometries can be exported. The difference in here is that the result just contains the geometry
+of the buffer and not the original polygon (as far as I can see)
+
+I will have to try to run the filter:
+
+```{python}
+run_filter = check_empty_dilated.filter(ee.Filter.eq('empty_buffer', 1))
+# total = run_filter.size()
+# print(total) 
+results = run_filter.limit(2).getInfo()
+print(json.dumps(results, indent = 2))
+```
+
+
+IT WORKS! The filter didn't get stuck! Now, having the features that do not contain coordinates after
+the negative buffer, I can remove them and export the asset. Just for the test, I'm gonna try
+the export. This would be the **entire steps** to crete the negative buffer, count the pixels and export
+
+```{python}
+asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
+feature_collection = ee.FeatureCollection(asset)
+
+# Function to apply inward buffer to each feature
+def apply_inward_dilation(feature):
+    buffered_feature = feature.buffer(-30, 1)
+    return buffered_feature
+
+# Apply the function to each feature in the collection
+dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
+
+# There is no need to export results. Next step can be run withou memory problems
+
+# Second, we need the # of pixels within those reduced polygons ====
+# abandoned_wells = ee.FeatureCollection(asset)
+pixels = (
+    ee.Image.constant(1)
+    .clip(dilated_abandoned_wells)
+    .rename("pixels")
+    .reproject(
+        crs="EPSG:32512",  # UTM zone 12N
+        scale=30,
+    )
+)
+
+pixel_count = pixels.reduceRegions(
+    collection=dilated_abandoned_wells, reducer=ee.Reducer.count(), scale=30
+)
+
+# Flag empty geometries
+def check_empty_coordinates(feature):
+    coordinates = feature.geometry().coordinates()
+    is_empty = coordinates.size().eq(0)
+    return feature.set('empty_buffer', is_empty)
+
+
+pixel_count_geom_flag = pixel_count.map(check_empty_coordinates)
+
+pixel_count_complete = pixel_count_geom_flag.filter(
+    ee.Filter.eq('empty_buffer', 0))
+
+# results = pixel_count_complete.limit(2).getInfo()
+# print(json.dumps(results, indent=2))
+
+# Export the result with roads+residential+industrial
+export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_reduced'
+export_task = ee.batch.Export.table.toAsset(
+    collection=pixel_count_complete,
+    description='export_intersecting_wells_flags_v3_reduced',
+    assetId=export_asset_id
+)
+export_task.start()
+```
+
+
+Let's check some features characteristics comparing the original feature collection and
+the dilated collection.
+
+```{python}
+collection_size = feature_collection.size().getInfo()
+print(f"Feature collection size: {collection_size}")
+
+collection_size = dilated_abandoned_wells.size().getInfo()
+print(f"Dilated abandoned wells size: {collection_size}")
+
+collection_bounds = feature_collection.geometry().bounds().getInfo()
+print(f"Collection bounds: {collection_bounds}")
+
+collection_bounds = dilated_abandoned_wells.geometry().bounds().getInfo()
+print(f"Dilated abandoned wells bounds: {collection_bounds}")
+```
+
+This one almost run, but nonetheless, it looks like all the features have a geometry.
+```{python}
+# Function to add a property indicating whether geometry exists
+def add_geometry_exists_property(feature):
+    return feature.set('hasGeometry', feature.geometry().geometries().size().gt(0))
+
+# Apply the function to each feature in the collection
+features_with_geometry = feature_collection.map(add_geometry_exists_property)
+
+results = features_with_geometry.limit(2).getInfo()
+print(json.dumps(results, indent = 2))
+
+# Filter out features with empty geometries
+filtered_features = features_with_geometry.filter(ee.Filter.eq('hasGeometry', 0))
+
+results = filtered_features.limit(2).getInfo()
+print(json.dumps(results, indent = 2))
+
+# Count the number of features with empty geometries
+empty_geometry_count = features_with_geometry.size().subtract(filtered_features.size()).getInfo()
+
+print(f"Number of features with empty geometries: {empty_geometry_count}")
+```
+
+Probably, to avoid problems with geometries, it will be better to run the negative buffer, 
+count the number of pixels, and then pass the number of pixels to the original asset.
+
+
+```{python}
+# Define the asset ID
+asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
+
+# Load the feature collection
+feature_collection = ee.FeatureCollection(asset)
+
+# Function to apply inward buffer to each feature
+def apply_inward_dilation(feature):
+    buffered_feature = feature.buffer(-30, 1)
+    return ee.Feature(buffered_feature).copyProperties(feature)
+
+# Apply the function to each feature in the collection
+dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
+
+# Create a constant image to count pixels
+pixels = (
+    ee.Image.constant(1)
+    .clip(dilated_abandoned_wells)
+    .rename("pixels")
+    .reproject(
+        crs="EPSG:32512",  # UTM zone 12N
+        scale=30,
+    )
+)
+
+# Reduce regions to count pixels within each polygon
+pixel_count = pixels.reduceRegions(
+    collection=dilated_abandoned_wells, reducer=ee.Reducer.count(), scale=30
+)
+
+# Function to add the pixel count to the original feature
+def add_pixel_count(original_feature):
+    well_id = original_feature.get('wllst__') 
+    matching_count_feature = pixel_count.filter(ee.Filter.eq('wllst__', well_id)).first()
+    pixel_count_value = ee.Number(matching_count_feature.get('count')).int()
+    return original_feature.set('pixel_count', pixel_count_value)
+
+# Map the function over the original feature collection
+updated_feature_collection = feature_collection.map(add_pixel_count)
+
+# results = updated_feature_collection.limit(2).getInfo()
+# print(json.dumps(results, indent = 2))
+
+# Export the updated feature collection
+export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_with_pixel_count'
+export_task = ee.batch.Export.table.toAsset(
+    collection=updated_feature_collection,
+    description='export_intersecting_wells_flags_v3_with_pixel_count_test',
+    assetId=export_asset_id
+)
+export_task.start()
+
+# print("Export task started.")
+```
+
+The code above returns an "out of memory" error when creating the asset in GEE. A possible solution
+could be to create an asset with just the pixel count and the wllst__ variables. 
+
+Thinking about it is not going to work. Because it does not have a geometry. 
+
+Nonetheless, I already created the asset with the flag if the negative buffer erased the
+geometry and it's an asset but just with the observation that contain the geometries
+after the negative buffer. I can try to test if with that one, I can join to 
+the latest asset and assign to pixel count 0 if the observation is not in the join.
+
+So for this, the asset with pixel count and the v2 asset. 
+
+```{python}
+pixel_count = ee.FeatureCollection("projects/ee-ronnyale/assets/intersecting_wells_flags_v3_reduced")
+# count
+# wllst__ 
+
+# Temporal flagged (probably later will have to be v3)
+abandoned_wells = ee.FeatureCollection("projects/ee-ronnyale/assets/intersecting_wells_flags_v2")
+
+pixel_count_selected = pixel_count.select('count', 'wllst__')
+primaryKey = 'wllst__'
+secondaryKey = 'wllst__'
+
+# Define a filter that matches features based on the keys
+join_filter = ee.Filter.equals(leftField=primaryKey, rightField=secondaryKey)
+
+# Define the join
+inner_join = ee.Join.saveAll(matchesKey='matches', outer=True)
+
+# Apply the join
+joined = inner_join.apply(primary=abandoned_wells, secondary=pixel_count_selected, condition=join_filter)
+# print(joined.limit(1).getInfo())
+# result = joined.limit(2).getInfo()
+# print(json.dumps(merged, indent = 2))
+
+# Function to merge properties and handle missing matches
+def merge_properties(feature):
+    matches = ee.List(feature.get('matches'))
+    count = ee.Algorithms.If(matches.size().eq(0), 0, ee.Feature(matches.get(0)).get('count'))
+    return feature.set('count', count).set('matches', None) 
+
+# Map the function over the joined FeatureCollection
+merged = joined.map(merge_properties)
+# print(merged.limit(1).getInfo())
+# result = merged.limit(2).getInfo()
+# print(json.dumps(merged, indent = 2))
+
+
+export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_with_pixel_count_join'
+export_task = ee.batch.Export.table.toAsset(
+    collection=merged,
+    description='export_intersecting_wells_flags_v3_with_pixel_count_join',
+    assetId=export_asset_id
+)
+export_task.start()
+```
+
+So it worked. It looks that it have the pixel count and all the original features with no repetition
+
+The code above returns a nested list. I want something simple. 
+
+```{python}
+# Select relevant properties from pixel_count
+pixel_count_selected = pixel_count.select(['count', 'wllst__'])
+
+primaryKey = 'wllst__'
+secondaryKey = 'wllst__'
+
+# Define a filter that matches features based on the keys
+join_filter = ee.Filter.equals(leftField=primaryKey, rightField=secondaryKey)
+
+# Define the join
+inner_join = ee.Join.saveAll(matchesKey='matches', outer=True)
+
+# Apply the join
+joined = inner_join.apply(primary=abandoned_wells, secondary=pixel_count_selected, condition=join_filter)
+
+# Function to merge properties and handle missing matches
+def merge_properties(feature):
+    matches = ee.List(feature.get('matches'))
+    # Use 0 if no matches found, otherwise extract 'count' from the first match
+    count = ee.Algorithms.If(matches.size().eq(0), 0, ee.Feature(matches.get(0)).get('count'))
+    return feature.set('count', count).set('matches', None)  # Remove the matches property
+
+# Map the function over the joined FeatureCollection
+merged = joined.map(merge_properties)
+
+results = merged.limit(1).getInfo()
+print(json.dumps(results, indent = 2))
+
+export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_with_pixel_count_join'
+export_task = ee.batch.Export.table.toAsset(
+    collection=merged,
+    description='export_intersecting_wells_flags_v3_with_pixel_count_join_simple_list',
+    assetId=export_asset_id
+)
+export_task.start()
+```
+
