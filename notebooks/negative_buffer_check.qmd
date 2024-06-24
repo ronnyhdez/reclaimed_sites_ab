@@ -221,16 +221,12 @@ the export. This would be the **entire steps** to crete the negative buffer, cou
 
 ```{python}
 asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
-
 feature_collection = ee.FeatureCollection(asset)
 
 # Function to apply inward buffer to each feature
-
-
 def apply_inward_dilation(feature):
     buffered_feature = feature.buffer(-30, 1)
     return buffered_feature
-
 
 # Apply the function to each feature in the collection
 dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
@@ -239,7 +235,6 @@ dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
 
 # Second, we need the # of pixels within those reduced polygons ====
 # abandoned_wells = ee.FeatureCollection(asset)
-
 pixels = (
     ee.Image.constant(1)
     .clip(dilated_abandoned_wells)
@@ -255,8 +250,6 @@ pixel_count = pixels.reduceRegions(
 )
 
 # Flag empty geometries
-
-
 def check_empty_coordinates(feature):
     coordinates = feature.geometry().coordinates()
     is_empty = coordinates.size().eq(0)
@@ -266,15 +259,15 @@ def check_empty_coordinates(feature):
 pixel_count_geom_flag = pixel_count.map(check_empty_coordinates)
 
 pixel_count_complete = pixel_count_geom_flag.filter(
-    ee.Filter.eq('empty_buffer', 1))
+    ee.Filter.eq('empty_buffer', 0))
 
-results = pixel_count_complete.limit(2).getInfo()
-print(json.dumps(results, indent=2))
+# results = pixel_count_complete.limit(2).getInfo()
+# print(json.dumps(results, indent=2))
 
 # Export the result with roads+residential+industrial
 export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_reduced'
 export_task = ee.batch.Export.table.toAsset(
-    collection=pixel_count,
+    collection=pixel_count_complete,
     description='export_intersecting_wells_flags_v3_reduced',
     assetId=export_asset_id
 )
@@ -342,9 +335,6 @@ def apply_inward_dilation(feature):
 # Apply the function to each feature in the collection
 dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
 
-# Filter out any features with empty geometries (optional but recommended)
-dilated_abandoned_wells = dilated_abandoned_wells.filter(ee.Filter.geometry())
-
 # Create a constant image to count pixels
 pixels = (
     ee.Image.constant(1)
@@ -363,36 +353,126 @@ pixel_count = pixels.reduceRegions(
 
 # Function to add the pixel count to the original feature
 def add_pixel_count(original_feature):
-    well_id = original_feature.get('WELLSITE_FOOTPRINT_ID')  # Assuming this is the unique ID
-    matching_count_feature = pixel_count.filter(ee.Filter.eq('WELLSITE_FOOTPRINT_ID', well_id)).first()
+    well_id = original_feature.get('wllst__') 
+    matching_count_feature = pixel_count.filter(ee.Filter.eq('wllst__', well_id)).first()
     pixel_count_value = ee.Number(matching_count_feature.get('count')).int()
     return original_feature.set('pixel_count', pixel_count_value)
 
 # Map the function over the original feature collection
 updated_feature_collection = feature_collection.map(add_pixel_count)
 
-# # Export the updated feature collection
-# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_with_pixel_count'
-# export_task = ee.batch.Export.table.toAsset(
-#     collection=updated_feature_collection,
-#     description='export_intersecting_wells_flags_v3_with_pixel_count',
-#     assetId=export_asset_id
-# )
-# export_task.start()
+# results = updated_feature_collection.limit(2).getInfo()
+# print(json.dumps(results, indent = 2))
+
+# Export the updated feature collection
+export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_with_pixel_count'
+export_task = ee.batch.Export.table.toAsset(
+    collection=updated_feature_collection,
+    description='export_intersecting_wells_flags_v3_with_pixel_count_test',
+    assetId=export_asset_id
+)
+export_task.start()
 
 # print("Export task started.")
-
 ```
 
+The code above returns an "out of memory" error when creating the asset in GEE. A possible solution
+could be to create an asset with just the pixel count and the wllst__ variables. 
 
-Before doing the above, probably its happening that in the smallest polygons there is no way to create a
-negative buffer. But, what comes out after the operation?
+Thinking about it is not going to work. Because it does not have a geometry. 
 
+Nonetheless, I already created the asset with the flag if the negative buffer erased the
+geometry and it's an asset but just with the observation that contain the geometries
+after the negative buffer. I can try to test if with that one, I can join to 
+the latest asset and assign to pixel count 0 if the observation is not in the join.
+
+So for this, the asset with pixel count and the v2 asset. 
 
 ```{python}
-test = dilated_abandoned_wells.filter(ee.Filter.eq('wllst__', 287438))
-results = test.limit(2).getInfo()
-print(json.dumps(results, indent  = 2))
+pixel_count = ee.FeatureCollection("projects/ee-ronnyale/assets/intersecting_wells_flags_v3_reduced")
+# count
+# wllst__ 
 
-print(test.getInfo())
+# Temporal flagged (probably later will have to be v3)
+abandoned_wells = ee.FeatureCollection("projects/ee-ronnyale/assets/intersecting_wells_flags_v2")
+
+pixel_count_selected = pixel_count.select('count', 'wllst__')
+primaryKey = 'wllst__'
+secondaryKey = 'wllst__'
+
+# Define a filter that matches features based on the keys
+join_filter = ee.Filter.equals(leftField=primaryKey, rightField=secondaryKey)
+
+# Define the join
+inner_join = ee.Join.saveAll(matchesKey='matches', outer=True)
+
+# Apply the join
+joined = inner_join.apply(primary=abandoned_wells, secondary=pixel_count_selected, condition=join_filter)
+# print(joined.limit(1).getInfo())
+# result = joined.limit(2).getInfo()
+# print(json.dumps(merged, indent = 2))
+
+# Function to merge properties and handle missing matches
+def merge_properties(feature):
+    matches = ee.List(feature.get('matches'))
+    count = ee.Algorithms.If(matches.size().eq(0), 0, ee.Feature(matches.get(0)).get('count'))
+    return feature.set('count', count).set('matches', None) 
+
+# Map the function over the joined FeatureCollection
+merged = joined.map(merge_properties)
+# print(merged.limit(1).getInfo())
+# result = merged.limit(2).getInfo()
+# print(json.dumps(merged, indent = 2))
+
+
+export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_with_pixel_count_join'
+export_task = ee.batch.Export.table.toAsset(
+    collection=merged,
+    description='export_intersecting_wells_flags_v3_with_pixel_count_join',
+    assetId=export_asset_id
+)
+export_task.start()
 ```
+
+So it worked. It looks that it have the pixel count and all the original features with no repetition
+
+The code above returns a nested list. I want something simple. 
+
+```{python}
+# Select relevant properties from pixel_count
+pixel_count_selected = pixel_count.select(['count', 'wllst__'])
+
+primaryKey = 'wllst__'
+secondaryKey = 'wllst__'
+
+# Define a filter that matches features based on the keys
+join_filter = ee.Filter.equals(leftField=primaryKey, rightField=secondaryKey)
+
+# Define the join
+inner_join = ee.Join.saveAll(matchesKey='matches', outer=True)
+
+# Apply the join
+joined = inner_join.apply(primary=abandoned_wells, secondary=pixel_count_selected, condition=join_filter)
+
+# Function to merge properties and handle missing matches
+def merge_properties(feature):
+    matches = ee.List(feature.get('matches'))
+    # Use 0 if no matches found, otherwise extract 'count' from the first match
+    count = ee.Algorithms.If(matches.size().eq(0), 0, ee.Feature(matches.get(0)).get('count'))
+    return feature.set('count', count).set('matches', None)  # Remove the matches property
+
+# Map the function over the joined FeatureCollection
+merged = joined.map(merge_properties)
+
+results = merged.limit(1).getInfo()
+print(json.dumps(results, indent = 2))
+
+export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_with_pixel_count_join'
+export_task = ee.batch.Export.table.toAsset(
+    collection=merged,
+    description='export_intersecting_wells_flags_v3_with_pixel_count_join_simple_list',
+    assetId=export_asset_id
+)
+export_task.start()
+```
+
