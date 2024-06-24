@@ -207,11 +207,15 @@ of the buffer and not the original polygon (as far as I can see)
 I will have to try to run the filter:
 
 ```{python}
-
+run_filter = check_empty_dilated.filter(ee.Filter.eq('empty_buffer', 1))
+# total = run_filter.size()
+# print(total) 
+results = run_filter.limit(2).getInfo()
+print(json.dumps(results, indent = 2))
 ```
 
 
-
+IT WORKS! The filter didn't get stuck! Now, having the 
 
 
 Let's check some features characteristics comparing the original feature collection and
