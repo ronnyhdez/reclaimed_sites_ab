@@ -689,3 +689,4 @@ sample = non_intersecting_features.limit(2).getInfo()
 print(json.dumps(sample, indent=2))
 print("# polygons after filtering: ", non_intersecting_features.size().getInfo())
 ```
+

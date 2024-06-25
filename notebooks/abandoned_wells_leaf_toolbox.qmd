@@ -60,6 +60,8 @@ filters = [
     ee.Filter.eq("intersects_roads_buffer", 0),
     ee.Filter.eq("intersects_waterbodies", 0),
     ee.Filter.eq("intersects_waterbody_buffer", 0),
+    ee.Filter.greaterThan("count", 0),
+    ee.Filter.eq("fire_year", 9999),
 ]
 
 combined_filter = ee.Filter.And(*filters)
@@ -67,8 +69,8 @@ combined_filter = ee.Filter.And(*filters)
 features = abandoned_wells.filter(combined_filter)
 
 # Check a sample
-sample = features.limit(10)
-print(sample.getInfo())
+sample = features.limit(10).getInfo()
+print(json.dumps(sample, indent = 2))
 ```
 
 ## Import the local LEAF-toolbox modules
