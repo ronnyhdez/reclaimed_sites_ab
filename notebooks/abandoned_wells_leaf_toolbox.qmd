@@ -88,7 +88,12 @@ from leaftoolbox import SL2PV1
 
 ## Run LEAF-toolbox on biggest abandoned well polygons 
 
-For this one, I run in GEE the filters and save the 100 biggest polygons as an asset.
+<!-- For this one, I run in GEE the filters and save the 100 biggest polygons as an asset. -->
+
+### Landsat reflectance
+
+This is with the filtered asset (steps in script random_polygons) with 1000 random 
+selected abandoned wells.
 
 ```{python}
 # site = ["projects/ee-ronnyale/assets/largest_100_non_intersecting_polygons"]
@@ -170,7 +175,6 @@ print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
 # print(f"Execution time sitesDictionaryL09V0: {execution_time} seconds")
 ```
 
-
 ```{python}
 # Check dictionay characteristics
 # print(type(sitesDictionaryL08SR))
@@ -221,6 +225,33 @@ pickle_filename = 'time_series_l09sr.pkl'
 with open(pickle_filename, 'wb') as file:
     pickle.dump(combined_df, file)
 ```
+
+### Sentinel
+
+```{python}
+import time
+site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
+
+
+# Landsat 8
+start_time = time.time()
+sitesDictionaryHarmonized = LEAF.sampleSites(
+    site,
+    imageCollectionName="COPERNICUS/S2_SR_HARMONIZED",
+    algorithm=SL2PV0,
+    variableName="Surface_Reflectance",
+    maxCloudcover=90,
+    outputScaleSize=30,
+    inputScaleSize=30,
+    bufferSpatialSize=0,
+    bufferTemporalSize=["2021-04-01", "2022-10-01"],
+    subsamplingFraction=0.99,
+)
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Execution time sitesDictionaryL08SR: {execution_time} seconds")
+```
+
 
 ## Other notes:
 
