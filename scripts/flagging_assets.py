@@ -340,7 +340,7 @@ export_task = ee.batch.Export.table.toAsset(
 export_task.start()
 
 
-# Fifth Asset | Pixel count in entire asset ==========================================
+# Fifth Asset | Pixel count in original geometries asset ==========================================
 # ATTENTION: This one have to be v4 with pixel count
 pixel_count = ee.FeatureCollection("projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4")
 

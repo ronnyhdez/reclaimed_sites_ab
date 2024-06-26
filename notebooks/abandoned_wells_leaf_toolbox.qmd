@@ -33,6 +33,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import sys
+import pickle
 
 ee.Initialize()
 ```
@@ -90,7 +91,8 @@ from leaftoolbox import SL2PV1
 For this one, I run in GEE the filters and save the 100 biggest polygons as an asset.
 
 ```{python}
-site = ["projects/ee-ronnyale/assets/largest_100_non_intersecting_polygons"]
+# site = ["projects/ee-ronnyale/assets/largest_100_non_intersecting_polygons"]
+site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
 
 import time
 
@@ -128,6 +130,7 @@ sitesDictionaryL09SR = LEAF.sampleSites(
 end_time = time.time()
 execution_time = end_time - start_time
 print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
+# Execution time sitesDictionaryL09SR: 28227.399247169495 second
 
 # # Landsat 8
 # start_time = time.time()
@@ -173,8 +176,50 @@ print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
 # print(type(sitesDictionaryL08SR))
 # print(len(sitesDictionaryL08SR))
 
-# print(sitesDictionaryL08SR.keys())
-# print(sitesDictionaryL08SR.values())
+print(sitesDictionaryL08SR.keys())
+print(sitesDictionaryL08SR.values())
+```
+
+```{python}
+# Trying to convert to pandas dataframe
+records = []
+
+for site, entries in sitesDictionaryL08SR.items():
+    for entry in entries:
+        feature = entry['feature']
+        time_start = feature['timeStart']
+        df = entry['leaftoolbox.SL2PV0']
+        df['time_start'] = time_start
+        df['site'] = site
+        records.append(df)
+
+# Combine all data frames
+combined_df = pd.concat(records, ignore_index=True)
+# print(combined_df.head())
+pickle_filename = 'time_series_l08sr.pkl'
+with open(pickle_filename, 'wb') as file:
+    pickle.dump(combined_df, file)
+```
+
+```{python}
+# Trying to convert to pandas dataframe
+records = []
+
+for site, entries in sitesDictionaryL09SR.items():
+    for entry in entries:
+        feature = entry['feature']
+        time_start = feature['timeStart']
+        df = entry['leaftoolbox.SL2PV0']
+        df['time_start'] = time_start
+        df['site'] = site
+        records.append(df)
+
+# Combine all data frames
+combined_df = pd.concat(records, ignore_index=True)
+# print(combined_df.head())
+pickle_filename = 'time_series_l09sr.pkl'
+with open(pickle_filename, 'wb') as file:
+    pickle.dump(combined_df, file)
 ```
 
 ## Other notes:
@@ -203,8 +248,7 @@ print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
 
 
 
-
-
+# Plotting some results
 
 ```{python}
 # # Choose a site from the sitelist
