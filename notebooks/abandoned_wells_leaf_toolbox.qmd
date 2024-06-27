@@ -232,7 +232,6 @@ with open(pickle_filename, 'wb') as file:
 import time
 site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
 
-
 # Landsat 8
 start_time = time.time()
 sitesDictionaryHarmonized = LEAF.sampleSites(
@@ -250,8 +249,29 @@ sitesDictionaryHarmonized = LEAF.sampleSites(
 end_time = time.time()
 execution_time = end_time - start_time
 print(f"Execution time sitesDictionaryL08SR: {execution_time} seconds")
+# Execution time sitesDictionaryL08SR: 95571.5514318943 seconds (26 hours)
 ```
 
+```{python}
+# Trying to convert to pandas dataframe
+records = []
+
+for site, entries in sitesDictionaryHarmonized.items():
+    for entry in entries:
+        feature = entry['feature']
+        time_start = feature['timeStart']
+        df = entry['leaftoolbox.SL2PV0']
+        df['time_start'] = time_start
+        df['site'] = site
+        records.append(df)
+
+# Combine all data frames
+combined_df = pd.concat(records, ignore_index=True)
+# print(combined_df.head())
+pickle_filename = 'time_series_harmonized.pkl'
+with open(pickle_filename, 'wb') as file:
+    pickle.dump(combined_df, file)
+```
 
 ## Other notes:
 
