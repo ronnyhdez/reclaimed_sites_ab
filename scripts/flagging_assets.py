@@ -270,14 +270,14 @@ def set_fire_year(well):
 disturbed_wells = abandoned_wells.map(set_fire_year)
 
 
-# # Export the result with roads+residential+industrial
-# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3'
-# export_task = ee.batch.Export.table.toAsset(
-#     collection=disturbed_wells,
-#     description='export_intersecting_wells_flags_v3',
-#     assetId=export_asset_id
-# )
-# export_task.start()
+# Export the result with roads+residential+industrial
+export_asset_id = 'projects/ee-ronnyale/assets/fire_disturbance_flags_v3'
+export_task = ee.batch.Export.table.toAsset(
+    collection=disturbed_wells,
+    description='fire_disturbance_flags_v3',
+    assetId=export_asset_id
+)
+export_task.start()
 
 # Fourth Asset | Pixels within polygons ==========================================
 
@@ -287,7 +287,7 @@ disturbed_wells = abandoned_wells.map(set_fire_year)
 # count to the entire flagged asset.
 
 # First, we need the negative buffers to avoid edges: ==== 
-asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v3"
+asset = "projects/ee-ronnyale/assets/fire_disturbance_flags_v3"
 
 feature_collection = ee.FeatureCollection(asset)
 
@@ -331,21 +331,21 @@ pixel_count_complete = pixel_count_geom_flag.filter(
 
 
 # Export the result with roads+residential+industrial
-export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v4'
+export_asset_id = 'projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4'
 export_task = ee.batch.Export.table.toAsset(
     collection=pixel_count_complete,
-    description='export_intersecting_wells_flags_v4',
+    description='export_pixel_count_negative_buffer_v4',
     assetId=export_asset_id
 )
 export_task.start()
 
 
-# Fifth Asset | Pixel count in entire asset ==========================================
-# TODO: This one have to be projects/ee-ronnyale/assets/intersecting_wells_flags_v4
-pixel_count = ee.FeatureCollection("projects/ee-ronnyale/assets/intersecting_wells_flags_v3_reduced")
+# Fifth Asset | Pixel count in original geometries asset ==========================================
+# ATTENTION: This one have to be v4 with pixel count
+pixel_count = ee.FeatureCollection("projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4")
 
-# TODO: Temporal flagged (probably later will have to be v3)
-abandoned_wells = ee.FeatureCollection("projects/ee-ronnyale/assets/intersecting_wells_flags_v2")
+# ATTENTION: This one have to be v3
+abandoned_wells = ee.FeatureCollection("projects/ee-ronnyale/assets/fire_disturbance_flags_v3")
 
 pixel_count_selected = pixel_count.select('count', 'wllst__')
 primaryKey = 'wllst__'
@@ -376,10 +376,10 @@ merged = joined.map(merge_properties)
 # print(json.dumps(merged, indent = 2))
 
 
-export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v5'
+export_asset_id = 'projects/ee-ronnyale/assets/pixel_count_flags_v5'
 export_task = ee.batch.Export.table.toAsset(
     collection=merged,
-    description='export_intersecting_wells_flags_v5',
+    description='export_pixel_count_flags_v5',
     assetId=export_asset_id
 )
 export_task.start()
