@@ -86,9 +86,9 @@ from leaftoolbox import SL2PV0
 from leaftoolbox import SL2PV1
 ```
 
-## Run LEAF-toolbox on biggest abandoned well polygons 
+## Run LEAF-toolbox on selected abadnoned well polygons 
 
-<!-- For this one, I run in GEE the filters and save the 100 biggest polygons as an asset. -->
+Asset used for this section was created in GEE script **create_sampler_asset**
 
 ### Landsat reflectance
 
@@ -193,44 +193,19 @@ with open(pickle_filename, 'wb') as file:
 ```
 
 ```{python}
-# Trying to convert to pandas dataframe
-records = []
+first_item = sitesDictionaryL09SR[outer_key]
+results = []
 
-for site, entries in sitesDictionaryL08SR.items():
-    for entry in entries:
-        feature = entry['feature']
-        time_start = feature['timeStart']
-        df = entry['leaftoolbox.SL2PV0']
-        df['time_start'] = time_start
-        df['site'] = site
-        records.append(df)
+for item in range(len(first_item)):
+    df = first_item[item]['leaftoolbox.SL2PV0']
+    df['site'] = first_item[item]['feature']['wllst__']
+    results.append(df)
 
 # Combine all data frames
-combined_df = pd.concat(records, ignore_index=True)
-# print(combined_df.head())
-pickle_filename = 'time_series_l08sr.pkl'
-with open(pickle_filename, 'wb') as file:
-    pickle.dump(combined_df, file)
-```
+combined_df = pd.concat(results, ignore_index=True)
 
-```{python}
-# Trying to convert to pandas dataframe
-records = []
-
-for site, entries in sitesDictionaryL09SR.items():
-    for entry in entries:
-        feature = entry['feature']
-        time_start = feature['timeStart']
-        df = entry['leaftoolbox.SL2PV0']
-        df['time_start'] = time_start
-        df['site'] = site
-        records.append(df)
-
-# Combine all data frames
-combined_df = pd.concat(records, ignore_index=True)
-# print(combined_df.head())
-pickle_filename = 'time_series_l09sr.pkl'
-with open(pickle_filename, 'wb') as file:
+# Export results
+with open('time_series_l09sr.pkl', 'wb') as file:
     pickle.dump(combined_df, file)
 ```
 
@@ -261,31 +236,22 @@ print(f"Execution time sitesDictionaryL08SR: {execution_time} seconds")
 ```
 
 ```{python}
-# Trying to convert to pandas dataframe
-records = []
+first_item = sitesDictionaryHarmonized.[outer_key]
+results = []
 
-for site, entries in sitesDictionaryHarmonized.items():
-    for entry in entries:
-        feature = entry['feature']
-        time_start = feature['timeStart']
-        df = entry['leaftoolbox.SL2PV0']
-        df['time_start'] = time_start
-        df['site'] = site
-        records.append(df)
-
+for item in range(len(first_item)):
+    df = first_item[item]['leaftoolbox.SL2PV0']
+    df['site'] = first_item[item]['feature']['wllst__']
+    results.append(df)
+    
 # Combine all data frames
-combined_df = pd.concat(records, ignore_index=True)
-# print(combined_df.head())
-pickle_filename = 'time_series_harmonized.pkl'
-with open(pickle_filename, 'wb') as file:
+combined_df = pd.concat(results, ignore_index=True)
+
+# Export results
+with open('time_series_harmonized.pkl', 'wb') as file:
     pickle.dump(combined_df, file)
 ```
 
-```{python}
-combined_df.head()
-combined_df.tail()
-# combined_df.columns()
-```
 ## Other notes:
 
  - SR results will be used with these functions.
