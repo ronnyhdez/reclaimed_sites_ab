@@ -96,8 +96,8 @@ This is with the filtered asset (steps in script random_polygons) with 1000 rand
 selected abandoned wells.
 
 ```{python}
-# site = ["projects/ee-ronnyale/assets/largest_100_non_intersecting_polygons"]
-site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
+site = ["projects/ee-ronnyale/assets/random_sample_10_filtered_polygons"]
+# site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
 
 import time
 
@@ -181,7 +181,59 @@ print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
 # print(len(sitesDictionaryL08SR))
 
 print(sitesDictionaryL08SR.keys())
-print(sitesDictionaryL08SR['projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons'])
+print(sitesDictionaryL08SR['projects/ee-ronnyale/assets/random_sample_10_filtered_polygons'])
+
+import json
+print(json.dumps(sitesDictionaryL08SR, indent = 4))
+print(sitesDictionaryL08SR.head())
+
+import pprint
+pp = pprint.PrettyPrinter(indent = 4)
+pp.pprint(sitesDictionaryL08SR)
+
+keys = sitesDictionaryL08SR.keys()
+print(keys)
+
+# I have nested dictionaries
+outer_key = 'projects/ee-ronnyale/assets/random_sample_10_filtered_polygons'
+first_item = sitesDictionaryL08SR[outer_key][0]
+print(first_item)
+
+first_item_keys = first_item.keys()
+print(first_item_keys)
+
+# Now, each element contains 
+feature_item = sitesDictionaryL08SR[outer_key][0]['feature']
+print(feature_item.keys())
+feature_item.head()
+
+# Now, each element contains 
+feature_item = sitesDictionaryL08SR[outer_key][0]['leaftoolbox.SL2PV0']
+print(feature_item.keys())
+
+feature_item.head()
+
+
+# Obtain well site id
+site_id = sitesDictionaryL08SR[outer_key][2]['feature']['wllst__']
+print(site_id)
+
+
+items = sitesDictionaryL08SR.items()
+print(items)
+
+
+
+first_item = sitesDictionaryL08SR[outer_key]
+print(first_item[4]['feature']['wllst__'])
+print(range(len(first_item)))
+
+results = []
+for item in range(len(first_item)):
+    df = first_item[item]['leaftoolbox.SL2PV0']
+    df['site'] = first_item[item]['feature']['wllst__']
+    results.append(df)
+    print(first_item[item]['feature']['wllst__'])
 ```
 
 ```{python}
