@@ -118,26 +118,21 @@ export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags',
 # Second Asset | ABMI Industrial + Residential + Roads ==========================================
 
 ## This would be the next step after the other asset import
-asset_flagged = "projects/ee-ronnyale/assets/intersecting_wells_flags"
-abandoned_wells = ee.FeatureCollection(asset_flagged)
+abandoned_wells = ee.FeatureCollection("projects/ee-ronnyale/assets/intersecting_wells_flags")
 
 ## Industrial ABMI
-asset_id = "projects/ee-ronnyale/assets/industrial"
-asset_industrial = ee.FeatureCollection(asset_id)
+asset_industrial = ee.FeatureCollection("projects/ee-ronnyale/assets/industrial")
 
 ## Residential ABMI
-asset_id = "projects/ee-ronnyale/assets/residentials"
-asset_residential = ee.FeatureCollection(asset_id)
+asset_residential = ee.FeatureCollection("projects/ee-ronnyale/assets/residentials")
 
 ## Roads ABMI
-asset_id = "projects/ee-ronnyale/assets/roads"
-asset_roads = ee.FeatureCollection(asset_id)
+asset_roads = ee.FeatureCollection("projects/ee-ronnyale/assets/roads")
 
 ## Create buffer industrial-residential-roads
 buffered_industrial = asset_industrial.map(buffer_feature)
 buffered_residential = asset_residential.map(buffer_feature)
 buffered_roads = asset_roads.map(buffer_feature)
-
 
 ## Function to add values
 def define_intersection(well):
@@ -162,26 +157,12 @@ def define_intersection(well):
         .set("intersects_roads_buffer", intersects_roads_buffer)
     )
 
-
 ## Apply the intersection check to each well
 wells_with_intersections = abandoned_wells.map(define_intersection)
 
-## Apply the intersection check to each well
-test = wells_with_intersections.map(define_intersection)
-
-## Show a sample
-sample = test.limit(6).getInfo()
-## sample = merged_results.limit(6).getInfo()
-print(json.dumps(sample, indent=2))
-
-# # Export the result with roads+residential+industrial
-# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v2'
-# export_task = ee.batch.Export.table.toAsset(
-#     collection=wells_with_intersections,
-#     description='export_intersecting_wells_flags_v2',
-#     assetId=export_asset_id
-# )
-# export_task.start()
+export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags_v2',
+                      wells_with_intersections,
+                      'export_intersecting_wells_flags_v2')
 
 # XXXX Asset | AER wetland_treed + wetland ==========================================
 
