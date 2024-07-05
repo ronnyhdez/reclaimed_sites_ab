@@ -176,64 +176,20 @@ print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
 ```
 
 ```{python}
-# Check dictionay characteristics
-# print(type(sitesDictionaryL08SR))
-# print(len(sitesDictionaryL08SR))
-
-print(sitesDictionaryL08SR.keys())
-print(sitesDictionaryL08SR['projects/ee-ronnyale/assets/random_sample_10_filtered_polygons'])
-
-import json
-print(json.dumps(sitesDictionaryL08SR, indent = 4))
-print(sitesDictionaryL08SR.head())
-
-import pprint
-pp = pprint.PrettyPrinter(indent = 4)
-pp.pprint(sitesDictionaryL08SR)
-
-keys = sitesDictionaryL08SR.keys()
-print(keys)
-
-# I have nested dictionaries
-outer_key = 'projects/ee-ronnyale/assets/random_sample_10_filtered_polygons'
-first_item = sitesDictionaryL08SR[outer_key][0]
-print(first_item)
-
-first_item_keys = first_item.keys()
-print(first_item_keys)
-
-# Now, each element contains 
-feature_item = sitesDictionaryL08SR[outer_key][0]['feature']
-print(feature_item.keys())
-feature_item.head()
-
-# Now, each element contains 
-feature_item = sitesDictionaryL08SR[outer_key][0]['leaftoolbox.SL2PV0']
-print(feature_item.keys())
-
-feature_item.head()
-
-
-# Obtain well site id
-site_id = sitesDictionaryL08SR[outer_key][2]['feature']['wllst__']
-print(site_id)
-
-
-items = sitesDictionaryL08SR.items()
-print(items)
-
-
-
 first_item = sitesDictionaryL08SR[outer_key]
-print(first_item[4]['feature']['wllst__'])
-print(range(len(first_item)))
-
 results = []
+
 for item in range(len(first_item)):
     df = first_item[item]['leaftoolbox.SL2PV0']
     df['site'] = first_item[item]['feature']['wllst__']
     results.append(df)
-    print(first_item[item]['feature']['wllst__'])
+    
+# Combine all data frames
+combined_df = pd.concat(results, ignore_index=True)
+# combined_df.to_csv('test.csv', index = False)
+pickle_filename = 'time_series_l08sr.pkl'
+with open(pickle_filename, 'wb') as file:
+    pickle.dump(combined_df, file)
 ```
 
 ```{python}
@@ -334,7 +290,6 @@ combined_df.tail()
 
  - SR results will be used with these functions.
  - LAI results will be obtained with functions to be imported.
- - Need to include start & end dates to each feature.
 
 ```{python}
 # Test adding dates to each feature.
@@ -351,9 +306,6 @@ combined_df.tail()
 # # Map the function over the FeatureCollection
 # updated_feature_collection = small_site_list.map(set_properties)
 ```
-
-
-
 
 
 # Plotting some results
