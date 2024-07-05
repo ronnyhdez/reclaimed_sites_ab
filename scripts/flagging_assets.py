@@ -57,17 +57,14 @@ def export_if_not_exists(asset_id, collection, description):
 # First Asset | ABMI reservoirs + AER waterbodies ==========================================
 
 ## Abandoned wells
-asset_id = "projects/ee-ronnyale/assets/selected_polygons"
-abandoned_wells = ee.FeatureCollection(asset_id)
+abandoned_wells = ee.FeatureCollection("projects/ee-ronnyale/assets/selected_polygons")
 
 ## Reservoirs (already vector)
-asset_id = "projects/ee-ronnyale/assets/reservoirs"
-reservoirs = ee.FeatureCollection(asset_id)
+reservoirs = ee.FeatureCollection("projects/ee-ronnyale/assets/reservoirs")
 buffered_reservoirs = reservoirs.map(buffer_feature)
 
 ## LULC asset
-asset_id = "projects/ee-eoagsaer/assets/LULC_2022_EE"
-asset_image = ee.Image(asset_id)
+asset_image = ee.Image("projects/ee-eoagsaer/assets/LULC_2022_EE")
 
 ## Mask for waterbodies
 water_mask = asset_image.eq(1)
@@ -105,11 +102,6 @@ def define_intersection(well):
 
 # Apply the intersection check to each well
 wells_with_intersections = abandoned_wells.map(define_intersection)
-
-# Show a sample
-# sample = wells_with_intersections.limit(6).getInfo()
-# sample = merged_results.limit(6).getInfo()
-# print(json.dumps(sample, indent=2))
 
 export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags',
                       wells_with_intersections,
@@ -285,15 +277,9 @@ def set_fire_year(well):
 # Map the function over the abandoned wells collection
 disturbed_wells = abandoned_wells.map(set_fire_year)
 
-
-# Export the result with roads+residential+industrial
-export_asset_id = 'projects/ee-ronnyale/assets/fire_disturbance_flags_v3'
-export_task = ee.batch.Export.table.toAsset(
-    collection=disturbed_wells,
-    description='fire_disturbance_flags_v3',
-    assetId=export_asset_id
-)
-export_task.start()
+export_if_not_exists('projects/ee-ronnyale/assets/fire_disturbance_flags_v3',
+                      disturbed_wells,
+                      'fire_disturbance_flags_v3')
 
 # Fourth Asset | Pixels within polygons ==========================================
 
@@ -303,9 +289,7 @@ export_task.start()
 # count to the entire flagged asset.
 
 # First, we need the negative buffers to avoid edges: ==== 
-asset = "projects/ee-ronnyale/assets/fire_disturbance_flags_v3"
-
-feature_collection = ee.FeatureCollection(asset)
+feature_collection = ee.FeatureCollection("projects/ee-ronnyale/assets/fire_disturbance_flags_v3")
 
 # Function to apply inward buffer to each feature
 def apply_inward_dilation(feature):
@@ -345,30 +329,17 @@ pixel_count_geom_flag = pixel_count.map(check_empty_coordinates)
 pixel_count_complete = pixel_count_geom_flag.filter(
     ee.Filter.eq('empty_buffer', 0))
 
-
-# Export the result with roads+residential+industrial
-export_asset_id = 'projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4'
-export_task = ee.batch.Export.table.toAsset(
-    collection=pixel_count_complete,
-    description='export_pixel_count_negative_buffer_v4',
-    assetId=export_asset_id
-)
-export_task.start()
-
+export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4',
+                      pixel_count_complete,
+                      'export_pixel_count_negative_buffer_v4')
 
 # Fifth Asset | Pixel count in original geometries asset ==========================================
-# ATTENTION: This one have to be v4 with pixel count
 pixel_count = ee.FeatureCollection("projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4")
-
-# ATTENTION: This one have to be v3
 abandoned_wells = ee.FeatureCollection("projects/ee-ronnyale/assets/fire_disturbance_flags_v3")
 
+# Define properties keys to perform the join
 pixel_count_selected = pixel_count.select('count', 'wllst__')
-primaryKey = 'wllst__'
-secondaryKey = 'wllst__'
-
-# Define a filter that matches features based on the keys
-join_filter = ee.Filter.equals(leftField=primaryKey, rightField=secondaryKey)
+join_filter = ee.Filter.equals(leftField='wllst__', rightField='wllst__')
 
 # Define the join
 inner_join = ee.Join.saveAll(matchesKey='matches', outer=True)
@@ -391,11 +362,7 @@ merged = joined.map(merge_properties)
 # result = merged.limit(2).getInfo()
 # print(json.dumps(merged, indent = 2))
 
+export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_flags_v5',
+                      merged,
+                      'export_pixel_count_flags_v5')
 
-export_asset_id = 'projects/ee-ronnyale/assets/pixel_count_flags_v5'
-export_task = ee.batch.Export.table.toAsset(
-    collection=merged,
-    description='export_pixel_count_flags_v5',
-    assetId=export_asset_id
-)
-export_task.start()
