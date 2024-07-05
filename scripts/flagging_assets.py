@@ -1,16 +1,25 @@
 """
 Flagging assets script.
 
-This script will read assets in GEE to create buffers around the
-features and flag if the abandoned well polygon intersects one 
-of those buffers. No filtering is done with this script. Flags
-can be use by final user to apply their own filters.
+This script will reads assets in GEE to create buffers around the
+features and flags if the abandoned well polygon intersects one 
+of those buffers. No filtering is done within this script. Flags
+can be used by the final user to apply their own filters.
+
+Also, the script creates a new property which contains the number 
+of Landsat pixels that fit inside the abandoned well polygon, as
+well a property indicating the earliest fire after the reclamation
+date.
+
+Given the API memory limits, each step creates an asset, which
+is read in the next steps to create a new asset, and so on.
 
 Author: Ronny A. Hernández Mora
 """
 
 import ee
 import json
+import sys
 
 try:
     ee.Initialize(opt_url='https://earthengine-highvolume.googleapis.com')
@@ -21,9 +30,29 @@ except:
     print("Unexpected error:", sys.exc_info()[0])
     raise
 
-## Define function for buffers
+## Define functions
 def buffer_feature(feature):
     return feature.buffer(30)
+
+def assets_exists(export_asset_id):
+    try:
+        ee.data.getAsset(export_asset_id)
+        return True
+    except:
+        return False
+
+def export_if_not_exists(asset_id, collection, description):
+    if not assets_exists(asset_id):
+        export_task = ee.batch.Export.table.toAsset(
+            collection = collection,
+            description = description,
+            assetId = asset_id
+        )
+        export_task.start()
+        print(f'Export task for {asset_id} started')
+    else:
+        print(f'No export for {asset_id}. Already exists')
+
 
 # First Asset | ABMI reservoirs + AER waterbodies ==========================================
 
@@ -55,7 +84,6 @@ water_bodies_vector = water_image.reduceToVectors(
 ## Create buffer of waterbodies
 buffered_waterbodies = water_bodies_vector.map(buffer_feature)
 
-
 # Function to check if a well intersects with waterbodies or buffered waterbodies
 def define_intersection(well):
     intersects_reservoirs = reservoirs.filterBounds(well.geometry()).size().gt(0)
@@ -75,27 +103,19 @@ def define_intersection(well):
         .set("intersects_reservoirs_buffer", intersects_reservoirs_buffer)
     )
 
-
 # Apply the intersection check to each well
 wells_with_intersections = abandoned_wells.map(define_intersection)
 
 # Show a sample
-sample = wells_with_intersections.limit(6).getInfo()
+# sample = wells_with_intersections.limit(6).getInfo()
 # sample = merged_results.limit(6).getInfo()
-print(json.dumps(sample, indent=2))
+# print(json.dumps(sample, indent=2))
 
-# # Export the result with waterbodies and reservoirs
-# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags'
-# export_task = ee.batch.Export.table.toAsset(
-#     collection=wells_with_intersections,
-#     description='export_intersecting_wells_flags',
-#     assetId=export_asset_id
-# )
-# export_task.start()
-
+export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags',
+                      wells_with_intersections,
+                      'export_intersecting_wells_flags')
 
 # Second Asset | ABMI Industrial + Residential + Roads ==========================================
-
 
 ## This would be the next step after the other asset import
 asset_flagged = "projects/ee-ronnyale/assets/intersecting_wells_flags"
