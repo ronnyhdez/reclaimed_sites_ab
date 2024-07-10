@@ -86,9 +86,9 @@ from leaftoolbox import SL2PV0
 from leaftoolbox import SL2PV1
 ```
 
-## Run LEAF-toolbox on biggest abandoned well polygons 
+## Run LEAF-toolbox on selected abadnoned well polygons 
 
-<!-- For this one, I run in GEE the filters and save the 100 biggest polygons as an asset. -->
+Asset used for this section was created in GEE script **create_sampler_asset**
 
 ### Landsat reflectance
 
@@ -96,8 +96,8 @@ This is with the filtered asset (steps in script random_polygons) with 1000 rand
 selected abandoned wells.
 
 ```{python}
-# site = ["projects/ee-ronnyale/assets/largest_100_non_intersecting_polygons"]
-site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
+site = ["projects/ee-ronnyale/assets/random_sample_10_filtered_polygons"]
+# site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
 
 import time
 
@@ -176,53 +176,36 @@ print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
 ```
 
 ```{python}
-# Check dictionay characteristics
-# print(type(sitesDictionaryL08SR))
-# print(len(sitesDictionaryL08SR))
+first_item = sitesDictionaryL08SR[outer_key]
+results = []
 
-print(sitesDictionaryL08SR.keys())
-print(sitesDictionaryL08SR['projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons'])
-```
-
-```{python}
-# Trying to convert to pandas dataframe
-records = []
-
-for site, entries in sitesDictionaryL08SR.items():
-    for entry in entries:
-        feature = entry['feature']
-        time_start = feature['timeStart']
-        df = entry['leaftoolbox.SL2PV0']
-        df['time_start'] = time_start
-        df['site'] = site
-        records.append(df)
-
+for item in range(len(first_item)):
+    df = first_item[item]['leaftoolbox.SL2PV0']
+    df['site'] = first_item[item]['feature']['wllst__']
+    results.append(df)
+    
 # Combine all data frames
-combined_df = pd.concat(records, ignore_index=True)
-# print(combined_df.head())
+combined_df = pd.concat(results, ignore_index=True)
+# combined_df.to_csv('test.csv', index = False)
 pickle_filename = 'time_series_l08sr.pkl'
 with open(pickle_filename, 'wb') as file:
     pickle.dump(combined_df, file)
 ```
 
 ```{python}
-# Trying to convert to pandas dataframe
-records = []
+first_item = sitesDictionaryL09SR[outer_key]
+results = []
 
-for site, entries in sitesDictionaryL09SR.items():
-    for entry in entries:
-        feature = entry['feature']
-        time_start = feature['timeStart']
-        df = entry['leaftoolbox.SL2PV0']
-        df['time_start'] = time_start
-        df['site'] = site
-        records.append(df)
+for item in range(len(first_item)):
+    df = first_item[item]['leaftoolbox.SL2PV0']
+    df['site'] = first_item[item]['feature']['wllst__']
+    results.append(df)
 
 # Combine all data frames
-combined_df = pd.concat(records, ignore_index=True)
-# print(combined_df.head())
-pickle_filename = 'time_series_l09sr.pkl'
-with open(pickle_filename, 'wb') as file:
+combined_df = pd.concat(results, ignore_index=True)
+
+# Export results
+with open('time_series_l09sr.pkl', 'wb') as file:
     pickle.dump(combined_df, file)
 ```
 
@@ -253,36 +236,26 @@ print(f"Execution time sitesDictionaryL08SR: {execution_time} seconds")
 ```
 
 ```{python}
-# Trying to convert to pandas dataframe
-records = []
+first_item = sitesDictionaryHarmonized.[outer_key]
+results = []
 
-for site, entries in sitesDictionaryHarmonized.items():
-    for entry in entries:
-        feature = entry['feature']
-        time_start = feature['timeStart']
-        df = entry['leaftoolbox.SL2PV0']
-        df['time_start'] = time_start
-        df['site'] = site
-        records.append(df)
-
+for item in range(len(first_item)):
+    df = first_item[item]['leaftoolbox.SL2PV0']
+    df['site'] = first_item[item]['feature']['wllst__']
+    results.append(df)
+    
 # Combine all data frames
-combined_df = pd.concat(records, ignore_index=True)
-# print(combined_df.head())
-pickle_filename = 'time_series_harmonized.pkl'
-with open(pickle_filename, 'wb') as file:
+combined_df = pd.concat(results, ignore_index=True)
+
+# Export results
+with open('time_series_harmonized.pkl', 'wb') as file:
     pickle.dump(combined_df, file)
 ```
 
-```{python}
-combined_df.head()
-combined_df.tail()
-# combined_df.columns()
-```
 ## Other notes:
 
  - SR results will be used with these functions.
  - LAI results will be obtained with functions to be imported.
- - Need to include start & end dates to each feature.
 
 ```{python}
 # Test adding dates to each feature.
@@ -299,9 +272,6 @@ combined_df.tail()
 # # Map the function over the FeatureCollection
 # updated_feature_collection = small_site_list.map(set_properties)
 ```
-
-
-
 
 
 # Plotting some results
