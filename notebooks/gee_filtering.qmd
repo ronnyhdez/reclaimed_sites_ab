@@ -46,27 +46,9 @@ The polygons in the data are the result of the filter applied in the `run_polygo
 
 
 ```{python}
-# # Get list of assets
-
-# ee.Initialize()
-# path = 'users/ronnyale'
-
-# # List assets
-# assets = ee.data.listAssets({'parent': path})
-# print(assets)
-# # Extract asset names
-# asset_names = [asset['id'] for asset in assets['assets']]
-
-# # Print the asset names
-# print("List of assets:")
-# for asset in asset_names:
-#     print(asset)
-
 ee.Initialize()
 
-asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
-
-abandoned_wells = ee.FeatureCollection(asset_id)
+abandoned_wells = ee.FeatureCollection('projects/ee-ronnyale/assets/selected_polygons')
 
 # getInfo query is aborted after accumulating 5000 elements
 # print(abandoned_wells.getInfo())
@@ -469,6 +451,57 @@ wells_map
 
 # Polygons size
 
+For the number of pixels that fit inside the abandoned well polygons calculation, we want to avoid the edges. For this
+I'm going to create a negative buffer of 30m and use those dilated polygons to count the number of pixels.
+
+```{python}
+import ee
+ee.Initialize()
+
+feature_collection = ee.FeatureCollection(
+    "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
+)
+
+# Function to apply inward buffer to each feature
+def apply_inward_dilation(feature):
+    buffered_feature = feature.buffer(-30, 1)
+    # dilated_feature = feature.difference(buffered_feature)
+    return buffered_feature
+    # return dilated_feature
+
+# Apply the function to each feature in the collection
+dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
+
+import folium
+import geemap
+
+Map = geemap.Map(center=[53.516, -113.498], zoom=5)
+Map.addLayer(feature_collection, {"color": "blue"}, "Original FeatureCollection")
+Map.addLayer(dilated_abandoned_wells, {"color": "red"}, "Dilated FeatureCollection")
+Map
+```
+
+## Number of pixels in dilated abandoned well polygons
+```{python}
+pixels = (
+    ee.Image.constant(1)
+    .clip(dilated_abandoned_wells)
+    .rename("pixels")
+    .reproject(
+        crs="EPSG:32512",  # UTM zone 12N
+        scale=30,
+    )
+)
+
+pixel_count = pixels.reduceRegions(
+    collection=dilated_abandoned_wells, reducer=ee.Reducer.count(), scale=30
+)
+
+# Check results
+print("Pixel counts: ", pixel_count.limit(2).getInfo())
+```
+
+## Number of pixels in abandoned well polygons
 ```{python}
 asset = "projects/ee-ronnyale/assets/intersecting_wells_flags_v2"
 
@@ -490,8 +523,28 @@ pixel_count = pixels.reduceRegions(
 
 # Check results
 print("Pixel counts: ", pixel_count.limit(2).getInfo())
-```
 
+# # Export the result with roads+residential+industrial
+# export_asset_id = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v3_dilated'
+# export_task = ee.batch.Export.table.toAsset(
+#     collection=pixel_count,
+#     description='export_intersecting_wells_flags_v3_dilated',
+#     assetId=export_asset_id
+# )
+# export_task.start()
+
+
+# check the empty geometries from error in tasks
+def is_geometry_empty(feature):
+    return feature.geometry().isEmpty()
+
+
+# Filter the feature collection for empty geometries
+empty_geometries = pixel_count.filter(is_geometry_empty)
+
+# Get the count of features with empty geometries
+empty_count = empty_geometries.size().getInfo()
+```
 
 ## Check 30x30m pixels within polygons
 
@@ -517,44 +570,7 @@ plt.ylabel('Frequency')
 plt.show()
 ```
 
-# Non-intersecting wells and non-empty pixels polygons
-
-```{python}
-# Read new asset
-asset_id = "projects/ee-ronnyale/assets/intersecting_wells_flags_v3"
-abandoned_wells = ee.FeatureCollection(asset_id)
-
-# Get all polygons without an intersetion
-filters = [
-    ee.Filter.eq("intersects_industrial", 0),
-    ee.Filter.eq("intersects_industrial_buffer", 0),
-    ee.Filter.eq("intersects_reservoirs", 0),
-    ee.Filter.eq("intersects_reservoirs_buffer", 0),
-    ee.Filter.eq("intersects_residential", 0),
-    ee.Filter.eq("intersects_residential_buffer", 0),
-    ee.Filter.eq("intersects_roads", 0),
-    ee.Filter.eq("intersects_roads_buffer", 0),
-    ee.Filter.eq("intersects_waterbodies", 0),
-    ee.Filter.eq("intersects_waterbody_buffer", 0),
-    ee.Filter.greaterThan("count", 0),
-]
-
-# Combine the filters using ee.Filter.or
-combined_filter = ee.Filter.And(*filters)
-
-# Apply the combined filter to the feature collection
-non_intersecting_features = abandoned_wells.filter(combined_filter)
-
-sample = non_intersecting_features.limit(2).getInfo()
-print(json.dumps(sample, indent=2))
-print("# polygons after filtering: ", non_intersecting_features.size().getInfo())
-```
-
 # Fires polygons
-
-```{python}
-fires = ee.FeatureCollection('projects/ee-ronnyale/assets/fires')
-```
 
 ```{python}
 abandoned_wells = ee.FeatureCollection(
@@ -601,9 +617,58 @@ def set_fire_year(well):
 
 # Map the function over the abandoned wells collection
 updated_wells = abandoned_wells.map(set_fire_year)
+```
+
+
+```{python}
+# Using the created asset
+flagged_fires = ee.FeatureCollection('projects/ee-ronnyale/assets/intersecting_wells_flags_v4')
+
+filtered_fires = flagged_fires.filter(ee.Filter.neq('fire_year', 9999))
 
 # Check results (limited to avoid memory issues)
-results = updated_wells.limit(2).getInfo()
+results = filtered_fires.limit(2).getInfo()
 print('Updated Abandoned Wells:', json.dumps(results, indent=2))
+```
+
+```{python}
+Map = geemap.Map(center=[52.82361173778549, -112.2608045090065], zoom=10)
+Map.addLayer(filtered_fires, {'color': 'blue'}, 'Polygons')
+Map.addLayer(fires, {'color': 'red'}, 'fires')
+Map
+```
+
+# Non-intersecting wells - non-empty pixels polygons - not disturbed polygons
+
+```{python}
+# Read new asset
+asset_id = "projects/ee-ronnyale/assets/intersecting_wells_flags_v4"
+abandoned_wells = ee.FeatureCollection(asset_id)
+
+# Get all polygons without an intersetion
+filters = [
+    ee.Filter.eq("intersects_industrial", 0),
+    ee.Filter.eq("intersects_industrial_buffer", 0),
+    ee.Filter.eq("intersects_reservoirs", 0),
+    ee.Filter.eq("intersects_reservoirs_buffer", 0),
+    ee.Filter.eq("intersects_residential", 0),
+    ee.Filter.eq("intersects_residential_buffer", 0),
+    ee.Filter.eq("intersects_roads", 0),
+    ee.Filter.eq("intersects_roads_buffer", 0),
+    ee.Filter.eq("intersects_waterbodies", 0),
+    ee.Filter.eq("intersects_waterbody_buffer", 0),
+    ee.Filter.greaterThan("count", 0),
+    ee.Filter.eq("fire_year", 9999),
+]
+
+# Combine the filters using ee.Filter.or
+combined_filter = ee.Filter.And(*filters)
+
+# Apply the combined filter to the feature collection
+non_intersecting_features = abandoned_wells.filter(combined_filter)
+
+sample = non_intersecting_features.limit(2).getInfo()
+print(json.dumps(sample, indent=2))
+print("# polygons after filtering: ", non_intersecting_features.size().getInfo())
 ```
 
