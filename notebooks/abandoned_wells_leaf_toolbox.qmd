@@ -181,7 +181,7 @@ print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
 # print(len(sitesDictionaryL08SR))
 
 print(sitesDictionaryL08SR.keys())
-print(sitesDictionaryL08SR.values())
+print(sitesDictionaryL08SR['projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons'])
 ```
 
 ```{python}
@@ -273,6 +273,11 @@ with open(pickle_filename, 'wb') as file:
     pickle.dump(combined_df, file)
 ```
 
+```{python}
+combined_df.head()
+combined_df.tail()
+# combined_df.columns()
+```
 ## Other notes:
 
  - SR results will be used with these functions.

@@ -1,10 +1,25 @@
+"""
+Flagging assets script.
 
+This script will read assets in GEE to create buffers around the
+features and flag if the abandoned well polygon intersects one 
+of those buffers. No filtering is done with this script. Flags
+can be use by final user to apply their own filters.
+
+Author: Ronny A. Hernández Mora
+"""
 
 import ee
-import geemap
 import json
 
-ee.Initialize()
+try:
+    ee.Initialize(opt_url='https://earthengine-highvolume.googleapis.com')
+    print('Google Earth Engine has initialized successfully!')
+except ee.EEException as e:
+    print('Failed to initialize GEE', e)
+except:
+    print("Unexpected error:", sys.exc_info()[0])
+    raise
 
 ## Define function for buffers
 def buffer_feature(feature):
