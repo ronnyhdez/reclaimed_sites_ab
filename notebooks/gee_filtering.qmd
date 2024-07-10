@@ -46,27 +46,9 @@ The polygons in the data are the result of the filter applied in the `run_polygo
 
 
 ```{python}
-# # Get list of assets
-
-# ee.Initialize()
-# path = 'users/ronnyale'
-
-# # List assets
-# assets = ee.data.listAssets({'parent': path})
-# print(assets)
-# # Extract asset names
-# asset_names = [asset['id'] for asset in assets['assets']]
-
-# # Print the asset names
-# print("List of assets:")
-# for asset in asset_names:
-#     print(asset)
-
 ee.Initialize()
 
-asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
-
-abandoned_wells = ee.FeatureCollection(asset_id)
+abandoned_wells = ee.FeatureCollection('projects/ee-ronnyale/assets/selected_polygons')
 
 # getInfo query is aborted after accumulating 5000 elements
 # print(abandoned_wells.getInfo())
