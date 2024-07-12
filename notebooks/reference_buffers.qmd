@@ -35,10 +35,10 @@ ee.Initialize()
 
 
 ```{python}
-polygons = ee.FeatureCollection("projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons")
+polygons = ee.FeatureCollection("projects/ee-ronnyale/assets/pixel_count_flags_v5")
 
 def create_buffer(feature):
-  buffered_feature = feature.buffer(60, 1)
+  buffered_feature = feature.buffer(30, 1)
   return buffered_feature
 
 polygons_with_buffer = polygons.map(create_buffer)
@@ -67,11 +67,14 @@ buffers_map
 Getting the difference between the first and second buffer
 ```{python}
 def create_well_buffer(feature):
-    buffer_geometry = feature.buffer(60, 1)
+    buffer_geometry = feature.buffer(30, 1)
     buffer_geometry_feature = buffer_geometry.geometry()
-    reference_buffer = buffer_geometry_feature.buffer(200, 1)
+    reference_buffer = buffer_geometry_feature.buffer(90, 1)
     buffer_only_geometry = reference_buffer.difference(buffer_geometry_feature)
-    return ee.Feature(buffer_only_geometry)
+    buffer_id = ee.Feature(buffer_only_geometry).copyProperties(
+        feature, ['wllst__'])
+    return ee.Feature(buffer_id)
+
 
 # Apply the buffer function to the polygons feature collection
 buffer_only_polygons = polygons.map(create_well_buffer)
@@ -80,3 +83,8 @@ buffers_map.addLayer(buffer_only_polygons, {'color': 'black'}, 'only buffer')
 buffers_map
 ```
 
+
+```{python}
+sample = buffer_only_polygons.limit(1).getInfo()
+print(json.dumps(sample, indent = 2))
+```

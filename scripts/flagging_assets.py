@@ -366,3 +366,20 @@ export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_flags_v5',
                       merged,
                       'export_pixel_count_flags_v5')
 
+# Sixth Asset | Reference buffers ==========================================
+polygons = ee.FeatureCollection('projects/ee-ronnyale/assets/pixel_count_flags_v5')
+
+def create_well_buffer(feature):
+    buffer_geometry = feature.buffer(30, 1)
+    buffer_geometry_feature = buffer_geometry.geometry()
+    reference_buffer = buffer_geometry_feature.buffer(90, 1)
+    buffer_only_geometry = reference_buffer.difference(buffer_geometry_feature)
+    buffer_id = ee.Feature(buffer_only_geometry).copyProperties(feature, ['wllst__'])
+    return ee.Feature(buffer_id)
+
+# Apply the buffer function to the polygons feature collection
+buffer_only_polygons = polygons.map(create_well_buffer)
+
+export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers',
+                     buffer_only_polygons,
+                     'export_reference_buffers')
