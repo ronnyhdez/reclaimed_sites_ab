@@ -374,8 +374,9 @@ def create_well_buffer(feature):
     buffer_geometry_feature = buffer_geometry.geometry()
     reference_buffer = buffer_geometry_feature.buffer(90, 1)
     buffer_only_geometry = reference_buffer.difference(buffer_geometry_feature)
-    buffer_id = ee.Feature(buffer_only_geometry).copyProperties(feature, ['wllst__'])
-    return ee.Feature(buffer_id)
+    wllst_value = feature.get('wllst__')
+    buffer_feature = ee.Feature(buffer_only_geometry).set('wllst__', wllst_value)    
+    return buffer_feature
 
 # Apply the buffer function to the polygons feature collection
 buffer_only_polygons = polygons.map(create_well_buffer)
