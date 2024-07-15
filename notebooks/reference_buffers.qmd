@@ -102,8 +102,6 @@ polygons = ee.FeatureCollection(
     'projects/ee-ronnyale/assets/pixel_count_flags_v5')
 
 # Define the function to create the buffer and retain the 'wllst__' property
-
-
 def create_well_buffer(feature):
     buffer_geometry = feature.buffer(30, 1)
     buffer_geometry_feature = buffer_geometry.geometry()
@@ -114,24 +112,5 @@ def create_well_buffer(feature):
         buffer_only_geometry).set('wllst__', wllst_value)
     return buffer_feature
 
-
-# Apply the buffer function to the polygons feature collection
 buffer_only_polygons = polygons.map(create_well_buffer)
-
-# Check the properties to ensure 'wllst__' is included
-print(buffer_only_polygons.first().getInfo())
-
-# Export the resulting FeatureCollection to an asset
-task = ee.batch.Export.table.toAsset(
-    collection=buffer_only_polygons,
-    description='buffer_only_polygons_export',
-    assetId='projects/ee-ronnyale/assets/buffer_only_polygons_v1'
-)
-
-# Start the export task
-task.start()
-
-# Print status of the export task
-print("Export task started. Monitor the task in the Earth Engine Code Editor under 'Tasks'.")
-
 ```
