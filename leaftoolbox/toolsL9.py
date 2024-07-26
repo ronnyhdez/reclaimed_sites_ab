@@ -1,5 +1,5 @@
 import ee  
-from . import mosaic
+import mosaic
 
 # landsat 8  land mask
 # clear and no water, cloud shadow, snow, water
