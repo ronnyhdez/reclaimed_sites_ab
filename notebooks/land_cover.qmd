@@ -1,0 +1,80 @@
+---
+title: "Land cover areas"
+author: Ronny A. Hernandez Mora
+execute:
+  message: false
+  warning: false
+format: 
+  html:
+    theme:
+      - flatly
+    linkcolor: "#FF5500"
+    highlight-style: tango
+    toc: true
+    toc-title: Table of contents
+    toc-location: left
+    number-sections: false
+    colorlinks: true
+    code-fold: true
+    code-line-numbers: true
+editor: visual
+jupyter: python3
+editor_options: 
+  chunk_output_type: console
+---
+
+# Reclaimed polygons 
+
+Check the area in squared meters of each land cover class in each of
+the reclaimed polygons
+
+```{python}
+asset_id = "projects/ee-ronnyale/assets/reclaimed_sites_areas_v6"
+abandoned_wells = ee.FeatureCollection(asset_id)
+
+# Get all polygons without an intersetion
+filters = [
+    ee.Filter.eq("intersects_industrial", 0),
+    ee.Filter.eq("intersects_industrial_buffer", 0),
+    ee.Filter.eq("intersects_reservoirs", 0),
+    ee.Filter.eq("intersects_reservoirs_buffer", 0),
+    ee.Filter.eq("intersects_residential", 0),
+    ee.Filter.eq("intersects_residential_buffer", 0),
+    ee.Filter.eq("intersects_roads", 0),
+    ee.Filter.eq("intersects_roads_buffer", 0),
+    ee.Filter.eq("intersects_waterbodies", 0),
+    ee.Filter.eq("intersects_waterbody_buffer", 0),
+    ee.Filter.greaterThan("count", 0),
+    ee.Filter.eq("fire_year", 9999),
+]
+
+# Combine the filters using ee.Filter.or
+combined_filter = ee.Filter.And(*filters)
+
+# Apply the combined filter to the feature collection
+non_intersecting_features = abandoned_wells.filter(combined_filter)
+
+sample = non_intersecting_features.limit(2).getInfo()
+print(json.dumps(sample, indent=2))
+print("# polygons after filtering: ", non_intersecting_features.size().getInfo())
+```
+
+# Reference buffers
+
+Using only the filtered abandoned polygons, check the squared meters land cover
+area classification for each of the reference buffers.
+
+```{python}
+reference_buffers = ee.FeatureCollection(
+    'projects/ee-ronnyale/assets/reference_buffers_lc_areas')
+reclaimed_ids = non_intersecting_features.aggregate_array('wllst__')
+
+# Define the filter to match 'wllst__' values in reclaimed_ids
+filtered_buffers = reference_buffers.filter(
+    ee.Filter.inList('wllst__', reclaimed_ids))
+
+sample = filtered_buffers.limit(2).getInfo()
+print(json.dumps(sample, indent=2))
+print("# reference buffers sample", filtered_buffers.size().getInfo())
+```
+
