@@ -446,3 +446,12 @@ export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers_lc_areas',
                      reference_areas,                    
                      'export_reference_land_cover_buffers')
 
+# Eighth Asset | Reclaimed polygons land cover area ==========================
+raw_reclaimed_sites = ee.FeatureCollection('projects/ee-ronnyale/assets/pixel_count_flags_v5');
+
+reclaimed_sites_areas = raw_reclaimed_sites.map(calculate_class_area)
+
+export_if_not_exists('projects/ee-ronnyale/assets/reclaimed_sites_areas_v6',
+                     reclaimed_sites_areas,                    
+                     'export_reclaimed_sites_areas')
+
