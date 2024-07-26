@@ -384,3 +384,74 @@ buffer_only_polygons = polygons.map(create_well_buffer)
 export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers',
                      buffer_only_polygons,
                      'export_reference_buffers')
+
+# Seventh Asset | Reference buffers land cover area ==========================
+image = ee.Image('projects/ee-ronnyale/assets/aer_lulc')
+
+# Define original classes and the simplified version
+original_classes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+simplified_values = [
+    0,  # 0 - Unclassified -> Unclassified
+    2,  # 1 - Water -> Other
+    4,  # 2 - Bryoids -> Other
+    2,  # 3 - Wetland – Treed -> Wetland/Marsh/Swamp
+    3,  # 4 - Herbs -> Crop/Herbaceous
+    4,  # 5 - Exposed/Barren Land -> Other
+    4,  # 6 - Shrubland -> Other
+    2,  # 7 - Wetland -> Wetland/Marsh/Swamp
+    3,  # 8 - Grassland -> Crop/Herbaceous
+    1,  # 9 - Coniferous -> Forest
+    1,  # 10 - Broadleaf -> Forest
+    1,  # 11 - Mixedwood -> Forest
+    3,  # 12 - Agriculture -> Crop/Herbaceous
+    4,  # 13 - Developed -> Other
+]
+
+# Reclassify the image
+reclassified_image = image.remap(original_classes, simplified_values)
+
+# TODO: Probably export the reclassified image
+
+# Function to calculate the area of each land cover class within the polygon
+def calculate_class_area(feature):
+    areas = ee.Image.pixelArea().addBands(reclassified_image) \
+        .reduceRegion(
+            reducer = ee.Reducer.sum().group(
+                groupField = 1,
+                groupName = 'class'
+            ),
+            geometry = feature.geometry(),
+            scale = 10,
+            maxPixels = 1e13
+        )
+    # Extract grouped dictionary
+    grouped = ee.List(areas.get('groups'))
+
+    # Conver list to dictionary
+    areas_dict = ee.Dictionary(
+        grouped.map(lambda item: ee.List([
+            ee.String(ee.Dictionary(item).get('class')),
+            ee.Number(ee.Dictionary(item).get('sum'))
+        ])).flatten()
+    )
+
+    # Set the areas as properties of the feature
+    return feature.set(areas_dict)
+
+# Read the reference buffers asset and calculate land cover areas
+reference = ee.FeatureCollection('projects/ee-ronnyale/assets/reference_buffers_test_gee')
+reference_areas = reference.map(calculate_class_area)
+
+export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers_lc_areas',
+                     reference_areas,                    
+                     'export_reference_land_cover_buffers')
+
+# Eighth Asset | Reclaimed polygons land cover area ==========================
+raw_reclaimed_sites = ee.FeatureCollection('projects/ee-ronnyale/assets/pixel_count_flags_v5');
+
+reclaimed_sites_areas = raw_reclaimed_sites.map(calculate_class_area)
+
+export_if_not_exists('projects/ee-ronnyale/assets/reclaimed_sites_areas_v6',
+                     reclaimed_sites_areas,                    
+                     'export_reclaimed_sites_areas')
+
