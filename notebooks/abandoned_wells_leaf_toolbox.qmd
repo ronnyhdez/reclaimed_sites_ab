@@ -78,9 +78,10 @@ print(json.dumps(sample, indent = 2))
 
 ```{python}
 module_path = os.path.abspath(os.path.join('..'))
+print(module_path)
 if module_path not in sys.path:
     sys.path.append(module_path)
-print(module_path)
+
 from leaftoolbox import LEAF
 from leaftoolbox import SL2PV0 
 from leaftoolbox import SL2PV1
@@ -96,10 +97,10 @@ This is with the filtered asset (steps in script random_polygons) with 1000 rand
 selected abandoned wells.
 
 ```{python}
+import time
 site = ["projects/ee-ronnyale/assets/random_sample_10_filtered_polygons"]
 # site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
 
-import time
 
 # Landsat 8
 start_time = time.time()
@@ -112,9 +113,10 @@ sitesDictionaryL08SR = LEAF.sampleSites(
     outputScaleSize=30,
     inputScaleSize=30,
     bufferSpatialSize=0,
-    bufferTemporalSize=[0, 0],
-    subsamplingFraction=0.99
-    # numPixels=100
+    # https://github.com/rfernand387/LEAF-Toolbox/issues/16
+    # bufferTemporalSize=[0, 0],
+    # subsamplingFraction=0.99,
+    numPixels=100
 )
 end_time = time.time()
 execution_time = end_time - start_time
