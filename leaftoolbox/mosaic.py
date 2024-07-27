@@ -1,5 +1,5 @@
 import ee
-import eoImage as eoImg
+from . import eoImage as eoImg
 
 #Water mask
 GL_water = ee.Image('JRC/GSW1_0/GlobalSurfaceWater').select('occurrence') 

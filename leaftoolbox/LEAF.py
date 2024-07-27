@@ -1,11 +1,9 @@
 import pandas as pd
 import ee
-import toolsUtils
-import eoImage
-import toolsNets
-import eoImage
-import toolsUtils
-import dictionariesSL2P 
+from . import toolsUtils
+from . import eoImage
+from . import toolsNets
+from . import dictionariesSL2P 
 from datetime import timedelta
 from datetime import datetime
 import pickle

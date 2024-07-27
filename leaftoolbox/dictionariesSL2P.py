@@ -2,10 +2,10 @@
 # Richard Fernandes
 
 import ee
-import toolsS2
-import toolsL8
-import toolsL9
-import toolsHLS
+from . import toolsS2
+from . import toolsL8
+from . import toolsL9
+from . import toolsHLS
 
 
 def make_collection_options(fc): 
