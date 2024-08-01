@@ -46,7 +46,7 @@ ee.Initialize()
  - Here is the code to demonstrate the intersection filtering needed.
 
 ```{python}
-flagged_asset = 'projects/ee-ronnyale/assets/intersecting_wells_flags_v2'
+flagged_asset = 'projects/ee-ronnyale/assets/random_sample_10_filtered_polygons'
 abandoned_wells = ee.FeatureCollection(flagged_asset)
 
 # Get all polygons without an intersetion
@@ -78,9 +78,10 @@ print(json.dumps(sample, indent = 2))
 
 ```{python}
 module_path = os.path.abspath(os.path.join('..'))
+print(module_path)
 if module_path not in sys.path:
     sys.path.append(module_path)
-    
+
 from leaftoolbox import LEAF
 from leaftoolbox import SL2PV0 
 from leaftoolbox import SL2PV1
@@ -96,10 +97,10 @@ This is with the filtered asset (steps in script random_polygons) with 1000 rand
 selected abandoned wells.
 
 ```{python}
+import time
 site = ["projects/ee-ronnyale/assets/random_sample_10_filtered_polygons"]
 # site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
 
-import time
 
 # Landsat 8
 start_time = time.time()
@@ -112,8 +113,10 @@ sitesDictionaryL08SR = LEAF.sampleSites(
     outputScaleSize=30,
     inputScaleSize=30,
     bufferSpatialSize=0,
-    bufferTemporalSize=["2021-04-01", "2022-10-01"],
-    subsamplingFraction=0.99,
+    # https://github.com/rfernand387/LEAF-Toolbox/issues/16
+    # bufferTemporalSize=[0, 0],
+    # subsamplingFraction=0.99,
+    numPixels=100
 )
 end_time = time.time()
 execution_time = end_time - start_time
@@ -129,14 +132,17 @@ sitesDictionaryL09SR = LEAF.sampleSites(
     outputScaleSize=30,
     inputScaleSize=30,
     bufferSpatialSize=0,
-    bufferTemporalSize=["2021-04-01", "2022-10-01"],
-    subsamplingFraction=0.99,
+    # https://github.com/rfernand387/LEAF-Toolbox/issues/16
+    # bufferTemporalSize=[0, 0],
+    # subsamplingFraction=0.99,
+    numPixels=100
 )
 end_time = time.time()
 execution_time = end_time - start_time
 print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
-# Execution time sitesDictionaryL09SR: 28227.399247169495 second
+Execution time sitesDictionaryL09SR: 28227.399247169495 second
 
+## LAI products not priority. Just reflectance above -----
 # # Landsat 8
 # start_time = time.time()
 # sitesDictionaryL08V0 = LEAF.sampleSites(
@@ -226,8 +232,10 @@ sitesDictionaryHarmonized = LEAF.sampleSites(
     outputScaleSize=30,
     inputScaleSize=30,
     bufferSpatialSize=0,
-    bufferTemporalSize=["2021-04-01", "2022-10-01"],
-    subsamplingFraction=0.99,
+    # https://github.com/rfernand387/LEAF-Toolbox/issues/16
+    # bufferTemporalSize=[0, 0],
+    # subsamplingFraction=0.99,
+    numPixels=100
 )
 end_time = time.time()
 execution_time = end_time - start_time

@@ -1,5 +1,5 @@
 import ee  
-import mosaic
+from . import mosaic
 
 # sentinel 2 land mask
 def MaskLand(image):
