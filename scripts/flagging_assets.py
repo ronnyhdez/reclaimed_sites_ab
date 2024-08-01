@@ -439,7 +439,7 @@ def calculate_class_area(feature):
     return feature.set(areas_dict)
 
 # Read the reference buffers asset and calculate land cover areas
-reference = ee.FeatureCollection('projects/ee-ronnyale/assets/reference_buffers_test_gee')
+reference = ee.FeatureCollection('projects/ee-ronnyale/assets/reference_buffers')
 reference_areas = reference.map(calculate_class_area)
 
 export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers_lc_areas',
