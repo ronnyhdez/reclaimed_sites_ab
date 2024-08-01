@@ -17,53 +17,28 @@ is read in the next steps to create a new asset, and so on.
 Author: Ronny A. Hernández Mora
 """
 
-import ee
-import json
+import os
 import sys
 
-try:
-    ee.Initialize(opt_url='https://earthengine-highvolume.googleapis.com')
-    print('Google Earth Engine has initialized successfully!')
-except ee.EEException as e:
-    print('Failed to initialize GEE', e)
-except:
-    print("Unexpected error:", sys.exc_info()[0])
-    raise
+module_path = os.path.abspath(os.path.join('..'))
+print(module_path)
+if module_path not in sys.path:
+    sys.path.append(module_path)
 
-## Define functions
-def buffer_feature(feature):
-    return feature.buffer(30)
+import ee
+import json
+from utils.utils import (
+    initialize_gee, buffer_feature, 
+    assets_exists, get_feature_collection,
+    export_if_not_exists
+)
 
-def assets_exists(export_asset_id):
-    try:
-        ee.data.getAsset(export_asset_id)
-        return True
-    except:
-        return False
-
-def export_if_not_exists(asset_id, collection, description):
-    if not assets_exists(asset_id):
-        export_task = ee.batch.Export.table.toAsset(
-            collection = collection,
-            description = description,
-            assetId = asset_id
-        )
-        export_task.start()
-        print(f'Export task for {asset_id} started')
-    else:
-        print(f'No export for {asset_id}. Already exists')
-
+initialize_gee()
 
 # First Asset | ABMI reservoirs + AER waterbodies ==========================================
-
-## Abandoned wells
-abandoned_wells = ee.FeatureCollection("projects/ee-ronnyale/assets/selected_polygons")
-
-## Reservoirs (already vector)
-reservoirs = ee.FeatureCollection("projects/ee-ronnyale/assets/reservoirs")
+abandoned_wells = get_feature_collection("projects/ee-ronnyale/assets/selected_polygons")
+reservoirs = get_feature_collection("projects/ee-ronnyale/assets/reservoirs")
 buffered_reservoirs = reservoirs.map(buffer_feature)
-
-## LULC asset
 asset_image = ee.Image("projects/ee-eoagsaer/assets/LULC_2022_EE")
 
 ## Mask for waterbodies

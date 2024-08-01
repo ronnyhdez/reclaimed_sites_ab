@@ -1,9 +1,6 @@
 import ee
 import sys
 
-# Constants
-BUFFER_SIZE = 30
-
 def initialize_gee():
     """Initialize GEE"""
     try:
@@ -15,7 +12,7 @@ def initialize_gee():
         print("Unexpected error:", sys.exc_info()[0])
         raise
 
-def buffer_feature(feature, distance=BUFFER_SIZE):
+def buffer_feature(feature, distance=30):
     """Create buffers around features"""
     return feature.buffer(distance)
 
@@ -26,6 +23,16 @@ def assets_exists(asset_id):
         return True
     except Exception:
         return False
+
+def get_feature_collection(asset_id):
+    """Check if an asset exists and return it as a FeatureCollection if it does."""
+    try:
+        if assets_exists(asset_id):
+            return ee.FeatureCollection(asset_id)
+        else:
+            raise ValueError(f"Asset {asset_id} does not exist.")
+    except Exception as e:
+        raise ValueError(f"Error loading asset {asset_id}: {str(e)}")
 
 def export_if_not_exists(asset_id, collection, description):
     """Export an asset only if it doesn't exists in GEE"""
