@@ -282,11 +282,12 @@ simplified_values = [
 
 # Reclassify the image
 reclassified_image = image.remap(original_classes, simplified_values)
-
 # TODO: Probably export the reclassified image
 
-# Function to calculate the area of each land cover class within the polygon
 def calculate_class_area(feature):
+    """
+    calculate the area of each land cover class within the polygon
+    """
     areas = ee.Image.pixelArea().addBands(reclassified_image) \
         .reduceRegion(
             reducer = ee.Reducer.sum().group(
@@ -307,12 +308,10 @@ def calculate_class_area(feature):
             ee.Number(ee.Dictionary(item).get('sum'))
         ])).flatten()
     )
-
-    # Set the areas as properties of the feature
     return feature.set(areas_dict)
 
 # Read the reference buffers asset and calculate land cover areas
-reference = ee.FeatureCollection('projects/ee-ronnyale/assets/reference_buffers')
+reference = get_feature_collection('projects/ee-ronnyale/assets/reference_buffers')
 reference_areas = reference.map(calculate_class_area)
 
 export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers_lc_areas',
@@ -320,8 +319,7 @@ export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers_lc_areas',
                      'export_reference_land_cover_buffers')
 
 # Eighth Asset | Reclaimed polygons land cover area ==========================
-raw_reclaimed_sites = ee.FeatureCollection('projects/ee-ronnyale/assets/pixel_count_flags_v5');
-
+raw_reclaimed_sites = get_feature_collection('projects/ee-ronnyale/assets/pixel_count_flags_v5');
 reclaimed_sites_areas = raw_reclaimed_sites.map(calculate_class_area)
 
 export_if_not_exists('projects/ee-ronnyale/assets/reclaimed_sites_areas_v6',
