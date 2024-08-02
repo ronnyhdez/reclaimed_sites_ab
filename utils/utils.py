@@ -16,6 +16,10 @@ def buffer_feature(feature, distance=30):
     """Create buffers around features"""
     return feature.buffer(distance)
 
+def apply_inward_dilation(feature, distance=-30):
+    """Apply inward buffer to each feature."""
+    return feature.buffer(distance, 1)
+
 def assets_exists(asset_id):
     """Validate if asset exists in GEE"""
     try:
@@ -46,3 +50,10 @@ def export_if_not_exists(asset_id, collection, description):
         print(f'Export task for {asset_id} started')
     else:
         print(f'Export skipped: Asset already exists at {asset_id}')
+
+
+def check_empty_coordinates(feature):
+    """Flag empty geometries based on the coordinates of the geometry."""
+    coordinates = feature.geometry().coordinates()
+    is_empty = coordinates.size().eq(0)
+    return feature.set('empty_buffer', is_empty)

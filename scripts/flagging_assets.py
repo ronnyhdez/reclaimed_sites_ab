@@ -29,8 +29,8 @@ import ee
 import json
 from utils.utils import (
     initialize_gee, buffer_feature, 
-    assets_exists, get_feature_collection,
-    export_if_not_exists
+    apply_inward_dilation, check_empty_coordinates,
+    get_feature_collection, export_if_not_exists
 )
 
 initialize_gee()
@@ -89,14 +89,15 @@ abandoned_wells = get_feature_collection("projects/ee-ronnyale/assets/intersecti
 asset_industrial = get_feature_collection("projects/ee-ronnyale/assets/industrial")
 asset_residential = get_feature_collection("projects/ee-ronnyale/assets/residentials")
 asset_roads = get_feature_collection("projects/ee-ronnyale/assets/roads")
-
-## Create buffer industrial-residential-roads
 buffered_industrial = asset_industrial.map(buffer_feature)
 buffered_residential = asset_residential.map(buffer_feature)
 buffered_roads = asset_roads.map(buffer_feature)
 
-## Function to add values
 def define_intersection(well):
+    """
+    Define polygons intersections with industrial/residential or roads areas or their
+    buffers.
+    """
     intersects_industrial = asset_industrial.filterBounds(well.geometry()).size().gt(0)
     intersects_industrial_buffer = (
         buffered_industrial.filterBounds(well.geometry()).size().gt(0)
@@ -125,12 +126,14 @@ export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags_v2',
                       'export_intersecting_wells_flags_v2')
 
 # Third Asset | Disturbed polygons ==========================================
-abandoned_wells = ee.FeatureCollection(
+abandoned_wells = get_feature_collection(
     'projects/ee-ronnyale/assets/intersecting_wells_flags_v2')
-fires = ee.FeatureCollection('projects/ee-ronnyale/assets/fires')
+fires = get_feature_collection('projects/ee-ronnyale/assets/fires')
 
-# Function to set the fire year for each abandoned well
 def set_fire_year(well):
+    """
+    Set the fire year for each abandoned well
+    """
     well_year = ee.Number(well.get('mx_bnd_'))
     well_geom = well.geometry()
 
@@ -144,7 +147,7 @@ def set_fire_year(well):
     fire_year = ee.Algorithms.If(intersecting_count.gt(0),
                                  # More than one intersecting fire polygon
                                  ee.Algorithms.If(intersecting_count.gt(1),
-                                                  # Get the fire year that is closest and after the well year
+                                 # Get the fire year that is closest and after the well year
                                                   ee.Algorithms.If(
                                      intersecting_fires.filter(ee.Filter.gte(
                                          'year', well_year)).size().gt(0),
@@ -162,12 +165,10 @@ def set_fire_year(well):
         # If there are no intersecting fire polygons, set the year to 9999
         9999
     )
-
     # Return properties
     return well.set('fire_year', fire_year) \
                .set('intersecting_fires', intersecting_count)
 
-# Map the function over the abandoned wells collection
 disturbed_wells = abandoned_wells.map(set_fire_year)
 
 export_if_not_exists('projects/ee-ronnyale/assets/fire_disturbance_flags_v3',
@@ -182,12 +183,8 @@ export_if_not_exists('projects/ee-ronnyale/assets/fire_disturbance_flags_v3',
 # count to the entire flagged asset.
 
 # First, we need the negative buffers to avoid edges: ==== 
-feature_collection = ee.FeatureCollection("projects/ee-ronnyale/assets/fire_disturbance_flags_v3")
-
-# Function to apply inward buffer to each feature
-def apply_inward_dilation(feature):
-    buffered_feature = feature.buffer(-30, 1)
-    return buffered_feature
+feature_collection = get_feature_collection(
+    "projects/ee-ronnyale/assets/fire_disturbance_flags_v3")
 
 # Apply the function to each feature in the collection
 dilated_abandoned_wells = feature_collection.map(apply_inward_dilation)
@@ -210,12 +207,6 @@ pixel_count = pixels.reduceRegions(
 )
 
 # Function to flag empty geometries (based on the coordinates of the geometry)
-def check_empty_coordinates(feature):
-    coordinates = feature.geometry().coordinates()
-    is_empty = coordinates.size().eq(0)
-    return feature.set('empty_buffer', is_empty)
-
-# Apply function
 pixel_count_geom_flag = pixel_count.map(check_empty_coordinates)
 
 # Filter out empty geometries (otherwise GEE will have an error exporting asset)
