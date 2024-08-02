@@ -85,18 +85,10 @@ export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags',
                       'export_intersecting_wells_flags')
 
 # Second Asset | ABMI Industrial + Residential + Roads ==========================================
-
-## This would be the next step after the other asset import
-abandoned_wells = ee.FeatureCollection("projects/ee-ronnyale/assets/intersecting_wells_flags")
-
-## Industrial ABMI
-asset_industrial = ee.FeatureCollection("projects/ee-ronnyale/assets/industrial")
-
-## Residential ABMI
-asset_residential = ee.FeatureCollection("projects/ee-ronnyale/assets/residentials")
-
-## Roads ABMI
-asset_roads = ee.FeatureCollection("projects/ee-ronnyale/assets/roads")
+abandoned_wells = get_feature_collection("projects/ee-ronnyale/assets/intersecting_wells_flags")
+asset_industrial = get_feature_collection("projects/ee-ronnyale/assets/industrial")
+asset_residential = get_feature_collection("projects/ee-ronnyale/assets/residentials")
+asset_roads = get_feature_collection("projects/ee-ronnyale/assets/roads")
 
 ## Create buffer industrial-residential-roads
 buffered_industrial = asset_industrial.map(buffer_feature)
@@ -126,7 +118,6 @@ def define_intersection(well):
         .set("intersects_roads_buffer", intersects_roads_buffer)
     )
 
-## Apply the intersection check to each well
 wells_with_intersections = abandoned_wells.map(define_intersection)
 
 export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags_v2',

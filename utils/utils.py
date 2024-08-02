@@ -45,4 +45,4 @@ def export_if_not_exists(asset_id, collection, description):
         export_task.start()
         print(f'Export task for {asset_id} started')
     else:
-        print(f'No export for {asset_id}. Already exists')
+        print(f'Export skipped: Asset already exists at {asset_id}')
