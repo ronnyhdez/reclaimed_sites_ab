@@ -21,16 +21,18 @@ import os
 import sys
 
 module_path = os.path.abspath(os.path.join('..'))
-print(module_path)
 if module_path not in sys.path:
     sys.path.append(module_path)
+print(module_path)
+
 
 import ee
 import json
 from utils.utils import (
     initialize_gee, buffer_feature, 
     apply_inward_dilation, check_empty_coordinates,
-    get_feature_collection, export_if_not_exists
+    get_feature_collection, export_if_not_exists,
+    print_sample_info, create_reference_buffer
 )
 
 initialize_gee()
@@ -218,21 +220,21 @@ export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4
                       'export_pixel_count_negative_buffer_v4')
 
 # Fifth Asset | Pixel count in original geometries asset ==========================================
-pixel_count = ee.FeatureCollection("projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4")
-abandoned_wells = ee.FeatureCollection("projects/ee-ronnyale/assets/fire_disturbance_flags_v3")
+pixel_count = get_feature_collection("projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4")
+abandoned_wells = get_feature_collection("projects/ee-ronnyale/assets/fire_disturbance_flags_v3")
 
 # Define properties keys to perform the join
 pixel_count_selected = pixel_count.select('count', 'wllst__')
-join_filter = ee.Filter.equals(leftField='wllst__', rightField='wllst__')
-
+join_filter = ee.Filter.equals(leftField = 'wllst__',
+                               rightField = 'wllst__')
 # Define the join
-inner_join = ee.Join.saveAll(matchesKey='matches', outer=True)
-
+inner_join = ee.Join.saveAll(matchesKey = 'matches',
+                             outer = True)
 # Apply the join
-joined = inner_join.apply(primary=abandoned_wells, secondary=pixel_count_selected, condition=join_filter)
-# print(joined.limit(1).getInfo())
-# result = joined.limit(2).getInfo()
-# print(json.dumps(merged, indent = 2))
+joined = inner_join.apply(primary = abandoned_wells, 
+                          secondary = pixel_count_selected, 
+                          condition = join_filter)
+# print_sample_info(joined)
 
 # Function to merge properties and handle missing matches
 def merge_properties(feature):
@@ -240,30 +242,17 @@ def merge_properties(feature):
     count = ee.Algorithms.If(matches.size().eq(0), 0, ee.Feature(matches.get(0)).get('count'))
     return feature.set('count', count).set('matches', None) 
 
-# Map the function over the joined FeatureCollection
 merged = joined.map(merge_properties)
-# print(merged.limit(1).getInfo())
-# result = merged.limit(2).getInfo()
-# print(json.dumps(merged, indent = 2))
+print_sample_info(merged)
 
 export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_flags_v5',
                       merged,
                       'export_pixel_count_flags_v5')
 
 # Sixth Asset | Reference buffers ==========================================
-polygons = ee.FeatureCollection('projects/ee-ronnyale/assets/pixel_count_flags_v5')
+polygons = get_feature_collection('projects/ee-ronnyale/assets/pixel_count_flags_v5')
 
-def create_well_buffer(feature):
-    buffer_geometry = feature.buffer(30, 1)
-    buffer_geometry_feature = buffer_geometry.geometry()
-    reference_buffer = buffer_geometry_feature.buffer(90, 1)
-    buffer_only_geometry = reference_buffer.difference(buffer_geometry_feature)
-    wllst_value = feature.get('wllst__')
-    buffer_feature = ee.Feature(buffer_only_geometry).set('wllst__', wllst_value)    
-    return buffer_feature
-
-# Apply the buffer function to the polygons feature collection
-buffer_only_polygons = polygons.map(create_well_buffer)
+buffer_only_polygons = polygons.map(create_reference_buffer)
 
 export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers',
                      buffer_only_polygons,
