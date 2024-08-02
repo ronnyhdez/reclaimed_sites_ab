@@ -53,11 +53,14 @@ water_bodies_vector = water_image.reduceToVectors(
     labelProperty="water_bodies",
 )
 
-## Create buffer of waterbodies
 buffered_waterbodies = water_bodies_vector.map(buffer_feature)
 
 # Function to check if a well intersects with waterbodies or buffered waterbodies
 def define_intersection(well):
+    """
+    Define polygons intersections with waterbodies or their buffers.
+    TODO: Annotate origin of waterbodies data        
+    """
     intersects_reservoirs = reservoirs.filterBounds(well.geometry()).size().gt(0)
     intersects_reservoirs_buffer = (
         buffered_reservoirs.filterBounds(well.geometry()).size().gt(0)
@@ -75,7 +78,6 @@ def define_intersection(well):
         .set("intersects_reservoirs_buffer", intersects_reservoirs_buffer)
     )
 
-# Apply the intersection check to each well
 wells_with_intersections = abandoned_wells.map(define_intersection)
 
 export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags',
@@ -130,81 +132,6 @@ wells_with_intersections = abandoned_wells.map(define_intersection)
 export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags_v2',
                       wells_with_intersections,
                       'export_intersecting_wells_flags_v2')
-
-# XXXX Asset | AER wetland_treed + wetland ==========================================
-
-#########################################
-### NOT USED ON FLAGGING OR FILTERING ###
-#########################################
-
-# # Abandoned wells
-# asset_id = 'projects/ee-ronnyale/assets/selected_polygons'
-# abandoned_wells = ee.FeatureCollection(asset_id)
-
-# # LULC asset
-# asset_id = 'projects/ee-eoagsaer/assets/LULC_2022_EE'
-# asset_image = ee.Image(asset_id)
-
-# # # This would be the next step after the other asset import
-# # asset_flagged = 'projects/ee-ronnyale/assets/intersecting_wells_flags'
-# # abandoned_wells = ee.FeatureCollection(asset_flagged)
-
-# # Mask for wetland-treed
-# wetland_treed_mask = asset_image.eq(3)
-# wetland_treed_image = asset_image.updateMask(wetland_treed_mask)
-# # Reduce to vector
-# wetland_treed_vector = wetland_treed_image.reduceToVectors(
-#     geometryType='polygon',
-#     scale=10,
-#     maxPixels=1e8,
-#     bestEffort=True,
-#     labelProperty='wetland_treed'
-# )
-
-# # Create buffer wetland treed
-# buffered_wetland_treed = wetland_treed_vector.map(buffer_feature)
-
-# # Mask for wetland
-# wetland_mask = asset_image.eq(7)
-# wetland_image = asset_image.updateMask(wetland_mask)
-# # Reduce to vector
-# wetland_vector = wetland_image.reduceToVectors(
-#     geometryType='polygon',
-#     scale=10,
-#     maxPixels=1e8,
-#     bestEffort=True,
-#     labelProperty='wetland'
-# )
-
-# # Create buffer wetland
-# buffered_wetland = wetland_vector.map(buffer_feature)
-
-# # Function to add values
-# def define_intersection(well):
-#     intersects_wetland_treed = wetland_treed_vector.filterBounds(
-#         well.geometry()).size().gt(0)
-#     intersects_wetland_treed_buffer = buffered_wetland_treed.filterBounds(
-#         well.geometry()).size().gt(0)
-#     # intersects_wetland = wetland_vector.filterBounds(
-#     #     well.geometry()).size().gt(0)
-#     # intersects_wetland_buffer = buffered_wetland.filterBounds(
-#     #     well.geometry()).size().gt(0)
-#     return well.set('intersects_wetland_treed', intersects_wetland_treed) \
-#                .set('intersects_wetland_treed_buffer', intersects_wetland_treed_buffer)  # \
-#     #    .set('intersects_wetland', intersects_wetland) \
-#     #    .set('intersects_wetland_buffer', intersects_wetland_buffer)
-
-
-# # Apply the intersection check to each well
-# wells_with_intersections = abandoned_wells.map(define_intersection)
-
-# # Apply the intersection check to each well
-# test = wells_with_intersections.map(define_intersection)
-
-# # Show a sample
-# sample = test.limit(6).getInfo()
-# # sample = merged_results.limit(6).getInfo()
-# print(json.dumps(sample, indent=2))
 
 # Third Asset | Disturbed polygons ==========================================
 abandoned_wells = ee.FeatureCollection(
