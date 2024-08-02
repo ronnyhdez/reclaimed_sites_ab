@@ -37,7 +37,7 @@ from utils.utils import (
 
 initialize_gee()
 
-# First Asset | ABMI reservoirs + AER waterbodies ==========================================
+# First Asset | ABMI reservoirs + AER waterbodies ==============================
 abandoned_wells = get_feature_collection("projects/ee-ronnyale/assets/selected_polygons")
 reservoirs = get_feature_collection("projects/ee-ronnyale/assets/reservoirs")
 buffered_reservoirs = reservoirs.map(buffer_feature)
@@ -251,9 +251,7 @@ export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_flags_v5',
 
 # Sixth Asset | Reference buffers ==========================================
 polygons = get_feature_collection('projects/ee-ronnyale/assets/pixel_count_flags_v5')
-
 buffer_only_polygons = polygons.map(create_reference_buffer)
-
 export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers',
                      buffer_only_polygons,
                      'export_reference_buffers')
@@ -282,7 +280,7 @@ simplified_values = [
 
 # Reclassify the image
 reclassified_image = image.remap(original_classes, simplified_values)
-# TODO: Probably export the reclassified image
+# TODO: Probably export the reclassified image?
 
 def calculate_class_area(feature):
     """
@@ -300,7 +298,6 @@ def calculate_class_area(feature):
         )
     # Extract grouped dictionary
     grouped = ee.List(areas.get('groups'))
-
     # Conver list to dictionary
     areas_dict = ee.Dictionary(
         grouped.map(lambda item: ee.List([
