@@ -98,8 +98,9 @@ selected abandoned wells.
 
 ```{python}
 import time
-site = ["projects/ee-ronnyale/assets/random_sample_10_filtered_polygons"]
-# site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
+# site = ["projects/ee-ronnyale/assets/random_sample_10_filtered_polygons"]
+site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
+# site = ["projects/ee-ronnyale/assets/random_sample_2000_filtered_polygons"]
 
 
 # Landsat 8
@@ -140,9 +141,9 @@ sitesDictionaryL09SR = LEAF.sampleSites(
 end_time = time.time()
 execution_time = end_time - start_time
 print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
-Execution time sitesDictionaryL09SR: 28227.399247169495 second
+# Execution time sitesDictionaryL09SR: 28227.399247169495 second
 
-## LAI products not priority. Just reflectance above -----
+# LAI products not priority. Just reflectance above -----
 # # Landsat 8
 # start_time = time.time()
 # sitesDictionaryL08V0 = LEAF.sampleSites(
@@ -221,7 +222,7 @@ with open('time_series_l09sr.pkl', 'wb') as file:
 import time
 site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
 
-# Landsat 8
+# Sentinel
 start_time = time.time()
 sitesDictionaryHarmonized = LEAF.sampleSites(
     site,
