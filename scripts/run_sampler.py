@@ -47,6 +47,16 @@ import pandas as pd
 
 from utils.utils import initialize_gee, get_feature_collection
 
+# Import LEAFtoolbox modules
+module_path = os.path.abspath(os.path.join('..'))
+print(module_path)
+if module_path not in sys.path:
+    sys.path.append(module_path)
+    
+from leaftoolbox import LEAF
+from leaftoolbox import SL2PV0 
+from leaftoolbox import SL2PV1
+
 # Start the process
 initialize_gee()
 batch_size = 20
@@ -83,5 +93,13 @@ for collection in image_collections:
         )
         task.start()
 
-        
+        # Avoid running if asset is not ready yet
+        while task.status()['state'] in ['READY', 'RUNNING']:
+            time.sleep(10)
+
+        start_time = time.time()
+        sites_dictionary = LEAF.sampleSites(
+            [batch_asset_id],
+            imageCollectionName = image_collection_name
+        )
 
