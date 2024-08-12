@@ -34,6 +34,7 @@ import pandas as pd
 import os
 import sys
 import pickle
+import time
 
 ee.Initialize()
 ```
@@ -97,11 +98,9 @@ This is with the filtered asset (steps in script random_polygons) with 1000 rand
 selected abandoned wells.
 
 ```{python}
-import time
 # site = ["projects/ee-ronnyale/assets/random_sample_10_filtered_polygons"]
 site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
 # site = ["projects/ee-ronnyale/assets/random_sample_2000_filtered_polygons"]
-
 
 # Landsat 8
 start_time = time.time()
@@ -311,4 +310,147 @@ with open('time_series_harmonized.pkl', 'wb') as file:
 # ax.set_ylabel('LAI')
 # plt.xticks(rotation=90);
 ```
+
+# Test with batches
+
+```{python}
+site = "projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"
+batch_size = 10
+polygon_collection = ee.FeatureCollection(site)
+total_polygons = polygon_collection.size().getInfo()
+
+all_results = []
+for start_index in range(0, total_polygons, batch_size):
+    batch = polygon_collection.toList(batch_size, start_index)
+    batch_fc = ee.FeatureCollection(batch)
+
+    # Export the batch as a temporary asset (or process directly if your function allows it)
+    batch_asset_id = f"projects/ee-ronnyale/assets/temp_batch_{start_index}"
+    task = ee.batch.Export.table.toAsset(
+        collection=batch_fc,
+        description=f'ExportBatch_{start_index}',
+        assetId=batch_asset_id
+    )
+    task.start()
+
+    # Avoid continuing if asset is not ready
+    while task.status()['state'] in ['READY', 'RUNNING']:
+        time.sleep(10)
+
+    start_time = time.time()
+    sitesDictionaryL08SR = LEAF.sampleSites(
+        [batch_asset_id],  # Now passing the asset ID (a string)
+        imageCollectionName="LANDSAT/LC08/C02/T1_L2",
+        algorithm=SL2PV0,
+        variableName="Surface_Reflectance",
+        maxCloudcover=90,
+        outputScaleSize=30,
+        inputScaleSize=30,
+        bufferSpatialSize=0,
+        numPixels=100
+    )
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(
+        f"Execution time for batch starting at index {start_index}: {execution_time} seconds")
+
+    outer_key = list(sitesDictionaryL08SR.keys())[0]
+    first_item = sitesDictionaryL08SR[outer_key]
+    batch_results = []
+
+    for item in range(len(first_item)):
+        df = first_item[item]['leaftoolbox.SL2PV0']
+        df['site'] = first_item[item]['feature']['wllst__']
+        batch_results.append(df)
+
+    combined_df = pd.concat(batch_results, ignore_index=True)
+
+    # Save each batch to a separate pickle file
+    print(f"Starting to save batch {start_index} into a pickle file")
+    pickle_filename = f'time_series_l08sr_batch_{start_index}.pkl'
+    with open(pickle_filename, 'wb') as file:
+        pickle.dump(combined_df, file)
+
+    print(f"Batch {start_index} saved to {pickle_filename}")
+```
+
+For the first batch it took 3527.0270488262177 seconds
+
+```{python}
+# Check the paused batch functionality
+site = "projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"
+batch_size = 20
+polygon_collection = ee.FeatureCollection(site)
+total_polygons = polygon_collection.size().getInfo()
+
+# Products to be processed
+image_collections = [
+    {"name": "LANDSAT/LC08/C02/T1_L2", "label": "LC08"},
+    {"name": "LANDSAT/LC09/C02/T1_L2", "label": "LC09"},
+    {"name": "COPERNICUS/S2_SR_HARMONIZED", "label": "S2"}        
+]
+
+for collection in image_collections:
+    imageCollectionName = collection["name"]
+    label = collection["label"]
+    
+    # Process each batch
+    for start_index in range(0, total_polygons, batch_size):
+        pickle_filename = f'time_series_{label}_batch_{start_index}.pkl'
+        
+        # Check if the pickle file for this batch already exists
+        if os.path.exists(pickle_filename):
+            print(f"Batch {start_index} for {label} already processed and saved. Skipping...")
+            continue
+        batch = polygon_collection.toList(batch_size, start_index)
+        batch_fc = ee.FeatureCollection(batch)
+
+        batch_asset_id = f"projects/ee-ronnyale/assets/temp_batch_{label}_{start_index}"
+        task = ee.batch.Export.table.toAsset(
+            collection=batch_fc,
+            description=f'ExportBatch_{label}_{start_index}',
+            assetId=batch_asset_id
+        )
+        task.start()
+        
+        # Avoid running if asset is not ready
+        while task.status()['state'] in ['READY', 'RUNNING']:
+            time.sleep(10)
+        
+        start_time = time.time()
+        sitesDictionary = LEAF.sampleSites(
+            [batch_asset_id],  
+            imageCollectionName=imageCollectionName,
+            algorithm=SL2PV0,
+            variableName="Surface_Reflectance",
+            maxCloudcover=90,
+            outputScaleSize=30,
+            inputScaleSize=30,
+            bufferSpatialSize=0,
+            numPixels=100
+        )
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print(f"Execution time for batch {start_index} with {label}: {execution_time} seconds")
+
+        # Extract and process results
+        outer_key = list(sitesDictionary.keys())[0]  
+        first_item = sitesDictionary[outer_key]
+        batch_results = []
+
+        for item in range(len(first_item)):
+            df = first_item[item]['leaftoolbox.SL2PV0']
+            df['site'] = first_item[item]['feature']['wllst__']
+            batch_results.append(df)
+
+        # Combine batch results
+        combined_df = pd.concat(batch_results, ignore_index=True)
+
+        # Save the batch to a pickle file
+        with open(pickle_filename, 'wb') as file:
+            pickle.dump(combined_df, file)
+        
+        print(f"Batch {start_index} for {label} saved to {pickle_filename}")
+```
+
 
