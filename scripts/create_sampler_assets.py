@@ -43,3 +43,38 @@ Author: Ronny A. Hernández Mora
 import ee
 from utils.utils import initialize_gee, get_feature_collection
 
+# Start the process
+initialize_gee()
+
+abandoned_wells = get_feature_collection(
+    "projects/ee-ronnyale/assets/reclaimed_sites_areas_v6")
+reference_buffers = get_feature_collection(
+    'projects/ee-ronnyale/assets/reference_buffers_lc_areas')
+
+# Abandoned wells processing
+filters = [
+    # Get all polygons without an intersetion
+    ee.Filter.eq("intersects_industrial", 0),
+    ee.Filter.eq("intersects_industrial_buffer", 0),
+    ee.Filter.eq("intersects_reservoirs", 0),
+    ee.Filter.eq("intersects_reservoirs_buffer", 0),
+    ee.Filter.eq("intersects_residential", 0),
+    ee.Filter.eq("intersects_residential_buffer", 0),
+    ee.Filter.eq("intersects_roads", 0),
+    ee.Filter.eq("intersects_roads_buffer", 0),
+    ee.Filter.eq("intersects_waterbodies", 0),
+    ee.Filter.eq("intersects_waterbody_buffer", 0),
+    # Get polygons with more or equal to 1 landsat pixel
+    ee.Filter.greaterThan("count", 0),
+    # Get polygons without fire disturbance
+    ee.Filter.eq("fire_year", 9999),
+]
+
+combined_filter = ee.Filter.And(*filters)
+non_intersecting_features = abandoned_wells.filter(combined_filter)
+
+# Reference buffers processing
+reclaimed_ids = non_intersecting_features.aggregate_array('wllst__')
+filtered_buffers = reference_buffers.filter(
+    ee.Filter.inList('wllst__', reclaimed_ids))
+
