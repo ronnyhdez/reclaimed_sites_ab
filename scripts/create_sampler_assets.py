@@ -41,7 +41,7 @@ Author: Ronny A. Hernández Mora
 
 
 import ee
-from utils.utils import initialize_gee, get_feature_collection
+from utils.utils import initialize_gee, get_feature_collection, set_dates
 
 # Start the process
 initialize_gee()
@@ -72,9 +72,17 @@ filters = [
 
 combined_filter = ee.Filter.And(*filters)
 non_intersecting_features = abandoned_wells.filter(combined_filter)
+# Include properly dates for the sampler:
+non_intersecting_features = non_intersecting_features.map(set_dates)
 
 # Reference buffers processing
 reclaimed_ids = non_intersecting_features.aggregate_array('wllst__')
 filtered_buffers = reference_buffers.filter(
     ee.Filter.inList('wllst__', reclaimed_ids))
 
+task = ee.batch.Export.table.toAsset(
+    collection = non_intersecting_features,
+    description = 'Export non-intersecting features',
+    assetId = "random_sample_1000_filtered_abandoned_wells"
+)
+task.start()

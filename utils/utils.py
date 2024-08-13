@@ -81,3 +81,20 @@ def print_sample_info(feature_collection, limit=2):
     """
     sample = feature_collection.limit(limit).getInfo()
     print(json.dumps(sample, indent=2))
+
+def set_dates(feature)
+    """
+    Set date properly to be consumed and processed with the
+    LEAFtoolbox sampler
+
+    Args:
+        feature: The feature collection to be processed
+    """
+    year = ee.Number(feature.get('rclmtn_d')).int()
+    time_start = ee.Date.fromYMD(year, 1, 1).millis()
+    time_end = ee.Date.fromYMD(2023, 1, 1).millis()
+    # Set the 'system:time_start' and 'system:time_end' properties
+    feature = feature.set('system:time_start', time_start) \
+                     .set('system:time_end', time_end)
+    
+    return feature
