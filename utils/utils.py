@@ -98,3 +98,14 @@ def set_dates(feature)
                      .set('system:time_end', time_end)
     
     return feature
+
+def set_area(feature):
+    """
+    Set the area in a feature collection. To be used
+    with a map in desired feature collection.
+
+    Args:
+        feature: The feature collection to be processed
+    """
+    area = feature.geometry().area()
+    return feature.set('area', area)
