@@ -82,7 +82,7 @@ def print_sample_info(feature_collection, limit=2):
     sample = feature_collection.limit(limit).getInfo()
     print(json.dumps(sample, indent=2))
 
-def set_dates(feature)
+def set_dates(feature):
     """
     Set date properly to be consumed and processed with the
     LEAFtoolbox sampler

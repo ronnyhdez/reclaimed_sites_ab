@@ -42,7 +42,7 @@ Author: Ronny A. Hernández Mora
 import ee
 from utils.utils import(
     initialize_gee, get_feature_collection,
-    set_dates, set_area
+    set_dates, set_area, export_if_not_exists
 )
 
 # Start the process
@@ -74,12 +74,12 @@ filters = [
 
 combined_filter = ee.Filter.And(*filters)
 non_intersecting_features = abandoned_wells.filter(combined_filter)
-# Include properly dates for the sampler:
+
+# Include properly dates for the sampler and add area:
 non_intersecting_features = non_intersecting_features.map(set_dates)
-# Apply the set_area function
 non_intersecting_with_area = non_intersecting_features.map(set_area)
 
-# Add a random column and limit the collection to 1000 features based on the 'random' column
+# Select a random sample
 random_sample = non_intersecting_with_area.randomColumn().limit(1000, 'random')
 
 # Reference buffers processing
@@ -88,16 +88,22 @@ filtered_buffers = reference_buffers.filter(
     ee.Filter.inList('wllst__', reclaimed_ids))
 
 # Export both feature collections as assets to GEE
-task = ee.batch.Export.table.toAsset(
-    collection = random_sample,
-    description = 'Export non-intersecting features',
-    assetId = "random_sample_1000_filtered_abandoned_wells"
-)
-task.start()
+export_if_not_exists('random_sample_1000_filtered_abandoned_wells',
+                     random_sample,
+                     'Export non-intersecting features')
+# task = ee.batch.Export.table.toAsset(
+#     collection = random_sample,
+#     description = 'Export non-intersecting features',
+#     assetId = "random_sample_1000_filtered_abandoned_wells"
+# )
+# task.start()
 
-task = ee.batch.Export.table.toAsset(
-    collection = filtered_buffers,
-    description = 'Export selected abandoned wells buffers',
-    assetId = "random_sample_1000_filtered_reference_buffers"
-)
-task.start()
+export_if_not_exists('random_sample_1000_filtered_reference_buffers',
+                     filtered_buffers,
+                     'Export selected abandoned wells buffers')
+# task = ee.batch.Export.table.toAsset(
+#     collection = filtered_buffers,
+#     description = 'Export selected abandoned wells buffers',
+#     assetId = "random_sample_1000_filtered_reference_buffers"
+# )
+# task.start()
