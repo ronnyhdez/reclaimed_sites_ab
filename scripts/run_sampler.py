@@ -52,7 +52,7 @@ module_path = os.path.abspath(os.path.join('..'))
 print(module_path)
 if module_path not in sys.path:
     sys.path.append(module_path)
-    
+
 from leaftoolbox import LEAF
 from leaftoolbox import SL2PV0 
 from leaftoolbox import SL2PV1
@@ -100,6 +100,32 @@ for collection in image_collections:
         start_time = time.time()
         sites_dictionary = LEAF.sampleSites(
             [batch_asset_id],
-            imageCollectionName = image_collection_name
+            imageCollectionName = image_collection_name,
+            algorithm = SL2PV0,
+            variableName = "Surface_Reflectance",
+            maxCloudcover = 90,
+            outputScaleSize = 30,
+            inputScaleSize = 30,
+            bufferSpatialSize = 0,
+            numPixels = 100
         )
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print(f'Execution time for batch {start_index} with {label}: {execution_time} seconds')
 
+        # Extract and process results
+        outer_key = list(sites_dictionary.keys())[0]
+        first_item = sites_dictionary[outer_key]
+        batch_results = []
+
+        for item in range(len(first_item)):
+            df = first_item[item]['leaftoolbox.SL2PV0']
+            df['site'] = first_item[item]['feature']['wllst__']
+            batch_results.append(df)
+
+        # Combine batch results
+        combined_df = pd.concat(batch_results, ignore_index = True)
+        with open(pickle_filename, 'wb') as file:
+            pickle.dump(combined_df, file)
+        
+        print(f'Batch {start_index} for {label} saved to {pickle_filename}')
