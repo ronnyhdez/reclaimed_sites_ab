@@ -35,17 +35,22 @@ Usage:
 Author: Ronny A. Hernández Mora
 """
 
-import json
 import os
 import pickle
 import sys
 import time
-
 import ee
-import matplotlib.pyplot as plt
-import pandas as pd
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils.utils import initialize_gee, get_feature_collection
+
+# PARAMETERS
+POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons'
+PROJECT_TO_SAVE_ASSETS = 'projects/ee-ronnyale/assets/'
+DATA_OUTPUT_DIR = 'data_out/'
+
+initialize_gee()
 
 # Import LEAFtoolbox modules
 module_path = os.path.abspath(os.path.join('..'))
@@ -55,13 +60,10 @@ if module_path not in sys.path:
 
 from leaftoolbox import LEAF
 from leaftoolbox import SL2PV0 
-from leaftoolbox import SL2PV1
 
 # Start the process
-initialize_gee()
 batch_size = 20
-polygon_collection = get_feature_collection(
-    'projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons')
+polygon_collection = get_feature_collection(POLYGONS_FEATURE_COLLECTION)
 total_polygons = polygon_collection.size().getInfo()
 
 # Products to be processed
@@ -77,7 +79,7 @@ for collection in image_collections:
 
     # Process each batch
     for start_index in range(0, total_polygons, batch_size):
-        pickle_filename = f'time_series_{label}_batch_{start_index}.pkl'
+        pickle_filename = f'{DATA_OUTPUT_DIR}time_series_{label}_batch_{start_index}.pkl'
 
         # Check if pkl file for the batch already exists
         if os.path.exists(pickle_filename):
@@ -85,7 +87,7 @@ for collection in image_collections:
             continue
         batch = polygon_collection.toList(batch_size, start_index)
         batch_fc = ee.FeatureCollection(batch)
-        batch_asset_id = f'projects/ee-ronnyale/assets/temp_batch_{lable}_{start_index}'
+        batch_asset_id = f'{PROJECT_TO_SAVE_ASSETS}_temp_batch_{label}_{start_index}'
         task = ee.batch.Export.table.toAsset(
             collection = batch_fc,
             description = f'export_batch_{label}_{start_index}',

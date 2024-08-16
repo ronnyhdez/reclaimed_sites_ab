@@ -39,55 +39,6 @@ import time
 ee.Initialize()
 ```
 
-## Filter the abandoned wells polygons
-
- - The asset contains all the polygons posterior to the first filtering steps (reclaimed and dates).
- - LEAF-toolbox `sampleSites` functions needs an asset as an input, not a FeatureCollection.
- - Intersections filtering needs to be done in GEE console and save result as a new asset.
- - Here is the code to demonstrate the intersection filtering needed.
-
-```{python}
-flagged_asset = 'projects/ee-ronnyale/assets/random_sample_10_filtered_polygons'
-abandoned_wells = ee.FeatureCollection(flagged_asset)
-
-# Get all polygons without an intersetion
-filters = [
-    ee.Filter.eq("intersects_industrial", 0),
-    ee.Filter.eq("intersects_industrial_buffer", 0),
-    ee.Filter.eq("intersects_reservoirs", 0),
-    ee.Filter.eq("intersects_reservoirs_buffer", 0),
-    ee.Filter.eq("intersects_residential", 0),
-    ee.Filter.eq("intersects_residential_buffer", 0),
-    ee.Filter.eq("intersects_roads", 0),
-    ee.Filter.eq("intersects_roads_buffer", 0),
-    ee.Filter.eq("intersects_waterbodies", 0),
-    ee.Filter.eq("intersects_waterbody_buffer", 0),
-    ee.Filter.greaterThan("count", 0),
-    ee.Filter.eq("fire_year", 9999),
-]
-
-combined_filter = ee.Filter.And(*filters)
-
-features = abandoned_wells.filter(combined_filter)
-
-# Check a sample
-sample = features.limit(10).getInfo()
-print(json.dumps(sample, indent = 2))
-```
-
-## Import the local LEAF-toolbox modules
-
-```{python}
-module_path = os.path.abspath(os.path.join('..'))
-print(module_path)
-if module_path not in sys.path:
-    sys.path.append(module_path)
-
-from leaftoolbox import LEAF
-from leaftoolbox import SL2PV0 
-from leaftoolbox import SL2PV1
-```
-
 ## Run LEAF-toolbox on selected abadnoned well polygons 
 
 Asset used for this section was created in GEE script **create_sampler_asset**
@@ -98,9 +49,6 @@ This is with the filtered asset (steps in script random_polygons) with 1000 rand
 selected abandoned wells.
 
 ```{python}
-# site = ["projects/ee-ronnyale/assets/random_sample_10_filtered_polygons"]
-site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
-# site = ["projects/ee-ronnyale/assets/random_sample_2000_filtered_polygons"]
 
 # Landsat 8
 start_time = time.time()
