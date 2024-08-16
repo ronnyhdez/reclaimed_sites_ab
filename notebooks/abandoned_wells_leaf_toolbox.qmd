@@ -454,3 +454,36 @@ for collection in image_collections:
 ```
 
 
+
+```{python}
+import glob
+import pickle
+import pandas as pd
+
+# Path to the directory where your pickle files are located
+pickle_directory = '.'
+
+# Use glob to find all files matching the pattern
+pickle_files = glob.glob(f"{pickle_directory}/time_series_LC09_batch_*.pkl")
+
+# List to store the dataframes
+dataframes = []
+
+# Iterate through the list of pickle files and read each one
+for pkl_file in pickle_files:
+    with open(pkl_file, 'rb') as file:
+        df = pickle.load(file)
+        dataframes.append(df)
+
+# Optionally, combine all the dataframes into a single dataframe
+combined_df = pd.concat(dataframes, ignore_index=True)
+```
+
+
+```{python}
+grouped_df = combined_df.groupby("site").size()
+print(grouped_df)
+
+max(grouped_df)
+min(grouped_df)
+```
