@@ -40,6 +40,7 @@ import pickle
 import sys
 import time
 import ee
+import pandas as pd
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -93,6 +94,7 @@ for collection in image_collections:
             description = f'export_batch_{label}_{start_index}',
             assetId = batch_asset_id
         )
+        print(f'Exporting batch {start_index} for {label} to GEE')
         task.start()
 
         # Avoid running if asset is not ready yet
