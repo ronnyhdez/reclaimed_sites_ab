@@ -18,6 +18,7 @@ pyjanitor = "*"
 geemap = "*"
 ipyleaflet = "*"
 utils = "*"
+seaborn = "*"
 
 [dev-packages]
 ipykernel = "*"

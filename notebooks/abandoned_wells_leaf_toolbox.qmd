@@ -36,6 +36,7 @@ import sys
 import pickle
 import time
 import glob
+import seaborn as sns
 
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -53,7 +54,7 @@ Asset used for this section was created in GEE script **create_sampler_asset**
  - SR results will be used with these functions.
  - LAI results will be obtained with functions to be imported.
 
-### Landsat reflectance
+### LC08 reflectance
 
 This is with the filtered asset (steps in script random_polygons) with 1000 random 
 selected abandoned wells.
@@ -88,9 +89,9 @@ max(grouped_df)
 min(grouped_df)
 ```
 
-# Time series trends
+## Time series trends
 
-## Canopy cover
+### Canopy cover
 ```{python}
 # Obtain NDVI to calculate canopy cover
 def calculate_ndvi(df, red_band, nir_band):
@@ -112,43 +113,117 @@ lc08 = calculate_ndvi(lc08, 'SR_B4', 'SR_B5')
 lc08.head()
 ```
 
+```{python}
+# Convert 'date' to datetime if not already done
+lc08['date'] = pd.to_datetime(lc08['date'], unit='ms')
 
+# Reduce sites:
+sites = [282, 443, 575]
+filtered_sites = lc08[lc08['site'].isin(sites)]
 
+# Set the Seaborn theme
+sns.set_theme(style="dark")
 
+# Create the plot
+g = sns.relplot(
+    data=filtered_sites,
+    x="date", y="ndvi", col="site", hue="site",
+    kind="line", palette="crest", linewidth=2, zorder=5,
+    col_wrap=3, height=4, aspect=1.5, legend=False,
+)
 
+# Iterate over each subplot to customize further
+for site, ax in g.axes_dict.items():
+    
+    # Add the site as an annotation within the plot
+    ax.text(.8, .85, site, transform=ax.transAxes, fontweight="bold")
 
+    # Plot every site's NDVI time series in the background with low opacity
+    sns.lineplot(
+        data=filtered_sites, x="date", y="NDVI", units="site",
+        estimator=None, color=".7", linewidth=1, ax=ax, alpha=0.5
+    )
 
+# Reduce the frequency of the x-axis ticks
+ax.set_xticks(ax.get_xticks()[::2])
 
-# Plotting some results
+# Tweak the supporting aspects of the plot
+g.set_titles("")
+g.set_axis_labels("Date", "NDVI")
+g.tight_layout()
+
+plt.show()
+```
+
+# LC09 reflectance
 
 ```{python}
-# # Choose a site from the sitelist
-# siteNum=282
+# Read the LC09 files into one dataframe
+pickle_directory = '../data_out'
+pickle_files = glob.glob(f"{pickle_directory}/time_series_LC09_batch_*.pkl")
+dataframes = []
+for pkl_file in pickle_files:
+    with open(pkl_file, 'rb') as file:
+        df = pickle.load(file)
+        dataframes.append(df)
 
-# # Select the first feature
-# featureNum = 0
+lc09 = pd.concat(dataframes, ignore_index = True)
 
-# #Select one sampled pixel from each feature
-# pixelNum = 3
-
-# #Extract time series of LAI with high quality only
-# site = sitesDictionaryL08SR[siteList[siteNum]]
-# # print(site[featureNum]['leaftoolbox.SL2PV0'])
-# df=site[featureNum]['leaftoolbox.SL2PV0']
-# df['utc'] =  pd.to_datetime(df['date'],unit='ms')
-# pixelL08V0=df.loc[(df['longitude']==df.loc[pixelNum].longitude) & (df['latitude']==df.loc[pixelNum].latitude) & (df['QC']==0)]
-
-
-# fig,ax = plt.subplots(1,1,figsize=[10,10])
-# plt.plot(pixelL08V0['utc'],pixelL08V0['estimateLAI'],'ob',markerfacecolor='none', label='L08V1')
-
-# ax.legend()
-# ax.set_xlabel('date')
-# ax.set_ylabel('LAI')
-# plt.xticks(rotation=90);
+# # Export results
+# with open('time_series_harmonized.pkl', 'wb') as file:
+#     pickle.dump(combined_df, file)
 ```
 
 
+```{python}
+# Check the columns
+print(list(lc09.columns))
+
+# Check # observatios per site
+grouped_df = lc09.groupby("site").size()
+print("Number of observatios per site: ")
+print(grouped_df)
+
+max(grouped_df)
+min(grouped_df)
+```
+
+# S2 reflectance
+
+```{python}
+import glob
+import pickle
+import pandas as pd
+import os
+
+pickle_directory = '../data_out'
+pickle_files = glob.glob(os.path.join(pickle_directory, "*temp*batch_S2_*_COPERNICUS_S2_SR_HARMONIZED_Surface_Reflectance_0_20_leaftoolbox.SL2PV0_*_*h_*mn.pkl"))
+
+dataframes = []
+for pkl_file in pickle_files:
+    # Skip files ending with "_raw.pkl"
+    if pkl_file.endswith("_raw.pkl"):
+        continue
+    
+    with open(pkl_file, 'rb') as file:
+        df = pickle.load(file)
+        dataframes.append(df)
+
+# s2 = pd.concat(dataframes, ignore_index=True)
+```
+
+```{python}
+# Check the columns
+print(list(s2.columns))
+
+# Check # observatios per site
+grouped_df = s2.groupby("site").size()
+print("Number of observatios per site: ")
+print(grouped_df)
+
+# max(grouped_df)
+# min(grouped_df)
+```
 
 
 
