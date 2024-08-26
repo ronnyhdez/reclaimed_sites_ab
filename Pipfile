@@ -17,6 +17,7 @@ configparser = "*"
 pyjanitor = "*"
 geemap = "*"
 ipyleaflet = "*"
+utils = "*"
 
 [dev-packages]
 ipykernel = "*"

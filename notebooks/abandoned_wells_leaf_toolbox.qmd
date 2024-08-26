@@ -35,6 +35,7 @@ import os
 import sys
 import pickle
 import time
+import glob
 
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -58,27 +59,16 @@ This is with the filtered asset (steps in script random_polygons) with 1000 rand
 selected abandoned wells.
 
 ```{python}
-import glob
-import pickle
-import pandas as pd
-
-# Path to the directory where your pickle files are located
+# Read the LC08 files into one dataframe
 pickle_directory = '../data_out'
-
-# Use glob to find all files matching the pattern
 pickle_files = glob.glob(f"{pickle_directory}/time_series_LC08_batch_*.pkl")
-
-# List to store the dataframes
 dataframes = []
-
-# Iterate through the list of pickle files and read each one
 for pkl_file in pickle_files:
     with open(pkl_file, 'rb') as file:
         df = pickle.load(file)
         dataframes.append(df)
 
-# Optionally, combine all the dataframes into a single dataframe
-combined_df = pd.concat(dataframes, ignore_index=True)
+lc08 = pd.concat(dataframes, ignore_index = True)
 
 # # Export results
 # with open('time_series_harmonized.pkl', 'wb') as file:
@@ -88,15 +78,46 @@ combined_df = pd.concat(dataframes, ignore_index=True)
 
 ```{python}
 # Check the columns
-print(list(combined_df.columns))
+print(list(lc08.columns))
 
 # Check # observatios per site
-grouped_df = combined_df.groupby("site").size()
+grouped_df = lc08.groupby("site").size()
+print("Number of observatios per site: ")
 print(grouped_df)
-
 max(grouped_df)
 min(grouped_df)
 ```
+
+# Time series trends
+
+## Canopy cover
+```{python}
+# Obtain NDVI to calculate canopy cover
+def calculate_ndvi(df, red_band, nir_band):
+    """
+    Calculate NDVI and add it as a new column to the DataFrame.
+    
+    Parameters:
+    df (pd.DataFrame): The DataFrame containing the reflectance values.
+    red_band (str): The column name for the red band reflectance values.
+    nir_band (str): The column name for the near-infrared band reflectance values.
+    
+    Returns:
+    pd.DataFrame: The DataFrame with an additional 'NDVI' column.
+    """
+    df['ndvi'] = (df[nir_band] - df[red_band]) / (df[nir_band] + df[red_band])
+    return df
+    
+lc08 = calculate_ndvi(lc08, 'SR_B4', 'SR_B5')
+lc08.head()
+```
+
+
+
+
+
+
+
 
 # Plotting some results
 
