@@ -1,5 +1,5 @@
 ---
-title: "Intersections flagged"
+title: "Leaf toolbox results"
 author: Ronny A. Hernandez Mora
 execute:
   message: false
@@ -36,12 +36,21 @@ import sys
 import pickle
 import time
 
-ee.Initialize()
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from utils.utils import initialize_gee
+
+initialize_gee()
 ```
 
-## Run LEAF-toolbox on selected abadnoned well polygons 
+## Run LEAF-toolbox on selected abandoned well polygons 
 
 Asset used for this section was created in GEE script **create_sampler_asset**
+
+## Other notes:
+
+ - SR results will be used with these functions.
+ - LAI results will be obtained with functions to be imported.
 
 ### Landsat reflectance
 
@@ -49,192 +58,51 @@ This is with the filtered asset (steps in script random_polygons) with 1000 rand
 selected abandoned wells.
 
 ```{python}
+import glob
+import pickle
+import pandas as pd
 
-# Landsat 8
-start_time = time.time()
-sitesDictionaryL08SR = LEAF.sampleSites(
-    site,
-    imageCollectionName="LANDSAT/LC08/C02/T1_L2",
-    algorithm=SL2PV0,
-    variableName="Surface_Reflectance",
-    maxCloudcover=90,
-    outputScaleSize=30,
-    inputScaleSize=30,
-    bufferSpatialSize=0,
-    # https://github.com/rfernand387/LEAF-Toolbox/issues/16
-    # bufferTemporalSize=[0, 0],
-    # subsamplingFraction=0.99,
-    numPixels=100
-)
-end_time = time.time()
-execution_time = end_time - start_time
-print(f"Execution time sitesDictionaryL08SR: {execution_time} seconds")
+# Path to the directory where your pickle files are located
+pickle_directory = '../data_out'
 
-# Landsat 9
-start_time = time.time()
-sitesDictionaryL09SR = LEAF.sampleSites(
-    site,
-    imageCollectionName="LANDSAT/LC09/C02/T1_L2",
-    algorithm=SL2PV0,
-    variableName="Surface_Reflectance",
-    outputScaleSize=30,
-    inputScaleSize=30,
-    bufferSpatialSize=0,
-    # https://github.com/rfernand387/LEAF-Toolbox/issues/16
-    # bufferTemporalSize=[0, 0],
-    # subsamplingFraction=0.99,
-    numPixels=100
-)
-end_time = time.time()
-execution_time = end_time - start_time
-print(f"Execution time sitesDictionaryL09SR: {execution_time} seconds")
-# Execution time sitesDictionaryL09SR: 28227.399247169495 second
+# Use glob to find all files matching the pattern
+pickle_files = glob.glob(f"{pickle_directory}/time_series_LC08_batch_*.pkl")
 
-# LAI products not priority. Just reflectance above -----
-# # Landsat 8
-# start_time = time.time()
-# sitesDictionaryL08V0 = LEAF.sampleSites(
-#     site,
-#     imageCollectionName="LANDSAT/LC08/C02/T1_L2",
-#     algorithm=SL2PV0,
-#     variableName="LAI",
-#     maxCloudcover=90,
-#     outputScaleSize=30,
-#     inputScaleSize=30,
-#     bufferSpatialSize=0,
-#     bufferTemporalSize=["2021-04-01", "2022-10-01"],
-#     subsamplingFraction=0.99,
-# )
-# end_time = time.time()
-# execution_time = end_time - start_time
-# print(f"Execution time sitesDictionaryL08V0: {execution_time} seconds")
+# List to store the dataframes
+dataframes = []
 
+# Iterate through the list of pickle files and read each one
+for pkl_file in pickle_files:
+    with open(pkl_file, 'rb') as file:
+        df = pickle.load(file)
+        dataframes.append(df)
 
-# # Landsat 9
-# start_time = time.time()
-# sitesDictionaryL09V0 = LEAF.sampleSites(
-#     site,
-#     imageCollectionName="LANDSAT/LC09/C02/T1_L2",
-#     algorithm=SL2PV0,
-#     variableName="LAI",
-#     maxCloudcover=90,
-#     outputScaleSize=30,
-#     inputScaleSize=30,
-#     bufferSpatialSize=0,
-#     bufferTemporalSize=["2021-04-01", "2022-10-01"],
-#     subsamplingFraction=0.99,
-# )
-# end_time = time.time()
-# execution_time = end_time - start_time
-# print(f"Execution time sitesDictionaryL09V0: {execution_time} seconds")
+# Optionally, combine all the dataframes into a single dataframe
+combined_df = pd.concat(dataframes, ignore_index=True)
+
+# # Export results
+# with open('time_series_harmonized.pkl', 'wb') as file:
+#     pickle.dump(combined_df, file)
 ```
+
 
 ```{python}
-first_item = sitesDictionaryL08SR[outer_key]
-results = []
+# Check the columns
+print(list(combined_df.columns))
 
-for item in range(len(first_item)):
-    df = first_item[item]['leaftoolbox.SL2PV0']
-    df['site'] = first_item[item]['feature']['wllst__']
-    results.append(df)
-    
-# Combine all data frames
-combined_df = pd.concat(results, ignore_index=True)
-# combined_df.to_csv('test.csv', index = False)
-pickle_filename = 'time_series_l08sr.pkl'
-with open(pickle_filename, 'wb') as file:
-    pickle.dump(combined_df, file)
+# Check # observatios per site
+grouped_df = combined_df.groupby("site").size()
+print(grouped_df)
+
+max(grouped_df)
+min(grouped_df)
 ```
-
-```{python}
-first_item = sitesDictionaryL09SR[outer_key]
-results = []
-
-for item in range(len(first_item)):
-    df = first_item[item]['leaftoolbox.SL2PV0']
-    df['site'] = first_item[item]['feature']['wllst__']
-    results.append(df)
-
-# Combine all data frames
-combined_df = pd.concat(results, ignore_index=True)
-
-# Export results
-with open('time_series_l09sr.pkl', 'wb') as file:
-    pickle.dump(combined_df, file)
-```
-
-### Sentinel
-
-```{python}
-import time
-site = ["projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"]
-
-# Sentinel
-start_time = time.time()
-sitesDictionaryHarmonized = LEAF.sampleSites(
-    site,
-    imageCollectionName="COPERNICUS/S2_SR_HARMONIZED",
-    algorithm=SL2PV0,
-    variableName="Surface_Reflectance",
-    maxCloudcover=90,
-    outputScaleSize=30,
-    inputScaleSize=30,
-    bufferSpatialSize=0,
-    # https://github.com/rfernand387/LEAF-Toolbox/issues/16
-    # bufferTemporalSize=[0, 0],
-    # subsamplingFraction=0.99,
-    numPixels=100
-)
-end_time = time.time()
-execution_time = end_time - start_time
-print(f"Execution time sitesDictionaryL08SR: {execution_time} seconds")
-# Execution time sitesDictionaryL08SR: 95571.5514318943 seconds (26 hours)
-```
-
-```{python}
-first_item = sitesDictionaryHarmonized.[outer_key]
-results = []
-
-for item in range(len(first_item)):
-    df = first_item[item]['leaftoolbox.SL2PV0']
-    df['site'] = first_item[item]['feature']['wllst__']
-    results.append(df)
-    
-# Combine all data frames
-combined_df = pd.concat(results, ignore_index=True)
-
-# Export results
-with open('time_series_harmonized.pkl', 'wb') as file:
-    pickle.dump(combined_df, file)
-```
-
-## Other notes:
-
- - SR results will be used with these functions.
- - LAI results will be obtained with functions to be imported.
-
-```{python}
-# Test adding dates to each feature.
-# Add date properties (emulating RF notebook example that works)
-# properties = {
-#     'system:time_start': ee.Date('2021-01-01').millis(),
-#     'system:time_end': ee.Date('2021-12-01').millis()
-# }
-
-# # Function to set properties for each feature
-# def set_properties(feature):
-#     return feature.set(properties)
-
-# # Map the function over the FeatureCollection
-# updated_feature_collection = small_site_list.map(set_properties)
-```
-
 
 # Plotting some results
 
 ```{python}
 # # Choose a site from the sitelist
-# siteNum=0
+# siteNum=282
 
 # # Select the first feature
 # featureNum = 0
@@ -259,179 +127,11 @@ with open('time_series_harmonized.pkl', 'wb') as file:
 # plt.xticks(rotation=90);
 ```
 
-# Test with batches
-
-```{python}
-site = "projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"
-batch_size = 10
-polygon_collection = ee.FeatureCollection(site)
-total_polygons = polygon_collection.size().getInfo()
-
-all_results = []
-for start_index in range(0, total_polygons, batch_size):
-    batch = polygon_collection.toList(batch_size, start_index)
-    batch_fc = ee.FeatureCollection(batch)
-
-    # Export the batch as a temporary asset (or process directly if your function allows it)
-    batch_asset_id = f"projects/ee-ronnyale/assets/temp_batch_{start_index}"
-    task = ee.batch.Export.table.toAsset(
-        collection=batch_fc,
-        description=f'ExportBatch_{start_index}',
-        assetId=batch_asset_id
-    )
-    task.start()
-
-    # Avoid continuing if asset is not ready
-    while task.status()['state'] in ['READY', 'RUNNING']:
-        time.sleep(10)
-
-    start_time = time.time()
-    sitesDictionaryL08SR = LEAF.sampleSites(
-        [batch_asset_id],  # Now passing the asset ID (a string)
-        imageCollectionName="LANDSAT/LC08/C02/T1_L2",
-        algorithm=SL2PV0,
-        variableName="Surface_Reflectance",
-        maxCloudcover=90,
-        outputScaleSize=30,
-        inputScaleSize=30,
-        bufferSpatialSize=0,
-        numPixels=100
-    )
-    end_time = time.time()
-    execution_time = end_time - start_time
-    print(
-        f"Execution time for batch starting at index {start_index}: {execution_time} seconds")
-
-    outer_key = list(sitesDictionaryL08SR.keys())[0]
-    first_item = sitesDictionaryL08SR[outer_key]
-    batch_results = []
-
-    for item in range(len(first_item)):
-        df = first_item[item]['leaftoolbox.SL2PV0']
-        df['site'] = first_item[item]['feature']['wllst__']
-        batch_results.append(df)
-
-    combined_df = pd.concat(batch_results, ignore_index=True)
-
-    # Save each batch to a separate pickle file
-    print(f"Starting to save batch {start_index} into a pickle file")
-    pickle_filename = f'time_series_l08sr_batch_{start_index}.pkl'
-    with open(pickle_filename, 'wb') as file:
-        pickle.dump(combined_df, file)
-
-    print(f"Batch {start_index} saved to {pickle_filename}")
-```
-
-For the first batch it took 3527.0270488262177 seconds
-
-```{python}
-# Check the paused batch functionality
-site = "projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons"
-batch_size = 20
-polygon_collection = ee.FeatureCollection(site)
-total_polygons = polygon_collection.size().getInfo()
-
-# Products to be processed
-image_collections = [
-    {"name": "LANDSAT/LC08/C02/T1_L2", "label": "LC08"},
-    {"name": "LANDSAT/LC09/C02/T1_L2", "label": "LC09"},
-    {"name": "COPERNICUS/S2_SR_HARMONIZED", "label": "S2"}        
-]
-
-for collection in image_collections:
-    imageCollectionName = collection["name"]
-    label = collection["label"]
-    
-    # Process each batch
-    for start_index in range(0, total_polygons, batch_size):
-        pickle_filename = f'time_series_{label}_batch_{start_index}.pkl'
-        
-        # Check if the pickle file for this batch already exists
-        if os.path.exists(pickle_filename):
-            print(f"Batch {start_index} for {label} already processed and saved. Skipping...")
-            continue
-        batch = polygon_collection.toList(batch_size, start_index)
-        batch_fc = ee.FeatureCollection(batch)
-
-        batch_asset_id = f"projects/ee-ronnyale/assets/temp_batch_{label}_{start_index}"
-        task = ee.batch.Export.table.toAsset(
-            collection=batch_fc,
-            description=f'ExportBatch_{label}_{start_index}',
-            assetId=batch_asset_id
-        )
-        task.start()
-        
-        # Avoid running if asset is not ready
-        while task.status()['state'] in ['READY', 'RUNNING']:
-            time.sleep(10)
-        
-        start_time = time.time()
-        sitesDictionary = LEAF.sampleSites(
-            [batch_asset_id],  
-            imageCollectionName=imageCollectionName,
-            algorithm=SL2PV0,
-            variableName="Surface_Reflectance",
-            maxCloudcover=90,
-            outputScaleSize=30,
-            inputScaleSize=30,
-            bufferSpatialSize=0,
-            numPixels=100
-        )
-        end_time = time.time()
-        execution_time = end_time - start_time
-        print(f"Execution time for batch {start_index} with {label}: {execution_time} seconds")
-
-        # Extract and process results
-        outer_key = list(sitesDictionary.keys())[0]  
-        first_item = sitesDictionary[outer_key]
-        batch_results = []
-
-        for item in range(len(first_item)):
-            df = first_item[item]['leaftoolbox.SL2PV0']
-            df['site'] = first_item[item]['feature']['wllst__']
-            batch_results.append(df)
-
-        # Combine batch results
-        combined_df = pd.concat(batch_results, ignore_index=True)
-
-        # Save the batch to a pickle file
-        with open(pickle_filename, 'wb') as file:
-            pickle.dump(combined_df, file)
-        
-        print(f"Batch {start_index} for {label} saved to {pickle_filename}")
-```
 
 
 
-```{python}
-import glob
-import pickle
-import pandas as pd
-
-# Path to the directory where your pickle files are located
-pickle_directory = '.'
-
-# Use glob to find all files matching the pattern
-pickle_files = glob.glob(f"{pickle_directory}/time_series_LC09_batch_*.pkl")
-
-# List to store the dataframes
-dataframes = []
-
-# Iterate through the list of pickle files and read each one
-for pkl_file in pickle_files:
-    with open(pkl_file, 'rb') as file:
-        df = pickle.load(file)
-        dataframes.append(df)
-
-# Optionally, combine all the dataframes into a single dataframe
-combined_df = pd.concat(dataframes, ignore_index=True)
-```
 
 
-```{python}
-grouped_df = combined_df.groupby("site").size()
-print(grouped_df)
 
-max(grouped_df)
-min(grouped_df)
-```
+
+
