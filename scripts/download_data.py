@@ -64,10 +64,9 @@ def download_and_extract(url, dest_folder):
 
 # Loop through each URL and download/extract the data
 urls = [
-    # 'https://ftp-public.abmi.ca/GISData/HumanFootprint/2021/HFI2021.gdb.zip',
-    'https://ftp-public.abmi.ca/GISData/HumanFootprint/2021/HFIeOSA_2021.gdb.zip',
-    # 'https://static.ags.aer.ca/files/document/DIG/DIG_2021_0019.zip',
-    # 'https://cwfis.cfs.nrcan.gc.ca/downloads/nfdb/fire_poly/current_version/NFDB_poly.zip'
+    'https://ftp-public.abmi.ca/GISData/HumanFootprint/2021/HFI2021.gdb.zip',
+    'https://static.ags.aer.ca/files/document/DIG/DIG_2021_0019.zip',
+    'https://cwfis.cfs.nrcan.gc.ca/downloads/nfdb/fire_poly/current_version/NFDB_poly.zip'
 ]
 
 for url in urls:
