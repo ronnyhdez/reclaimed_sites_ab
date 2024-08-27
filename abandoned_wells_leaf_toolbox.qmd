@@ -23,9 +23,8 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Explore  
-
 ```{python}
+from utils.utils import initialize_gee
 import ee
 import geemap
 import json
@@ -37,12 +36,29 @@ import pickle
 import time
 import glob
 import seaborn as sns
+from pathlib import Path
+
+# # Get the current notebook's directory
+# notebook_dir = Path().absolute()
+
+# # Go up one level to the project root
+# project_root = notebook_dir.parent
+
+# # Add the project root to sys.path
+# sys.path.append(str(project_root))
+
+module_path = os.path.abspath(os.path.join('..'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
+print(module_path)
+
+# Now try to import
+from utils import initialize_gee
+initialize_gee()
 
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from utils.utils import initialize_gee
-
-initialize_gee()
+# from utils.utils import initialize_gee
+# initialize_gee()
 ```
 
 ## Run LEAF-toolbox on selected abandoned well polygons 
@@ -187,6 +203,54 @@ print(grouped_df)
 max(grouped_df)
 min(grouped_df)
 ```
+
+
+```{python}
+# Get ndvi
+lc09 = calculate_ndvi(lc09, 'SR_B4', 'SR_B5')
+
+# Convert 'date' to datetime
+lc09['date'] = pd.to_datetime(lc09['date'], unit='ms')
+
+# Reduce sites:
+sites = [282, 443, 575]
+filtered_sites = lc08[lc09['site'].isin(sites)]
+
+# Set the Seaborn theme
+sns.set_theme(style="dark")
+
+# Create the plot
+g = sns.relplot(
+    data=filtered_sites,
+    x="date", y="ndvi", col="site", hue="site",
+    kind="line", palette="crest", linewidth=2, zorder=5,
+    col_wrap=3, height=4, aspect=1.5, legend=False,
+)
+
+# Iterate over each subplot to customize further
+for site, ax in g.axes_dict.items():
+    
+    # Add the site as an annotation within the plot
+    ax.text(.8, .85, site, transform=ax.transAxes, fontweight="bold")
+
+    # Plot every site's NDVI time series in the background with low opacity
+    sns.lineplot(
+        data=filtered_sites, x="date", y="NDVI", units="site",
+        estimator=None, color=".7", linewidth=1, ax=ax, alpha=0.5
+    )
+
+# Reduce the frequency of the x-axis ticks
+ax.set_xticks(ax.get_xticks()[::2])
+
+# Tweak the supporting aspects of the plot
+g.set_titles("")
+g.set_axis_labels("Date", "NDVI")
+g.tight_layout()
+
+plt.show()
+```
+
+
 
 # S2 reflectance
 
