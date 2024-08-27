@@ -24,7 +24,6 @@ editor_options:
 ---
 
 ```{python}
-from utils.utils import initialize_gee
 import ee
 import geemap
 import json
@@ -47,18 +46,14 @@ from pathlib import Path
 # # Add the project root to sys.path
 # sys.path.append(str(project_root))
 
-module_path = os.path.abspath(os.path.join('..'))
-if module_path not in sys.path:
-    sys.path.append(module_path)
-print(module_path)
+# module_path = os.path.abspath(os.path.join('..'))
+# if module_path not in sys.path:
+#     sys.path.append(module_path)
+# print(module_path)
 
 # Now try to import
-from utils import initialize_gee
+from utils.utils import initialize_gee
 initialize_gee()
-
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-# from utils.utils import initialize_gee
-# initialize_gee()
 ```
 
 ## Run LEAF-toolbox on selected abandoned well polygons 
@@ -77,7 +72,7 @@ selected abandoned wells.
 
 ```{python}
 # Read the LC08 files into one dataframe
-pickle_directory = '../data_out'
+pickle_directory = 'data_out'
 pickle_files = glob.glob(f"{pickle_directory}/time_series_LC08_batch_*.pkl")
 dataframes = []
 for pkl_file in pickle_files:
@@ -150,13 +145,13 @@ g = sns.relplot(
 
 # Iterate over each subplot to customize further
 for site, ax in g.axes_dict.items():
-    
+
     # Add the site as an annotation within the plot
     ax.text(.8, .85, site, transform=ax.transAxes, fontweight="bold")
 
     # Plot every site's NDVI time series in the background with low opacity
     sns.lineplot(
-        data=filtered_sites, x="date", y="NDVI", units="site",
+        data=filtered_sites, x="date", y="ndvi", units="site",
         estimator=None, color=".7", linewidth=1, ax=ax, alpha=0.5
     )
 
@@ -175,7 +170,7 @@ plt.show()
 
 ```{python}
 # Read the LC09 files into one dataframe
-pickle_directory = '../data_out'
+pickle_directory = 'data_out'
 pickle_files = glob.glob(f"{pickle_directory}/time_series_LC09_batch_*.pkl")
 dataframes = []
 for pkl_file in pickle_files:
@@ -184,10 +179,6 @@ for pkl_file in pickle_files:
         dataframes.append(df)
 
 lc09 = pd.concat(dataframes, ignore_index = True)
-
-# # Export results
-# with open('time_series_harmonized.pkl', 'wb') as file:
-#     pickle.dump(combined_df, file)
 ```
 
 
@@ -214,7 +205,7 @@ lc09['date'] = pd.to_datetime(lc09['date'], unit='ms')
 
 # Reduce sites:
 sites = [282, 443, 575]
-filtered_sites = lc08[lc09['site'].isin(sites)]
+filtered_sites = lc09[lc09['site'].isin(sites)]
 
 # Set the Seaborn theme
 sns.set_theme(style="dark")
@@ -235,7 +226,7 @@ for site, ax in g.axes_dict.items():
 
     # Plot every site's NDVI time series in the background with low opacity
     sns.lineplot(
-        data=filtered_sites, x="date", y="NDVI", units="site",
+        data=filtered_sites, x="date", y="ndvi", units="site",
         estimator=None, color=".7", linewidth=1, ax=ax, alpha=0.5
     )
 
@@ -250,43 +241,41 @@ g.tight_layout()
 plt.show()
 ```
 
-
-
 # S2 reflectance
 
 ```{python}
-import glob
-import pickle
-import pandas as pd
-import os
+# import glob
+# import pickle
+# import pandas as pd
+# import os
 
-pickle_directory = '../data_out'
-pickle_files = glob.glob(os.path.join(pickle_directory, "*temp*batch_S2_*_COPERNICUS_S2_SR_HARMONIZED_Surface_Reflectance_0_20_leaftoolbox.SL2PV0_*_*h_*mn.pkl"))
+# pickle_directory = '../data_out'
+# pickle_files = glob.glob(os.path.join(pickle_directory, "*temp*batch_S2_*_COPERNICUS_S2_SR_HARMONIZED_Surface_Reflectance_0_20_leaftoolbox.SL2PV0_*_*h_*mn.pkl"))
 
-dataframes = []
-for pkl_file in pickle_files:
-    # Skip files ending with "_raw.pkl"
-    if pkl_file.endswith("_raw.pkl"):
-        continue
+# dataframes = []
+# for pkl_file in pickle_files:
+#     # Skip files ending with "_raw.pkl"
+#     if pkl_file.endswith("_raw.pkl"):
+#         continue
     
-    with open(pkl_file, 'rb') as file:
-        df = pickle.load(file)
-        dataframes.append(df)
+#     with open(pkl_file, 'rb') as file:
+#         df = pickle.load(file)
+#         dataframes.append(df)
 
 # s2 = pd.concat(dataframes, ignore_index=True)
 ```
 
 ```{python}
-# Check the columns
-print(list(s2.columns))
+# # Check the columns
+# print(list(s2.columns))
 
-# Check # observatios per site
-grouped_df = s2.groupby("site").size()
-print("Number of observatios per site: ")
-print(grouped_df)
+# # Check # observatios per site
+# grouped_df = s2.groupby("site").size()
+# print("Number of observatios per site: ")
+# print(grouped_df)
 
-# max(grouped_df)
-# min(grouped_df)
+# # max(grouped_df)
+# # min(grouped_df)
 ```
 
 
