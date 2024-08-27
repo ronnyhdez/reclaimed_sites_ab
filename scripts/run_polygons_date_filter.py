@@ -1,3 +1,26 @@
+"""
+Create the selected abandoned wells asset
+
+This will run filters according to the reclamation
+status. Specifically, it will select just those
+abandoned wells wich status is 'reclaimed'. Then
+it will validate dates according to the variables
+reclamation date, maximum abandoned date, and 
+maximum last production date.
+
+The abandoned wells that pass those filters will
+be exported as an asset to GEE to be use for
+flagging (intersecting features from the assets derived
+from 'shp_exports_for_assets.R')
+
+Outputs:
+- 'selected_abandoned_wells' asset in GEE.
+
+Usage:
+- ...
+
+Author: Ronny A. Hernández Mora
+"""
 
 # Imports
 import fiona
