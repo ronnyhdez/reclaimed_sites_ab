@@ -74,19 +74,7 @@ filtered_buffers = reference_buffers.filter(
 export_if_not_exists('random_sample_1000_filtered_abandoned_wells',
                      random_sample,
                      'Export non-intersecting features')
-# task = ee.batch.Export.table.toAsset(
-#     collection = random_sample,
-#     description = 'Export non-intersecting features',
-#     assetId = "random_sample_1000_filtered_abandoned_wells"
-# )
-# task.start()
 
 export_if_not_exists('random_sample_1000_filtered_reference_buffers',
                      filtered_buffers,
                      'Export selected abandoned wells buffers')
-# task = ee.batch.Export.table.toAsset(
-#     collection = filtered_buffers,
-#     description = 'Export selected abandoned wells buffers',
-#     assetId = "random_sample_1000_filtered_reference_buffers"
-# )
-# task.start()
