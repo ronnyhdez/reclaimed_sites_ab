@@ -8,22 +8,6 @@ import json
 import math
 import time
 
-# # # Fires shp for GEE
-# # fires = gpd.read_file('data/NFDB_poly/NFDB_poly_20210707.shp')
-# # fires = clean_names(fires)
-# # fires = fires[fires['src_agency'] == "AB"]
-
-# # # Drop elevation (Z and M values)
-# # fires_2d = fires.copy()
-# # fires_2d['geometry'] = fires_2d['geometry'].apply(lambda geom: geom if geom.is_empty else geom.dropna())
-import geopandas as gpd
-import os
-import sys
-import ee
-import json
-import math
-import time
-
 def wait_for_tasks(task_list):
     while True:
         tasks_completed = all(task.status()['state'] in ['COMPLETED', 'FAILED', 'CANCELLED'] for task in task_list)
@@ -77,7 +61,7 @@ def process_layer(layer_name, data):
         export_tasks.append(exportTask)
 
     # Wait for all batch export tasks to complete
-    print(f"Waiting for all {layer_name} batch export tasks to complete...")
+    print(f"Waiting for all {layer_name} batch export tasks to complete in GEE...")
     wait_for_tasks(export_tasks)
     print(f"All {layer_name} batch export tasks completed successfully.")
 
@@ -90,7 +74,7 @@ def process_layer(layer_name, data):
         merged_fc = merged_fc.merge(batch_fc)
 
     print(f'Done merging {layer_name} batches...')
-    print(f'Total number of features: {merged_fc.size().getInfo()}')
+    print(f'Total number of features merged: {merged_fc.size().getInfo()}')
 
     # Export the merged collection to another asset
     exportTask = ee.batch.Export.table.toAsset(
@@ -102,7 +86,7 @@ def process_layer(layer_name, data):
     exportTask.start()
 
     # Wait for the merged asset export to complete
-    print(f"Waiting for merged {layer_name} asset export to complete...")
+    print(f"Waiting for merged {layer_name} asset export to complete in GEE...")
     wait_for_tasks([exportTask])
     print(f"Merged {layer_name} asset export completed successfully.")
 
@@ -142,12 +126,21 @@ if __name__ == "__main__":
     industrials = industrials.clean_names()
     industrials = industrials[['feature_ty', 'geometry']]
 
+    fires = gpd.read_file('data/NFDB_poly/NFDB_poly_20210707.shp')
+    fires = clean_names(fires)
+    fires = fires[fires['src_agency'] == "AB"]
+
+    # Drop elevation (Z and M values)
+    fires_2d = fires.copy()
+    fires_2d['geometry'] = fires_2d['geometry'].apply(lambda geom: geom if geom.is_empty else geom.dropna())
+
     # Define the layers to process
     layers = [
         ('reservoirs', reservoirs),
         ('residentials', residentials),
         ('roads', roads),
-        ('industrials', industrials)
+        ('industrials', industrials),
+        ('fires', fires_2d)
     ]
 
     # Process each layer
