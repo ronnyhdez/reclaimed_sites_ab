@@ -17,8 +17,8 @@ reservoirs = reservoirs[['feature_ty', 'geometry']]
 reservoirs = reservoirs[:10]
 print(reservoirs.head())
 print(f'Total number of reservoirs: {len(reservoirs)}')
-
-
+print(reservoirs.crs)
+reservoirs = reservoirs.to_crs(epsg=4326)
 ee.Initialize()
 
 reservoirs_geojson = reservoirs.to_json()
@@ -28,11 +28,13 @@ reservoirs_fc = ee.FeatureCollection(json.loads(reservoirs_geojson))
 exportTask = ee.batch.Export.table.toAsset(
     collection=reservoirs_fc,
     description='Reservoirs Export',
-    assetId='projects/ee-ronnyale/assets/reservoirs_test_v1'
+    assetId='projects/ee-ronnyale/assets/reservoirs_test_v2'
 )
 
 # Start the export task
 exportTask.start()
+
+
 # # Fires shp for GEE
 # fires = gpd.read_file('data/NFDB_poly/NFDB_poly_20210707.shp')
 # fires = clean_names(fires)
