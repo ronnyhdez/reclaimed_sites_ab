@@ -32,7 +32,7 @@ import janitor
 
 # Read data
 sys.path.append(os.path.abspath(os.path.join('..')))
-abandoned_wells = gpd.read_file('data/HFI2021.gdb/HFI2021.gdb',
+abandoned_wells = gpd.read_file('data_check/HFI2021.gdb',
                                 driver = 'FileGDB',
                                 layer = 'o16_WellsAbnd_HFI_2021')
 
