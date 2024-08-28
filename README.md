@@ -53,9 +53,31 @@ reclaimed_sites_ab/
 - notebooks: Documented analysis and data exploration
 - scripts: Code to generate assets in GEE
 
-## Assets creation
+## Data Pipeline
 
-![Data flow diagram](img/reclamation_diagram.jpg)
+This project involves several stages to process and analyze data
+effectively.
+
+### 0. Download Data
+
+The pipeline begins with downloading the necessary datasets.
+Run the script `scripts/download_data.py` to retrieve all
+the datasets required for the analysis.
+
+### 1. Export Assets to Google Earth Engine (GEE)
+
+The **first stage** of the data pipeline involves exporting
+the processed assets to Google Earth Engine (GEE). All
+the compute processing will be done in GEE.
+
+![First stage diagram](img/diagram_first_stage.png)
+
+### 2. Flagging assets
+
+The **second_stage** consist of several steps to
+flag the data. These flags will help later for filtering
+the abandoned wells, which will later be used with
+the LEAF-toolbox sampler.to be used with LEAF-toolbox sampler
 
 ## Running the code
 
