@@ -127,7 +127,7 @@ if __name__ == "__main__":
     industrials = industrials[['feature_ty', 'geometry']]
 
     fires = gpd.read_file('data/NFDB_poly/NFDB_poly_20210707.shp')
-    fires = clean_names(fires)
+    fires = fires.clean_names()
     fires = fires[fires['src_agency'] == "AB"]
 
     # Drop elevation (Z and M values)
