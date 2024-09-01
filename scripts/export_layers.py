@@ -109,17 +109,6 @@ def process_layer(layer_name, layer_data):
     merged_fc_flag = merged_fc.map(check_empty_coordinates)
     merged_fc_complete = merged_fc_flag.filter(ee.Filter.eq('empty_buffer', 0))
 
-# # Function to flag empty geometries (based on the coordinates of the geometry)
-# pixel_count_geom_flag = pixel_count.map(check_empty_coordinates)
-
-# # Filter out empty geometries (otherwise GEE will have an error exporting asset)
-# pixel_count_complete = pixel_count_geom_flag.filter(
-#     ee.Filter.eq('empty_buffer', 0))
-
-# export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4',
-#                       pixel_count_complete,
-#                       'export_pixel_count_negative_buffer_v4')
-
     print(f'Done merging {layer_name} batches...')
     print(f'Total number of features: {merged_fc.size().getInfo()}')
 
