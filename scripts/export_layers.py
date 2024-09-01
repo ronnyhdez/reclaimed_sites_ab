@@ -188,6 +188,7 @@ if __name__ == "__main__":
             .query("reclamation_date > max_abandoned_date")
             .query("reclamation_date > max_last_production_date")
             .query("max_abandoned_date > max_last_production_date")
+            .drop(columns=['first_spud_date']) 
     )
 
     layers = [
