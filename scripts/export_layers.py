@@ -25,6 +25,12 @@ def remove_z(geometry):
             return MultiPolygon([Polygon([(x, y) for x, y, z in poly.exterior.coords], [([(x, y) for x, y, z in interior.coords]) for interior in poly.interiors]) for poly in geometry.geoms])
     return geometry
 
+def check_empty_coordinates(feature):
+    """Flag empty geometries based on the coordinates of the geometry."""
+    coordinates = feature.geometry().coordinates()
+    is_empty = coordinates.size().eq(0)
+    return feature.set('empty_buffer', is_empty)
+
 def wait_for_tasks(task_list):
     while True:
         tasks_completed = all(task.status()['state'] in ['COMPLETED', 'FAILED', 'CANCELLED'] for task in task_list)
@@ -64,7 +70,7 @@ def process_layer(layer_name, layer_data):
     print(f'Total number of {layer_name}: {len(data)}')
     print(f'Original data CRS: {data.crs}')
 
-    batch_size = 1
+    batch_size = 500
 
     num_batches = math.ceil(len(data) / batch_size)
     print(f'Total of batches to export: {num_batches}')
@@ -100,11 +106,25 @@ def process_layer(layer_name, layer_data):
     
     merged_fc = merge_collections(batch_asset_ids, layer_name)
 
+    merged_fc_flag = merged_fc.map(check_empty_coordinates)
+    merged_fc_complete = merged_fc_flag.filter(ee.Filter.eq('empty_buffer', 0))
+
+# # Function to flag empty geometries (based on the coordinates of the geometry)
+# pixel_count_geom_flag = pixel_count.map(check_empty_coordinates)
+
+# # Filter out empty geometries (otherwise GEE will have an error exporting asset)
+# pixel_count_complete = pixel_count_geom_flag.filter(
+#     ee.Filter.eq('empty_buffer', 0))
+
+# export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4',
+#                       pixel_count_complete,
+#                       'export_pixel_count_negative_buffer_v4')
+
     print(f'Done merging {layer_name} batches...')
     print(f'Total number of features: {merged_fc.size().getInfo()}')
 
     exportTask = ee.batch.Export.table.toAsset(
-        collection=merged_fc,
+        collection=merged_fc_complete,
         description=f'Merged {layer_name.capitalize()}',
         assetId=f'projects/ee-ronnyale/assets/{layer_name}_merged'
     )
@@ -148,24 +168,24 @@ if __name__ == "__main__":
     # residentials = residentials.clean_names()
     # residentials = residentials[['feature_ty', 'geometry']]
 
-    # industrials = gpd.read_file('data_check/HFI2021.gdb',
-    #                                 layer = 'o08_Industrials_HFI_2021')
-    # industrials = industrials.clean_names()
-    # industrials = industrials[['feature_ty', 'geometry']]
-    # industrials = industrials.dropna(subset=['geometry'])
+    industrials = gpd.read_file('data_check/HFI2021.gdb',
+                                    layer = 'o08_Industrials_HFI_2021')
+    industrials = industrials.clean_names()
+    industrials = industrials[['feature_ty', 'geometry']]
+    industrials = industrials.dropna(subset=['geometry'])
 
-    fires = gpd.read_file('data_check/NFDB_poly_20210707.shp')
-    fires = fires.clean_names()
-    fires = fires[fires['src_agency'] == "AB"]
-    fires = fires[['fire_id', 'rep_date', 'geometry']]
-    fires['geometry'] = fires['geometry'].apply(remove_z)
+    # fires = gpd.read_file('data_check/NFDB_poly_20210707.shp')
+    # fires = fires.clean_names()
+    # fires = fires[fires['src_agency'] == "AB"]
+    # fires = fires[['fire_id', 'rep_date', 'geometry']]
+    # fires['geometry'] = fires['geometry'].apply(remove_z)
     
     layers = [
         # ('reservoirs', reservoirs),
         # ('residentials', residentials),
         # ('roads', roads),
-        # ('industrials', industrials),
-        ('fires', fires)
+        ('industrials', industrials)
+        # ('fires', fires)
     ]
 
     # Process each layer
