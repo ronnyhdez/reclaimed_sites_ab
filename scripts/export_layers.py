@@ -104,21 +104,10 @@ def process_layer(layer_name, layer_data):
 
     batch_asset_ids = [f'projects/ee-ronnyale/assets/{layer_name}_batch_{i+1}' for i in range(num_batches)]
     
+    print(f'Merging {layer_name} batches...')
     merged_fc = merge_collections(batch_asset_ids, layer_name)
-
     merged_fc_flag = merged_fc.map(check_empty_coordinates)
     merged_fc_complete = merged_fc_flag.filter(ee.Filter.eq('empty_buffer', 0))
-
-# # Function to flag empty geometries (based on the coordinates of the geometry)
-# pixel_count_geom_flag = pixel_count.map(check_empty_coordinates)
-
-# # Filter out empty geometries (otherwise GEE will have an error exporting asset)
-# pixel_count_complete = pixel_count_geom_flag.filter(
-#     ee.Filter.eq('empty_buffer', 0))
-
-# export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4',
-#                       pixel_count_complete,
-#                       'export_pixel_count_negative_buffer_v4')
 
     print(f'Done merging {layer_name} batches...')
     print(f'Total number of features: {merged_fc.size().getInfo()}')
@@ -168,11 +157,11 @@ if __name__ == "__main__":
     # residentials = residentials.clean_names()
     # residentials = residentials[['feature_ty', 'geometry']]
 
-    industrials = gpd.read_file('data_check/HFI2021.gdb',
-                                    layer = 'o08_Industrials_HFI_2021')
-    industrials = industrials.clean_names()
-    industrials = industrials[['feature_ty', 'geometry']]
-    industrials = industrials.dropna(subset=['geometry'])
+    # industrials = gpd.read_file('data_check/HFI2021.gdb',
+    #                                 layer = 'o08_Industrials_HFI_2021')
+    # industrials = industrials.clean_names()
+    # industrials = industrials[['feature_ty', 'geometry']]
+    # industrials = industrials.dropna(subset=['geometry'])
 
     # fires = gpd.read_file('data_check/NFDB_poly_20210707.shp')
     # fires = fires.clean_names()
@@ -180,12 +169,34 @@ if __name__ == "__main__":
     # fires = fires[['fire_id', 'rep_date', 'geometry']]
     # fires['geometry'] = fires['geometry'].apply(remove_z)
     
+    abandoned_wells = gpd.read_file('data_check/HFI2021.gdb',
+                                layer = 'o16_WellsAbnd_HFI_2021')
+    abandoned_wells = abandoned_wells.clean_names()
+
+    # Map reclamation values
+    abandoned_wells['reclamation_status'] = abandoned_wells['reclamation_status'].map({
+        1: 'not_reclaimed',
+        2: 'reclamation_exempt',
+        3: 'reclaimed'
+    }).fillna('no_data')
+
+    # Filter polygons
+    selected_polygons = (
+            abandoned_wells
+            .query("reclamation_status == 'reclaimed'")
+            .query("reclamation_date != 0")
+            .query("reclamation_date > max_abandoned_date")
+            .query("reclamation_date > max_last_production_date")
+            .query("max_abandoned_date > max_last_production_date")
+    )
+
     layers = [
         # ('reservoirs', reservoirs),
         # ('residentials', residentials),
         # ('roads', roads),
-        ('industrials', industrials)
+        # ('industrials', industrials)
         # ('fires', fires)
+        ('abandoned_wells', selected_polygons)
     ]
 
     # Process each layer
