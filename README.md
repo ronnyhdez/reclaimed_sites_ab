@@ -89,3 +89,20 @@ In summary, steps to recreate the results:
 - Flag assets and create buffers with `flagging_assets.py`
 - Prepare the asset to be sample with LEAF-toolbox: `create_sampler_asset.py`
 - Run the LEAF-toolbox sampler on selected abandoned wells: `run_sampler.py`
+
+# References
+
+Alberta Biodiversity Monitoring Institute and Alberta Human Footprint Monitoring
+Program. ABMI Human Footprint Inventory (HFI) for Alberta 2021 (version 1.0).
+Geodatabase. Last modified August 1, 2023.
+
+Canadian Forest Service. 2021. Canadian National Fire Database – Agency Fire Data.
+Natural Resources Canada, Canadian Forest Service, Northern Forestry Centre,
+Edmonton, Alberta. https://cwfis.cfs.nrcan.gc.ca/ha/nfdb
+
+Chowdhury, S. (2021): Land-use/Land-cover classification of Alberta, derived from
+2020 sentinel-2 multispectral data (image data, TIFF format); Alberta Energy
+Regulator / Alberta Geological Survey, AER/AGS Digital Data 2021-0019.
+
+Fernandes, R. et al., 2021, "LEAF Toolbox", Canada Centre for Remote Sensing,
+https://github.com/rfernand387/LEAF-Toolbox/wiki, DOI: 10.5281/zenodo.4321298.
