@@ -79,13 +79,42 @@ flag the data. These flags will help later for filtering
 the abandoned wells, which will later be used with
 the LEAF-toolbox sampler.to be used with LEAF-toolbox sampler
 
+![Second stage diagram](img/diagram_second_stage.png)
+
+### 3. Create sampler assets
+
+This third stage will take the flagged assets and based on
+the research objectives, will filter polygons accordingly.
+The resulting assets will be used finally to run the
+LEAF-toolbox
+
+![Third state diagram](img/diagram_third_stage.png)
+
 ## Running the code
 
 [WIP dev notes](https://github.com/ronnyhdez/reclaimed_sites_ab/wiki/Dev-notes)
 
 In summary, steps to recreate the results:
 
-- Create first assets in GEE with `shp_exports_for_assets.R` & `run_polygons_date_filter.py`
-- Flag assets and create buffers with `flagging_assets.py`
-- Prepare the asset to be sample with LEAF-toolbox: `create_sampler_asset.py`
-- Run the LEAF-toolbox sampler on selected abandoned wells: `run_sampler.py`
+- Create first assets in GEE with `scripts/export_assets.py`
+- Flag assets and create buffers with `scripts/flagging_assets.py`
+- Prepare the asset to be sample with LEAF-toolbox: `scripts/create_sampler_asset.py`
+- Run the LEAF-toolbox sampler on selected abandoned wells: `scripts/run_sampler.py`
+- Read the pkl files and check time series in `abandoned_wells_leaf_toolsbox.qmd`
+
+# References
+
+Alberta Biodiversity Monitoring Institute and Alberta Human Footprint Monitoring
+Program. ABMI Human Footprint Inventory (HFI) for Alberta 2021 (version 1.0).
+Geodatabase. Last modified August 1, 2023.
+
+Canadian Forest Service. 2021. Canadian National Fire Database – Agency Fire Data.
+Natural Resources Canada, Canadian Forest Service, Northern Forestry Centre,
+Edmonton, Alberta. https://cwfis.cfs.nrcan.gc.ca/ha/nfdb
+
+Chowdhury, S. (2021): Land-use/Land-cover classification of Alberta, derived from
+2020 sentinel-2 multispectral data (image data, TIFF format); Alberta Energy
+Regulator / Alberta Geological Survey, AER/AGS Digital Data 2021-0019.
+
+Fernandes, R. et al., 2021, "LEAF Toolbox", Canada Centre for Remote Sensing,
+https://github.com/rfernand387/LEAF-Toolbox/wiki, DOI: 10.5281/zenodo.4321298.
