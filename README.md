@@ -79,16 +79,28 @@ flag the data. These flags will help later for filtering
 the abandoned wells, which will later be used with
 the LEAF-toolbox sampler.to be used with LEAF-toolbox sampler
 
+![Second stage diagram](img/diagram_second_stage.png)
+
+### 3. Create sampler assets
+
+This third stage will take the flagged assets and based on
+the research objectives, will filter polygons accordingly.
+The resulting assets will be used finally to run the
+LEAF-toolbox
+
+![Third state diagram](img/diagram_third_stage.png)
+
 ## Running the code
 
 [WIP dev notes](https://github.com/ronnyhdez/reclaimed_sites_ab/wiki/Dev-notes)
 
 In summary, steps to recreate the results:
 
-- Create first assets in GEE with `shp_exports_for_assets.R` & `run_polygons_date_filter.py`
-- Flag assets and create buffers with `flagging_assets.py`
-- Prepare the asset to be sample with LEAF-toolbox: `create_sampler_asset.py`
-- Run the LEAF-toolbox sampler on selected abandoned wells: `run_sampler.py`
+- Create first assets in GEE with `scripts/export_assets.py`
+- Flag assets and create buffers with `scripts/flagging_assets.py`
+- Prepare the asset to be sample with LEAF-toolbox: `scripts/create_sampler_asset.py`
+- Run the LEAF-toolbox sampler on selected abandoned wells: `scripts/run_sampler.py`
+- Read the pkl files and check time series in `abandoned_wells_leaf_toolsbox.qmd`
 
 # References
 
