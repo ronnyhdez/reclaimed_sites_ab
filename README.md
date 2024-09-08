@@ -64,6 +64,8 @@ The pipeline begins with downloading the necessary datasets.
 Run the script `scripts/download_data.py` to retrieve all
 the datasets required for the analysis.
 
+![Download process](img/reclamation_data_download.png)
+
 ### 1. Export Assets to Google Earth Engine (GEE)
 
 The **first stage** of the data pipeline involves exporting
