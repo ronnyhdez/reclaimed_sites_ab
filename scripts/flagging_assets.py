@@ -28,7 +28,7 @@ print(module_path)
 
 import ee
 import json
-from utils.utils import (
+from gee_helpers.gee_helpers import (
     initialize_gee, buffer_feature, 
     apply_inward_dilation, check_empty_coordinates,
     get_feature_collection, export_if_not_exists,
