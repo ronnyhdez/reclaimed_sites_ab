@@ -36,15 +36,20 @@ Author: Ronny A. Hernández Mora
 """
 
 import os
-import pickle
 import sys
+import pickle
 import time
 import ee
 import pandas as pd
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+print("Current working directory:", os.getcwd())
 
-from utils.utils import initialize_gee, get_feature_collection
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+print("Parent directory: ", parent_dir)
+sys.path.append(parent_dir)
+
+# Import functions from custom helper module
+from gee_helpers.gee_helpers import initialize_gee, get_feature_collection
 
 # PARAMETERS
 POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons'
@@ -69,8 +74,8 @@ total_polygons = polygon_collection.size().getInfo()
 
 # Products to be processed
 image_collections = [
-    {"name": "LANDSAT/LC08/C02/T1_L2", "label": "LC08"},
-    {"name": "LANDSAT/LC09/C02/T1_L2", "label": "LC09"},
+    # {"name": "LANDSAT/LC08/C02/T1_L2", "label": "LC08"},
+    # {"name": "LANDSAT/LC09/C02/T1_L2", "label": "LC09"},
     {"name": "COPERNICUS/S2_SR_HARMONIZED", "label": "S2"}        
 ]
 
@@ -79,6 +84,7 @@ for collection in image_collections:
     label = collection["label"]
 
     # Process each batch
+    # for start_index in range(0, 20, 20):
     for start_index in range(0, total_polygons, batch_size):
         pickle_filename = f'{DATA_OUTPUT_DIR}time_series_{label}_batch_{start_index}.pkl'
 
@@ -102,17 +108,31 @@ for collection in image_collections:
             time.sleep(10)
 
         start_time = time.time()
-        sites_dictionary = LEAF.sampleSites(
-            [batch_asset_id],
-            imageCollectionName = image_collection_name,
-            algorithm = SL2PV0,
-            variableName = "Surface_Reflectance",
-            maxCloudcover = 90,
-            outputScaleSize = 30,
-            inputScaleSize = 30,
-            bufferSpatialSize = 0,
-            numPixels = 100
-        )
+        if label in ["LC08", "LC09"]:
+          sites_dictionary = LEAF.sampleSites(
+              [batch_asset_id],
+              imageCollectionName = image_collection_name,
+              algorithm = SL2PV0,
+              variableName = "Surface_Reflectance",
+              maxCloudcover = 90,
+              outputScaleSize = 30,
+              inputScaleSize = 30,
+              bufferSpatialSize = 0,
+              numPixels = 100
+          )
+        elif label == "S2":
+          sites_dictionary = LEAF.sampleSites(
+              [batch_asset_id],
+              imageCollectionName = image_collection_name,
+              algorithm = SL2PV0,
+              variableName = "Surface_Reflectance",
+              maxCloudcover = 90,
+              outputScaleSize = 20,
+              inputScaleSize = 20,
+              bufferSpatialSize = 0,
+              bufferTemporalSize = ['2020-01-01','2020-12-01'],
+              numPixels = 100
+          )
         end_time = time.time()
         execution_time = end_time - start_time
         print(f'Execution time for batch {start_index} with {label}: {execution_time} seconds')
