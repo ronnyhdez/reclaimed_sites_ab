@@ -23,7 +23,7 @@ Author: Ronny A. Hernández Mora
 """
 
 import ee
-from utils.utils import(
+from gee_helpers.gee_helpers import(
     initialize_gee, get_feature_collection,
     set_dates, set_area, export_if_not_exists
 )
