@@ -84,6 +84,7 @@ for collection in image_collections:
     label = collection["label"]
 
     # Process each batch
+    # for start_index in range(0, 20, 20):
     for start_index in range(0, total_polygons, batch_size):
         pickle_filename = f'{DATA_OUTPUT_DIR}time_series_{label}_batch_{start_index}.pkl'
 

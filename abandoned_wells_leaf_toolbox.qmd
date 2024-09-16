@@ -52,7 +52,7 @@ from pathlib import Path
 # print(module_path)
 
 # Now try to import
-from utils.utils import initialize_gee
+from gee_helpers.gee_helpers import initialize_gee
 initialize_gee()
 ```
 
