@@ -108,18 +108,31 @@ for collection in image_collections:
             time.sleep(10)
 
         start_time = time.time()
-        sites_dictionary = LEAF.sampleSites(
-            [batch_asset_id],
-            imageCollectionName = image_collection_name,
-            algorithm = SL2PV0,
-            variableName = "Surface_Reflectance",
-            maxCloudcover = 90,
-            outputScaleSize = 20,
-            inputScaleSize = 20,
-            bufferSpatialSize = 0,
-            bufferTemporalSize = ['2020-01-01','2020-12-01'],
-            numPixels = 100
-        )
+        if label in ["LC08", "LC09"]:
+          sites_dictionary = LEAF.sampleSites(
+              [batch_asset_id],
+              imageCollectionName = image_collection_name,
+              algorithm = SL2PV0,
+              variableName = "Surface_Reflectance",
+              maxCloudcover = 90,
+              outputScaleSize = 30,
+              inputScaleSize = 30,
+              bufferSpatialSize = 0,
+              numPixels = 100
+          )
+        elif label == "S2":
+          sites_dictionary = LEAF.sampleSites(
+              [batch_asset_id],
+              imageCollectionName = image_collection_name,
+              algorithm = SL2PV0,
+              variableName = "Surface_Reflectance",
+              maxCloudcover = 90,
+              outputScaleSize = 20,
+              inputScaleSize = 20,
+              bufferSpatialSize = 0,
+              bufferTemporalSize = ['2020-01-01','2020-12-01'],
+              numPixels = 100
+          )
         end_time = time.time()
         execution_time = end_time - start_time
         print(f'Execution time for batch {start_index} with {label}: {execution_time} seconds')
