@@ -89,11 +89,20 @@ def process_layer(layer_name, layer_data):
 
     export_tasks = []
 
-    for i, batch in enumerate(data.groupby(data.index // batch_size)):
-        batch = batch[1].to_crs(epsg=4326)
+    for i in range(num_batches):
+        start_idx = i * batch_size
+        end_idx = min((i + 1) * batch_size, len(data))
+        
+        batch = data.iloc[start_idx:end_idx].to_crs(epsg=4326)
         batch_geojson = batch.to_json()
-        print(f'Transforming to json batch {i}')
+        print(f'Transforming to json batch {i}/{num_batches}')
         batch_fc = ee.FeatureCollection(json.loads(batch_geojson))
+
+    # for i, batch in enumerate(data.groupby(data.index // batch_size)):
+    #     batch = batch[1].to_crs(epsg=4326)
+    #     batch_geojson = batch.to_json()
+    #     print(f'Transforming to json batch {i}')
+    #     batch_fc = ee.FeatureCollection(json.loads(batch_geojson))
 
         batch_asset_id = f'projects/ee-ronnyale/assets/{layer_name}_batch_{i+1}'
 
@@ -115,9 +124,9 @@ def process_layer(layer_name, layer_data):
     print(f"All {layer_name} batch export tasks completed successfully.")
 
     batch_asset_ids = [f'projects/ee-ronnyale/assets/{layer_name}_batch_{i+1}' for i in range(num_batches)]
-    
+    print(batch_asset_ids)
+    print(f'Merging {layer_name} batches...')
     merged_fc = merge_collections(batch_asset_ids, layer_name)
-
     merged_fc_flag = merged_fc.map(check_empty_coordinates)
     merged_fc_complete = merged_fc_flag.filter(ee.Filter.eq('empty_buffer', 0))
 
@@ -154,20 +163,20 @@ if __name__ == "__main__":
     # Read data
     sys.path.append(os.path.abspath(os.path.join('..')))
 
-    # reservoirs = gpd.read_file('data_check/HFI2021.gdb',
-    #                                 layer = 'o01_Reservoirs_HFI_2021')
-    # reservoirs = reservoirs.clean_names()
-    # reservoirs = reservoirs[['feature_ty', 'geometry']]
+    reservoirs = gpd.read_file('data_check/HFI2021.gdb',
+                                    layer = 'o01_Reservoirs_HFI_2021')
+    reservoirs = reservoirs.clean_names()
+    reservoirs = reservoirs[['feature_ty', 'geometry']]
 
-    # roads = gpd.read_file('data_check/HFI2021.gdb',
-    #                                 layer = 'o03_Roads_HFI_2021')
-    # roads = roads.clean_names()
-    # roads = roads[['feature_ty', 'geometry']]
+    roads = gpd.read_file('data_check/HFI2021.gdb',
+                                    layer = 'o03_Roads_HFI_2021')
+    roads = roads.clean_names()
+    roads = roads[['feature_ty', 'geometry']]
 
-    # residentials = gpd.read_file('data_check/HFI2021.gdb',
-    #                                 layer = 'o15_Residentials_HFI_2021')
-    # residentials = residentials.clean_names()
-    # residentials = residentials[['feature_ty', 'geometry']]
+    residentials = gpd.read_file('data_check/HFI2021.gdb',
+                                    layer = 'o15_Residentials_HFI_2021')
+    residentials = residentials.clean_names()
+    residentials = residentials[['feature_ty', 'geometry']]
 
     # industrials = gpd.read_file('data_check/HFI2021.gdb',
     #                                 layer = 'o08_Industrials_HFI_2021')
@@ -192,12 +201,35 @@ if __name__ == "__main__":
     # Print statistics after simplification
     print(f"Total number of points after simplification: {sum(fires.geometry.apply(count_points))}")
     
+    abandoned_wells = gpd.read_file('data_check/HFI2021.gdb',
+                                layer = 'o16_WellsAbnd_HFI_2021')
+    abandoned_wells = abandoned_wells.clean_names()
+
+    # Map reclamation values
+    abandoned_wells['reclamation_status'] = abandoned_wells['reclamation_status'].map({
+        1: 'not_reclaimed',
+        2: 'reclamation_exempt',
+        3: 'reclaimed'
+    }).fillna('no_data')
+
+    # Filter polygons
+    selected_polygons = (
+            abandoned_wells
+            .query("reclamation_status == 'reclaimed'")
+            .query("reclamation_date != 0")
+            .query("reclamation_date > max_abandoned_date")
+            .query("reclamation_date > max_last_production_date")
+            .query("max_abandoned_date > max_last_production_date")
+            .drop(columns=['first_spud_date']) 
+    )
+
     layers = [
-        # ('reservoirs', reservoirs),
-        # ('residentials', residentials),
-        # ('roads', roads),
-        # ('industrials', industrials)
-        ('fires', fires)
+        ('reservoirs', reservoirs),
+        ('residentials', residentials),
+        ('roads', roads),
+        ('industrials', industrials)
+        # ('fires', fires)
+        ('abandoned_wells', selected_polygons)
     ]
 
     # Process each layer

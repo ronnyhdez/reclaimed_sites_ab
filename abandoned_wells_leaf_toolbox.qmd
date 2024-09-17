@@ -52,7 +52,7 @@ from pathlib import Path
 # print(module_path)
 
 # Now try to import
-from utils.utils import initialize_gee
+from gee_helpers.gee_helpers import initialize_gee
 initialize_gee()
 ```
 
@@ -249,33 +249,90 @@ plt.show()
 # import pandas as pd
 # import os
 
-# pickle_directory = '../data_out'
-# pickle_files = glob.glob(os.path.join(pickle_directory, "*temp*batch_S2_*_COPERNICUS_S2_SR_HARMONIZED_Surface_Reflectance_0_20_leaftoolbox.SL2PV0_*_*h_*mn.pkl"))
+# Create pattern to match all S2 files
+# pickle_directory = 'data_out/'
+# pickle_pattern = os.path.join(
+#     pickle_directory, "*temp*batch_S2_*_COPERNICUS_S2_SR_HARMONIZED_Surface_Reflectance_0_*_leaftoolbox.SL2PV0_*_*h_*mn*.pkl")
+
+# # Get  matching pickle files
+# pickle_files = glob.glob(pickle_pattern)
 
 # dataframes = []
-# for pkl_file in pickle_files:
-#     # Skip files ending with "_raw.pkl"
-#     if pkl_file.endswith("_raw.pkl"):
-#         continue
-    
-#     with open(pkl_file, 'rb') as file:
-#         df = pickle.load(file)
+
+# for file in pickle_files:
+#     with open(file, 'rb') as f:
+#         # Load the pickle file
+#         df = pickle.load(f)
+#         outer_key = list(df.keys())[0]
+#         first_item = df[outer_key]
+#         batch_results = []
+#         for item in range(len(first_item)):
+#             df = first_item[item]['leaftoolbox.SL2PV0']
+#             df['site'] = first_item[item]['feature']['wllst__']
+#             batch_results.append(df)
+#         # Append the DataFrame to the list
 #         dataframes.append(df)
 
-# s2 = pd.concat(dataframes, ignore_index=True)
+# # Concatenate all DataFrames into a single DataFrame
+# combined_df = pd.concat(dataframes, ignore_index=True)
+
+# Read file
+file = 'data_out/sites_dictionary.pkl'
+with open(file, 'rb') as f:
+    df = pickle.load(f)
+
+outer_key = list(df.keys())[0]
+first_item = df[outer_key]
+batch_results = []
+for item in range(len(first_item)):
+    df = first_item[item]['SL2PV0']
+    df['site'] = first_item[item]['feature']['wllst__']
+    batch_results.append(df)
 ```
 
 ```{python}
-# # Check the columns
-# print(list(s2.columns))
+# Get ndvi
+s2 = calculate_ndvi(df, 'B4', 'B8')
 
-# # Check # observatios per site
-# grouped_df = s2.groupby("site").size()
-# print("Number of observatios per site: ")
-# print(grouped_df)
+# Convert 'date' to datetime
+s2['date'] = pd.to_datetime(s2['date'], unit='ms')
 
-# # max(grouped_df)
-# # min(grouped_df)
+# Reduce sites:
+sites = [137639]
+filtered_sites = s2[s2['site'].isin(sites)]
+
+# Set the Seaborn theme
+sns.set_theme(style="dark")
+
+# Create the plot
+g = sns.relplot(
+    data=filtered_sites,
+    x="date", y="ndvi", col="site", hue="site",
+    kind="line", palette="crest", linewidth=2, zorder=5,
+    col_wrap=3, height=4, aspect=1.5, legend=False,
+)
+
+# Iterate over each subplot to customize further
+for site, ax in g.axes_dict.items():
+
+    # Add the site as an annotation within the plot
+    ax.text(.8, .85, site, transform=ax.transAxes, fontweight="bold")
+
+    # Plot every site's NDVI time series in the background with low opacity
+    sns.lineplot(
+        data=filtered_sites, x="date", y="ndvi", units="site",
+        estimator=None, color=".7", linewidth=1, ax=ax, alpha=0.5
+    )
+
+# Reduce the frequency of the x-axis ticks
+ax.set_xticks(ax.get_xticks()[::2])
+
+# Tweak the supporting aspects of the plot
+g.set_titles("")
+g.set_axis_labels("Date", "NDVI")
+g.tight_layout()
+
+plt.show()
 ```
 
 
