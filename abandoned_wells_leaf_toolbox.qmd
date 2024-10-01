@@ -72,7 +72,7 @@ selected abandoned wells.
 
 ```{python}
 # Read the LC08 files into one dataframe
-pickle_directory = 'data_out'
+pickle_directory = 'data'
 pickle_files = glob.glob(f"{pickle_directory}/time_series_LC08_batch_*.pkl")
 dataframes = []
 for pkl_file in pickle_files:
@@ -170,7 +170,7 @@ plt.show()
 
 ```{python}
 # Read the LC09 files into one dataframe
-pickle_directory = 'data_out'
+pickle_directory = 'data'
 pickle_files = glob.glob(f"{pickle_directory}/time_series_LC09_batch_*.pkl")
 dataframes = []
 for pkl_file in pickle_files:
@@ -220,7 +220,7 @@ g = sns.relplot(
 
 # Iterate over each subplot to customize further
 for site, ax in g.axes_dict.items():
-    
+
     # Add the site as an annotation within the plot
     ax.text(.8, .85, site, transform=ax.transAxes, fontweight="bold")
 
@@ -277,7 +277,7 @@ plt.show()
 # combined_df = pd.concat(dataframes, ignore_index=True)
 
 # Read file
-file = 'data_out/sites_dictionary.pkl'
+file = 'data/1000_filtered_polygons_COPERNICUS_S2_SR_HARMONIZED_Surface_Reflectance_0_999_SL2PV0_2024_09_16_19h_09mn_raw.pkl'
 with open(file, 'rb') as f:
     df = pickle.load(f)
 
@@ -298,7 +298,7 @@ s2 = calculate_ndvi(df, 'B4', 'B8')
 s2['date'] = pd.to_datetime(s2['date'], unit='ms')
 
 # Reduce sites:
-sites = [137639]
+sites = [169342]
 filtered_sites = s2[s2['site'].isin(sites)]
 
 # Set the Seaborn theme
