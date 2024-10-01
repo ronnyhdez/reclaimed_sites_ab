@@ -1,3 +1,4 @@
 data/time_series_l08sr.pkl filter=lfs diff=lfs merge=lfs -text
 data/time_series_l09sr.pkl filter=lfs diff=lfs merge=lfs -text
 data/time_series_harmonized.pkl filter=lfs diff=lfs merge=lfs -text
+data/*.pkl filter=lfs diff=lfs merge=lfs -text
