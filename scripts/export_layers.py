@@ -9,6 +9,9 @@ import math
 import time
 from shapely.geometry import Polygon, MultiPolygon
 
+# PARAMETERS
+GEE_PROJECT = "projects/ee-ronnyale/assets/"
+
 def assets_exists(asset_id):
     """Validate if asset exists in GEE"""
     try:
@@ -77,22 +80,22 @@ def process_layer(layer_name, layer_data):
 
     export_tasks = []
 
-    for i in range(num_batches):
-        start_idx = i * batch_size
-        end_idx = min((i + 1) * batch_size, len(data))
+    # for i in range(num_batches):
+    #     start_idx = i * batch_size
+    #     end_idx = min((i + 1) * batch_size, len(data))
         
-        batch = data.iloc[start_idx:end_idx].to_crs(epsg=4326)
-        batch_geojson = batch.to_json()
-        print(f'Transforming to json batch {i}/{num_batches}')
-        batch_fc = ee.FeatureCollection(json.loads(batch_geojson))
-
-    # for i, batch in enumerate(data.groupby(data.index // batch_size)):
-    #     batch = batch[1].to_crs(epsg=4326)
+    #     batch = data.iloc[start_idx:end_idx].to_crs(epsg=4326)
     #     batch_geojson = batch.to_json()
-    #     print(f'Transforming to json batch {i}')
+    #     print(f'Transforming to json batch {i}/{num_batches}')
     #     batch_fc = ee.FeatureCollection(json.loads(batch_geojson))
 
-        batch_asset_id = f'projects/ee-ronnyale/assets/{layer_name}_batch_{i+1}'
+    for i, batch in enumerate(data.groupby(data.index // batch_size)):
+        batch = batch[1].to_crs(epsg=4326)
+        batch_geojson = batch.to_json()
+        print(f'Transforming to json batch {i}')
+        batch_fc = ee.FeatureCollection(json.loads(batch_geojson))
+
+        batch_asset_id = f'{GEE_PROJECT}{layer_name}_batch_{i+1}'
 
         if not assets_exists(batch_asset_id):
             print(f'Exporting the batch: {batch_asset_id}')
@@ -111,7 +114,7 @@ def process_layer(layer_name, layer_data):
     wait_for_tasks(export_tasks)
     print(f"All {layer_name} batch export tasks completed successfully.")
 
-    batch_asset_ids = [f'projects/ee-ronnyale/assets/{layer_name}_batch_{i+1}' for i in range(num_batches)]
+    batch_asset_ids = [f'{GEE_PROJECT}{layer_name}_batch_{i+1}' for i in range(num_batches)]
     print(batch_asset_ids)
     print(f'Merging {layer_name} batches...')
     merged_fc = merge_collections(batch_asset_ids, layer_name)
@@ -124,7 +127,7 @@ def process_layer(layer_name, layer_data):
     exportTask = ee.batch.Export.table.toAsset(
         collection=merged_fc_complete,
         description=f'Merged {layer_name.capitalize()}',
-        assetId=f'projects/ee-ronnyale/assets/{layer_name}_merged'
+        assetId=f'{GEE_PROJECT}{layer_name}_merged'
     )
     print(f'Exporting merged {layer_name} asset')
     exportTask.start()
@@ -172,11 +175,11 @@ if __name__ == "__main__":
     industrials = industrials[['feature_ty', 'geometry']]
     industrials = industrials.dropna(subset=['geometry'])
 
-    fires = gpd.read_file('data_check/NFDB_poly_20210707.shp')
-    fires = fires.clean_names()
-    fires = fires[fires['src_agency'] == "AB"]
-    fires = fires[['fire_id', 'rep_date', 'geometry']]
-    fires['geometry'] = fires['geometry'].apply(remove_z)
+    # fires = gpd.read_file('data_check/NFDB_poly_20210707.shp')
+    # fires = fires.clean_names()
+    # fires = fires[fires['src_agency'] == "AB"]
+    # fires = fires[['fire_id', 'rep_date', 'geometry']]
+    # fires['geometry'] = fires['geometry'].apply(remove_z)
     
     abandoned_wells = gpd.read_file('data_check/HFI2021.gdb',
                                 layer = 'o16_WellsAbnd_HFI_2021')
@@ -204,7 +207,7 @@ if __name__ == "__main__":
         ('reservoirs', reservoirs),
         ('residentials', residentials),
         ('roads', roads),
-        ('industrials', industrials)
+        ('industrials', industrials),
         # ('fires', fires)
         ('abandoned_wells', selected_polygons)
     ]
