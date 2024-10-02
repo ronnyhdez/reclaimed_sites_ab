@@ -20,11 +20,16 @@ Author: Ronny A. Hernández Mora
 import os
 import sys
 
-module_path = os.path.abspath(os.path.join('..'))
-if module_path not in sys.path:
-    sys.path.append(module_path)
-print(module_path)
+# module_path = os.path.abspath(os.path.join('..'))
+# if module_path not in sys.path:
+#     sys.path.append(module_path)
+# print(module_path)
 
+print("Current working directory:", os.getcwd())
+
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+print("Parent directory: ", parent_dir)
+sys.path.append(parent_dir)
 
 import ee
 import json
