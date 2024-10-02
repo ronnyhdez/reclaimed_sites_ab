@@ -19,26 +19,37 @@ Author: Ronny A. Hernández Mora
 
 import os
 import sys
-
-# module_path = os.path.abspath(os.path.join('..'))
-# if module_path not in sys.path:
-#     sys.path.append(module_path)
-# print(module_path)
+import ee
+import json
 
 print("Current working directory:", os.getcwd())
-
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 print("Parent directory: ", parent_dir)
 sys.path.append(parent_dir)
 
-import ee
-import json
 from gee_helpers.gee_helpers import (
     initialize_gee, buffer_feature, 
     apply_inward_dilation, check_empty_coordinates,
     get_feature_collection, export_if_not_exists,
     print_sample_info, create_reference_buffer
 )
+
+## Function to implement in current script
+## So that script can run without doing manual work
+
+# def wait_for_tasks(task_list):
+#     while True:
+#         tasks_completed = all(task.status()['state'] in ['COMPLETED', 'FAILED', 'CANCELLED'] for task in task_list)
+#         if tasks_completed:
+#             break
+#         time.sleep(10)  
+
+#     # Check for any failed tasks
+#     failed_tasks = [task for task in task_list if task.status()['state'] == 'FAILED']
+#     if failed_tasks:
+#         raise Exception(f"The following tasks failed: {', '.join(task.status()['description'] for task in failed_tasks)}")
+
+
 
 initialize_gee()
 
