@@ -23,6 +23,14 @@ Author: Ronny A. Hernández Mora
 """
 
 import ee
+import os
+import sys
+
+print("Current working directory:", os.getcwd())
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+print("Parent directory: ", parent_dir)
+sys.path.append(parent_dir)
+
 from gee_helpers.gee_helpers import(
     initialize_gee, get_feature_collection,
     set_dates, set_area, export_if_not_exists
@@ -71,10 +79,10 @@ filtered_buffers = reference_buffers.filter(
     ee.Filter.inList('wllst__', reclaimed_ids))
 
 # Export both feature collections as assets to GEE
-export_if_not_exists('random_sample_1000_filtered_abandoned_wells',
+export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells',
                      random_sample,
                      'Export non-intersecting features')
 
-export_if_not_exists('random_sample_1000_filtered_reference_buffers',
+export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers',
                      filtered_buffers,
                      'Export selected abandoned wells buffers')
