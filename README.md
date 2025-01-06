@@ -55,8 +55,16 @@ reclaimed_sites_ab/
 
 ## Data Pipeline
 
-This project involves several stages to process and analyze data
-effectively.
+This project involves several stages to process and analyze data. 
+In summary, main steps to recreate the results are:
+
+- Create first assets in GEE with `scripts/export_assets.py`
+- Flag assets and create buffers with `scripts/flagging_assets.py`
+- Prepare the asset to be sample with LEAF-toolbox: `scripts/create_sampler_asset.py`
+- Run the LEAF-toolbox sampler on selected abandoned wells: `scripts/run_sampler.py`
+- Read the pkl files and check time series in `abandoned_wells_leaf_toolsbox.qmd`
+
+Detailed instructions for each step: 
 
 ### 0. Download Data
 
@@ -96,13 +104,6 @@ LEAF-toolbox
 
 [WIP dev notes](https://github.com/ronnyhdez/reclaimed_sites_ab/wiki/Dev-notes)
 
-In summary, steps to recreate the results:
-
-- Create first assets in GEE with `scripts/export_assets.py`
-- Flag assets and create buffers with `scripts/flagging_assets.py`
-- Prepare the asset to be sample with LEAF-toolbox: `scripts/create_sampler_asset.py`
-- Run the LEAF-toolbox sampler on selected abandoned wells: `scripts/run_sampler.py`
-- Read the pkl files and check time series in `abandoned_wells_leaf_toolsbox.qmd`
 
 # References
 
