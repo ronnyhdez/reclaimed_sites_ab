@@ -1,12 +1,12 @@
 # Imports
-import geopandas as gpd
 import os
 import sys
-import janitor
 import ee
 import json
 import math
 import time
+import janitor
+import geopandas as gpd
 from shapely.geometry import Polygon, MultiPolygon
 
 # PARAMETERS
@@ -79,15 +79,6 @@ def process_layer(layer_name, layer_data):
     print(f'Total of batches to export: {num_batches}')
 
     export_tasks = []
-
-    # for i in range(num_batches):
-    #     start_idx = i * batch_size
-    #     end_idx = min((i + 1) * batch_size, len(data))
-        
-    #     batch = data.iloc[start_idx:end_idx].to_crs(epsg=4326)
-    #     batch_geojson = batch.to_json()
-    #     print(f'Transforming to json batch {i}/{num_batches}')
-    #     batch_fc = ee.FeatureCollection(json.loads(batch_geojson))
 
     for i, batch in enumerate(data.groupby(data.index // batch_size)):
         batch = batch[1].to_crs(epsg=4326)
