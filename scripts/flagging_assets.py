@@ -1,7 +1,7 @@
 """
 Flagging assets script.
 
-This script will reads assets in GEE to create buffers around the
+This script will read assets in GEE to create buffers around the
 features and flags if the abandoned well polygon intersects one 
 of those buffers. No filtering is done within this script. Flags
 can be used by the final user to apply their own filters.
@@ -19,21 +19,36 @@ Author: Ronny A. Hernández Mora
 
 import os
 import sys
-
-module_path = os.path.abspath(os.path.join('..'))
-if module_path not in sys.path:
-    sys.path.append(module_path)
-print(module_path)
-
-
 import ee
 import json
+import time
+
+print("Current working directory:", os.getcwd())
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+print("Parent directory: ", parent_dir)
+sys.path.append(parent_dir)
+
 from gee_helpers.gee_helpers import (
     initialize_gee, buffer_feature, 
     apply_inward_dilation, check_empty_coordinates,
     get_feature_collection, export_if_not_exists,
     print_sample_info, create_reference_buffer
 )
+
+## Function to implement in current script
+## So that script can run without doing manual work
+
+# def wait_for_tasks(task_list):
+#     while True:
+#         tasks_completed = all(task.status()['state'] in ['COMPLETED', 'FAILED', 'CANCELLED'] for task in task_list)
+#         if tasks_completed:
+#             break
+#         time.sleep(10)  
+
+#     # Check for any failed tasks
+#     failed_tasks = [task for task in task_list if task.status()['state'] == 'FAILED']
+#     if failed_tasks:
+#         raise Exception(f"The following tasks failed: {', '.join(task.status()['description'] for task in failed_tasks)}")
 
 initialize_gee()
 
@@ -82,9 +97,11 @@ def define_intersection(well):
 
 wells_with_intersections = abandoned_wells.map(define_intersection)
 
-export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags',
+task_1 = export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags_test',
                       wells_with_intersections,
                       'export_intersecting_wells_flags')
+
+# wait_for_tasks([task_1])
 
 # Second Asset | ABMI Industrial + Residential + Roads ==========================================
 abandoned_wells = get_feature_collection("projects/ee-ronnyale/assets/intersecting_wells_flags")
@@ -123,9 +140,11 @@ def define_intersection(well):
 
 wells_with_intersections = abandoned_wells.map(define_intersection)
 
-export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags_v2',
+task_2 = export_if_not_exists('projects/ee-ronnyale/assets/intersecting_wells_flags_v2',
                       wells_with_intersections,
                       'export_intersecting_wells_flags_v2')
+
+
 
 # Third Asset | Disturbed polygons ==========================================
 abandoned_wells = get_feature_collection(
@@ -173,7 +192,7 @@ def set_fire_year(well):
 
 disturbed_wells = abandoned_wells.map(set_fire_year)
 
-export_if_not_exists('projects/ee-ronnyale/assets/fire_disturbance_flags_v3',
+task_3 = export_if_not_exists('projects/ee-ronnyale/assets/fire_disturbance_flags_v3',
                       disturbed_wells,
                       'fire_disturbance_flags_v3')
 
@@ -215,7 +234,7 @@ pixel_count_geom_flag = pixel_count.map(check_empty_coordinates)
 pixel_count_complete = pixel_count_geom_flag.filter(
     ee.Filter.eq('empty_buffer', 0))
 
-export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4',
+task_4 = export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_negative_buffer_v4',
                       pixel_count_complete,
                       'export_pixel_count_negative_buffer_v4')
 
@@ -245,14 +264,14 @@ def merge_properties(feature):
 merged = joined.map(merge_properties)
 print_sample_info(merged)
 
-export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_flags_v5',
+task_5 = export_if_not_exists('projects/ee-ronnyale/assets/pixel_count_flags_v5',
                       merged,
                       'export_pixel_count_flags_v5')
 
 # Sixth Asset | Reference buffers ==========================================
 polygons = get_feature_collection('projects/ee-ronnyale/assets/pixel_count_flags_v5')
 buffer_only_polygons = polygons.map(create_reference_buffer)
-export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers',
+task_6 = export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers',
                      buffer_only_polygons,
                      'export_reference_buffers')
 
@@ -311,7 +330,7 @@ def calculate_class_area(feature):
 reference = get_feature_collection('projects/ee-ronnyale/assets/reference_buffers')
 reference_areas = reference.map(calculate_class_area)
 
-export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers_lc_areas',
+task_7 = export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers_lc_areas',
                      reference_areas,                    
                      'export_reference_land_cover_buffers')
 
@@ -319,7 +338,16 @@ export_if_not_exists('projects/ee-ronnyale/assets/reference_buffers_lc_areas',
 raw_reclaimed_sites = get_feature_collection('projects/ee-ronnyale/assets/pixel_count_flags_v5')
 reclaimed_sites_areas = raw_reclaimed_sites.map(calculate_class_area)
 
-export_if_not_exists('projects/ee-ronnyale/assets/reclaimed_sites_areas_v6',
+task_8 = export_if_not_exists('projects/ee-ronnyale/assets/reclaimed_sites_areas_v6',
                      reclaimed_sites_areas,                    
                      'export_reclaimed_sites_areas')
 
+# wait_for_tasks([task_1, task_2, task_3, task_4, task_5, task_6, task_7, task_8])
+wait_for_task(task_1)
+wait_for_task(task_2)
+wait_for_task(task_3)
+wait_for_task(task_4)
+wait_for_task(task_5)
+wait_for_task(task_6)
+wait_for_task(task_7)
+wait_for_task(task_8)
