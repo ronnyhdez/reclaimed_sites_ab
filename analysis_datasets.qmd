@@ -1,0 +1,43 @@
+---
+title: "Datasets description and validation"
+subtitle: "Annotations on data after sampler"
+author: Ronny A. Hernandez Mora
+execute:
+  message: false
+  warning: false
+format: 
+  html:
+    theme:
+      - flatly
+    linkcolor: "#FF5500"
+    highlight-style: tango
+    toc: true
+    toc-title: Table of contents
+    toc-location: left
+    number-sections: false
+    colorlinks: true
+    code-fold: true
+    code-line-numbers: true
+editor: visual
+jupyter: python3
+editor_options: 
+  chunk_output_type: console
+---
+
+This file is intended to be a reference of the resulting datasets we have so
+far. Before the sampler process, there is a script `create_sampler_assets.py`
+which create two assets to be consumed by the `run_sampler.py` script which
+will create a group of pkl files with produces Level 2 Vegetation Biophysical 
+Products (LEAF-toolbox)
+
+Things to do:
+
+ - List variables from abandoned_wells
+ - List variables from reference buffers
+ - List variables in pkl files.
+ - Define dataset from batches of pkl files
+ - Join datasets (unified pkl file with abandoned_wells)
+ - Join datasets (unified pkl file with reference_buffers)
+ - Number of observations, description of datasets etc.
+
+
