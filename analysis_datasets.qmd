@@ -24,6 +24,17 @@ editor_options:
   chunk_output_type: console
 ---
 
+```{python}
+import ee
+import os
+import sys
+import glob
+import geemap
+import pickle
+import seaborn as sns
+from pathlib import Path
+```
+
 This file is intended to be a reference of the resulting datasets we have so
 far. Before the sampler process, there is a script `create_sampler_assets.py`
 which create two assets to be consumed by the `run_sampler.py` script which
@@ -40,4 +51,54 @@ Things to do:
  - Join datasets (unified pkl file with reference_buffers)
  - Number of observations, description of datasets etc.
 
+## Variables from abandoned wells and reference buffers
 
+```{python}
+
+```
+
+## Variables from LEAF-toolbox processed files
+
+```{python}
+# Read the LC08 files into one dataframe
+pickle_directory = 'data'
+pickle_files = glob.glob(f"{pickle_directory}/time_series_LC08_batch_*.pkl")
+dataframes = []
+for pkl_file in pickle_files:
+    with open(pkl_file, 'rb') as file:
+        df = pickle.load(file)
+        dataframes.append(df)
+
+lc08 = pd.concat(dataframes, ignore_index = True)
+```
+
+```{python}
+# Check the columns
+print(list(lc08.columns))
+```
+
+```{python}
+lc08.columns
+```
+
+
+```{python}
+# Check # observatios per site
+grouped_df = lc08.groupby("site").size()
+print("Number of observatios per site: ")
+print(grouped_df)
+```
+
+```{python}
+max(grouped_df)
+```
+
+```{python}
+min(grouped_df)
+```
+
+## Joined datasets
+
+```{python}
+
+```
