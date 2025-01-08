@@ -26,6 +26,7 @@ editor_options:
 
 ```{python}
 import ee
+import json
 import os
 import sys
 import glob
@@ -33,6 +34,10 @@ import geemap
 import pickle
 import seaborn as sns
 from pathlib import Path
+```
+
+```{python}
+ee.Initialize()
 ```
 
 This file is intended to be a reference of the resulting datasets we have so
@@ -53,8 +58,86 @@ Things to do:
 
 ## Variables from abandoned wells and reference buffers
 
-```{python}
+### Reference buffers
 
+
+
+```{python}
+sample_wells = ee.FeatureCollection(
+    'projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells')
+
+
+sample_buffers = ee.FeatureCollection(
+  'projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers')
+```
+
+```{python}
+check_buffers = sample_buffers.limit(1).getInfo()
+print(json.dumps(check_buffers, indent = 2))
+```
+
+```{python}
+check_buffers = sample_buffers.first().getInfo()
+properties = check_buffers['properties']
+
+for key, value in properties.items():
+              print(f'{key}: {type(value).__name__}')
+```
+
+```{python}
+print(properties.keys())
+```
+
+### Abandoned wells
+
+```{python}
+check_wells = sample_wells.limit(1).getInfo()
+print(json.dumps(check_wells, indent = 2))
+```
+
+
+```{python}
+check_wells = sample_wells.first().getInfo()
+properties = check_wells['properties']
+print(properties.keys())
+```
+
+### Join date variables in buffers for sampler
+
+This is a test that if success needs to be exported as final code to the 
+`create_sampler_assets.py` script.
+
+
+```{python}
+filter = ee.Filter.equals(
+    leftField='wllst__',
+    rightField='wllst__'
+)
+
+join = ee.Join.saveAll(
+    matchesKey='matches',
+    outer = True
+)
+
+joined = join.apply(
+    primary=sample_buffers,
+    secondary=sample_wells,
+    condition=filter
+)
+
+def transfer_time_properties(feature):
+    matches = ee.List(feature.get('matches'))
+    well = ee.Feature(matches.get(0))  
+    return feature \
+        .set('system:time_start', well.get('system:time_start')) \
+        .set('system:time_end', well.get('system:time_end')) \
+        .set('matches', None) 
+
+result = joined.map(transfer_time_properties)
+```
+
+```{python}
+print(result.first().getInfo()['properties'])
 ```
 
 ## Variables from LEAF-toolbox processed files
