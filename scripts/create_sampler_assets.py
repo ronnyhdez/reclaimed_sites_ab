@@ -79,10 +79,10 @@ filtered_buffers = reference_buffers.filter(
     ee.Filter.inList('wllst__', reclaimed_ids))
 
 # Export both feature collections as assets to GEE
-export_if_not_exists('projects/ee-ronnyale/assets/test_random_sample_1000_filtered_abandoned_wells',
+export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells',
                      random_sample,
                      'Export non-intersecting features')
 
-export_if_not_exists('projects/ee-ronnyale/assets/test_random_sample_1000_filtered_reference_buffers',
+export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers',
                      filtered_buffers,
                      'Export selected abandoned wells buffers')
