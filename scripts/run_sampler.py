@@ -64,9 +64,6 @@ DATA_OUTPUT_DIR = 'data_buffers/'
 
 initialize_gee()
 
-# Fix date formats to be accepted by sampler
-
-
 
 # Import LEAFtoolbox modules
 module_path = os.path.abspath(os.path.join('..'))
