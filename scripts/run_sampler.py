@@ -52,11 +52,21 @@ sys.path.append(parent_dir)
 from gee_helpers.gee_helpers import initialize_gee, get_feature_collection
 
 # PARAMETERS
-POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons'
+# This first random_sample_1000_filtered_polygons works due to the transformation
+# in the date format created in GEE script create_sampler_asset. This needs
+# to be implemented here for the correspondent assets.
+# POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons'
+# POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells'
+# POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers'
+# POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/reference_buffers_with_dates'
 PROJECT_TO_SAVE_ASSETS = 'projects/ee-ronnyale/assets/'
-DATA_OUTPUT_DIR = 'data_out/'
+DATA_OUTPUT_DIR = 'data_buffers/'
 
 initialize_gee()
+
+# Fix date formats to be accepted by sampler
+
+
 
 # Import LEAFtoolbox modules
 module_path = os.path.abspath(os.path.join('..'))
@@ -74,9 +84,9 @@ total_polygons = polygon_collection.size().getInfo()
 
 # Products to be processed
 image_collections = [
-    # {"name": "LANDSAT/LC08/C02/T1_L2", "label": "LC08"},
-    # {"name": "LANDSAT/LC09/C02/T1_L2", "label": "LC09"},
-    {"name": "COPERNICUS/S2_SR_HARMONIZED", "label": "S2"}        
+    {"name": "LANDSAT/LC08/C02/T1_L2", "label": "LC08"},
+    {"name": "LANDSAT/LC09/C02/T1_L2", "label": "LC09"},
+    # {"name": "COPERNICUS/S2_SR_HARMONIZED", "label": "S2"}        
 ]
 
 for collection in image_collections:
