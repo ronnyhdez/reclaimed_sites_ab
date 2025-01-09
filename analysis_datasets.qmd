@@ -109,6 +109,20 @@ This is a test that if success needs to be exported as final code to the
 
 
 ```{python}
+def transfer_time_properties(feature):
+    matches = ee.List(feature.get('matches'))
+    well = ee.Feature(matches.get(0))
+    
+    # Get year as integer
+    year = ee.Number.parse(well.get('rclmtn_d'))  # Parse as number first
+    startDate = ee.Date.fromYMD(year, 1, 1).format('dd/MM/yy')
+    endDate = ee.Date.fromYMD(2023, 1, 1).format('dd/MM/yy')
+    
+    return feature \
+        .set('system:time_start', startDate) \
+        .set('system:time_end', endDate) \
+        .set('matches', None)
+
 filter = ee.Filter.equals(
     leftField='wllst__',
     rightField='wllst__'
@@ -125,20 +139,46 @@ joined = join.apply(
     condition=filter
 )
 
-def transfer_time_properties(feature):
-    matches = ee.List(feature.get('matches'))
-    well = ee.Feature(matches.get(0))  
-    return feature \
-        .set('system:time_start', well.get('system:time_start')) \
-        .set('system:time_end', well.get('system:time_end')) \
-        .set('matches', None) 
-
-result = joined.map(transfer_time_properties)
+buffers_with_dates = joined.map(transfer_time_properties)
 ```
 
 ```{python}
-print(result.first().getInfo()['properties'])
+print(buffers_with_dates.first().getInfo()['properties'])
 ```
+
+### Temporal code to export FeatureCollection
+
+```{python}
+#print("Current working directory:", os.getcwd())
+#parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+#print("Parent directory: ", parent_dir)
+#sys.path.append(parent_dir)
+
+from gee_helpers.gee_helpers import(
+    initialize_gee, get_feature_collection,
+    set_dates, set_area, export_if_not_exists
+)
+
+# Start the process
+initialize_gee()
+```
+
+```{python}
+export_if_not_exists(
+  'projects/ee-ronnyale/assets/reference_buffers_with_dates',
+  buffers_with_dates,
+ 'Export reference buffers with dates for sampler process')
+```
+
+
+
+
+
+
+
+
+
+
 
 ## Variables from LEAF-toolbox processed files
 
