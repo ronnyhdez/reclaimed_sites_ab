@@ -1,5 +1,4 @@
 
-
 import ee
 import os
 import sys
@@ -17,11 +16,19 @@ from gee_helpers.gee_helpers import(
 # Start the process
 initialize_gee()
 
+# Get the assets
+## In this case, the assets are the ones already created and to be consumed
+## by the run_sampler.py script. I don't want to create an new set of
+## observations because it's gonna take too long to re-run the entire
+## process.
 abandoned_wells = get_feature_collection(
     'projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells')
 reference_buffers = get_feature_collection(
     'projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers')
 
+# Function to format date from the abandoned wells
+## This is due to the LEAFtoolbox sampler code. If not formatted this way
+## the sampler code will return an error.
 def rename_property(feature):
     # Convert year to integer and create timestamps
     year = ee.Number(feature.get('rclmtn_d')).int()
@@ -32,15 +39,24 @@ def rename_property(feature):
         .set('system:time_start', time_start) \
         .set('system:time_end', time_end)
 
-# Apply the date formatting to both collections
+# Apply the date formatting to the abandoned wells
+## This is the asset that contains the date propertie 
 updated_wells = abandoned_wells.map(rename_property)
-updated_buffers = reference_buffers.map(rename_property)
+
+# Copy the date to the reference buffers
+## The buffers asset does not contains a date propertie. Given that they
+## are buffers for each of the abandoned wells, we can just copy the date
+## in order to process the buffers with the LEAF-toolbox.
+
+
+
+
 
 # Export both feature collections as assets to GEE
-#export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells',
-#                     random_sample,
+#export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells_date_formatted',
+#                     updated_wells,
 #                     'Export non-intersecting features')
-#
-#export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers',
-#                     filtered_buffers,
-#                     'Export selected abandoned wells buffers')
+
+export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers_date_formatted',
+                     updated_buffers,
+                     'Export selected abandoned wells buffers')
