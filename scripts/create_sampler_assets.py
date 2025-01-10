@@ -75,6 +75,7 @@ random_sample = non_intersecting_with_area.randomColumn().limit(1000, 'random')
 
 # Reference buffers processing
 reclaimed_ids = random_sample.aggregate_array('wllst__')
+
 filtered_buffers = reference_buffers.filter(
     ee.Filter.inList('wllst__', reclaimed_ids))
 
