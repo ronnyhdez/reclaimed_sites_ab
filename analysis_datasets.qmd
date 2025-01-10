@@ -34,6 +34,7 @@ import geemap
 import pickle
 import seaborn as sns
 from pathlib import Path
+import pandas as pd
 ```
 
 ```{python}
@@ -59,8 +60,6 @@ Things to do:
 ## Variables from abandoned wells and reference buffers
 
 ### Reference buffers
-
-
 
 ```{python}
 sample_wells = ee.FeatureCollection(
@@ -224,4 +223,70 @@ min(grouped_df)
 
 ```{python}
 
+```
+
+# Checking assets ids
+
+```{python}
+abandoned_wells = ee.FeatureCollection(
+    'projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells')
+referece_buffers = ee.FeatureCollection(
+    'projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers')
+filtered_polygons = ee.FeatureCollection(
+    'projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons')
+```
+
+Check ids:
+
+```{python}
+def compare_wllst_values(ee_collections, pandas_df):
+    # Function to get sorted list of unique wllst__ values from EE collection
+    def get_distinct_ee_values(collection):
+        return collection.aggregate_array('wllst__').distinct().sort().getInfo()
+    
+    # Get wllst__ values from all sources
+    values_by_source = {}
+    
+    # Get values from EE collections
+    for name, collection in ee_collections.items():
+        values_by_source[name] = set(get_distinct_ee_values(collection))
+        print(f"{name} has {len(values_by_source[name])} unique wllst__ values")
+    
+    # Get values from pandas DataFrame using 'site' column
+    pandas_values = set(pandas_df['site'].unique())
+    values_by_source['pandas_lc08'] = pandas_values
+    print(f"pandas_lc08 has {len(pandas_values)} unique site values")
+    
+    # Compare all sources with each other
+    sources = list(values_by_source.keys())
+    for i in range(len(sources)):
+        for j in range(i + 1, len(sources)):
+            name1 = sources[i]
+            name2 = sources[j]
+            values1 = values_by_source[name1]
+            values2 = values_by_source[name2]
+            
+            # Find differences
+            only_in_1 = values1 - values2
+            only_in_2 = values2 - values1
+            
+            print(f"\nComparing {name1} with {name2}:")
+            if only_in_1 or only_in_2:
+                if only_in_1:
+                    print(f"Values only in {name1}: {sorted(only_in_1)}")
+                if only_in_2:
+                    print(f"Values only in {name2}: {sorted(only_in_2)}")
+            else:
+                print(f"They have exactly the same values")
+
+# Create dictionary of EE collections
+ee_collections = {
+    'abandoned_wells': abandoned_wells,
+    #'abandoned_wells_date': abandoned_wells_date,
+    'reference_buffers': referece_buffers,
+    'filtered_polygons': filtered_polygons
+}
+
+# Run the comparison
+compare_wllst_values(ee_collections, lc08)
 ```
