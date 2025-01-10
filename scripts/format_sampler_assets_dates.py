@@ -79,10 +79,10 @@ joined = join.apply(
 updated_buffers = joined.map(transfer_time_properties)
 
 # Export both feature collections as assets to GEE
-#export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells_date_formatted',
-#                     updated_wells,
-#                     'Export non-intersecting features')
+export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells_date_formatted',
+                     updated_wells,
+                     'Export abandoned wells with date formatted')
 
 export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers_date_formatted',
                      updated_buffers,
-                     'Export selected abandoned wells buffers')
+                     'Export reference buffers with date formatted')
