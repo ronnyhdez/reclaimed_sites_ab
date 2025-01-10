@@ -56,9 +56,10 @@ from gee_helpers.gee_helpers import initialize_gee, get_feature_collection
 # in the date format created in GEE script create_sampler_asset. This needs
 # to be implemented here for the correspondent assets.
 # POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons'
+
+## These are tests. 
 # POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells'
-# POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers'
-# POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/reference_buffers_with_dates'
+POLYGONS_FEATURE_COLLECTION = 'projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers_date_formatted'
 PROJECT_TO_SAVE_ASSETS = 'projects/ee-ronnyale/assets/'
 DATA_OUTPUT_DIR = 'data_buffers/'
 
