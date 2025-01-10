@@ -47,10 +47,36 @@ updated_wells = abandoned_wells.map(rename_property)
 ## The buffers asset does not contains a date propertie. Given that they
 ## are buffers for each of the abandoned wells, we can just copy the date
 ## in order to process the buffers with the LEAF-toolbox.
+def transfer_time_properties(feature):
+    matches = ee.List(feature.get('matches'))
+    well = ee.Feature(matches.get(0))
+    
+    # Get the time properties we just created in updated_wells
+    time_start = well.get('system:time_start')
+    time_end = well.get('system:time_end')
+    
+    return feature \
+        .set('system:time_start', time_start) \
+        .set('system:time_end', time_end) \
+        .set('matches', None)
 
+filter = ee.Filter.equals(
+    leftField='wllst__',
+    rightField='wllst__'
+)
 
+join = ee.Join.saveAll(
+    matchesKey='matches',
+    outer = True
+)
 
+joined = join.apply(
+    primary=reference_buffers,
+    secondary=abandoned_wells,
+    condition=filter
+)
 
+updated_buffers = joined.map(transfer_time_properties)
 
 # Export both feature collections as assets to GEE
 #export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells_date_formatted',
