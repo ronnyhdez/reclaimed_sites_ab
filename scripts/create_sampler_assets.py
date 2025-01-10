@@ -78,11 +78,19 @@ reclaimed_ids = random_sample.aggregate_array('wllst__')
 filtered_buffers = reference_buffers.filter(
     ee.Filter.inList('wllst__', reclaimed_ids))
 
+# Format dates
+
+# TODO:ref 207
+# The code to format the dates could be somehwere aroung here.
+# Given that this is a random selection, as today (20250109)
+# i don't want to create a new random dataset which will have
+# to be re-processed by the sampler
+
 # Export both feature collections as assets to GEE
-export_if_not_exists('projects/ee-ronnyale/assets/test_random_sample_1000_filtered_abandoned_wells',
+export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells',
                      random_sample,
                      'Export non-intersecting features')
 
-export_if_not_exists('projects/ee-ronnyale/assets/test_random_sample_1000_filtered_reference_buffers',
+export_if_not_exists('projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers',
                      filtered_buffers,
                      'Export selected abandoned wells buffers')
