@@ -49,6 +49,7 @@ Products (LEAF-toolbox)
 
 Things to do:
 
+ - Check asset id
  - List variables from abandoned_wells
  - List variables from reference buffers
  - List variables in pkl files.
@@ -57,129 +58,18 @@ Things to do:
  - Join datasets (unified pkl file with reference_buffers)
  - Number of observations, description of datasets etc.
 
-## Variables from abandoned wells and reference buffers
+# Assets ids
 
-### Reference buffers
+Given all the processing steps and the resulting datasets, it is
+necessary to validate that the abandoned wells, reference buffers
+and resulting outputs from the LEAFtoolbox sampler contain the
+same exact observations. 
 
-```{python}
-sample_wells = ee.FeatureCollection(
-    'projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells')
-
-
-sample_buffers = ee.FeatureCollection(
-  'projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers')
-```
-
-```{python}
-check_buffers = sample_buffers.limit(1).getInfo()
-print(json.dumps(check_buffers, indent = 2))
-```
-
-```{python}
-check_buffers = sample_buffers.first().getInfo()
-properties = check_buffers['properties']
-
-for key, value in properties.items():
-              print(f'{key}: {type(value).__name__}')
-```
-
-```{python}
-print(properties.keys())
-```
-
-### Abandoned wells
-
-```{python}
-check_wells = sample_wells.limit(1).getInfo()
-print(json.dumps(check_wells, indent = 2))
-```
-
-
-```{python}
-check_wells = sample_wells.first().getInfo()
-properties = check_wells['properties']
-print(properties.keys())
-```
-
-### Join date variables in buffers for sampler
-
-This is a test that if success needs to be exported as final code to the 
-`create_sampler_assets.py` script.
-
-
-```{python}
-def transfer_time_properties(feature):
-    matches = ee.List(feature.get('matches'))
-    well = ee.Feature(matches.get(0))
-    
-    # Get year as integer
-    year = ee.Number.parse(well.get('rclmtn_d'))  # Parse as number first
-    startDate = ee.Date.fromYMD(year, 1, 1).format('dd/MM/yy')
-    endDate = ee.Date.fromYMD(2023, 1, 1).format('dd/MM/yy')
-    
-    return feature \
-        .set('system:time_start', startDate) \
-        .set('system:time_end', endDate) \
-        .set('matches', None)
-
-filter = ee.Filter.equals(
-    leftField='wllst__',
-    rightField='wllst__'
-)
-
-join = ee.Join.saveAll(
-    matchesKey='matches',
-    outer = True
-)
-
-joined = join.apply(
-    primary=sample_buffers,
-    secondary=sample_wells,
-    condition=filter
-)
-
-buffers_with_dates = joined.map(transfer_time_properties)
-```
-
-```{python}
-print(buffers_with_dates.first().getInfo()['properties'])
-```
-
-### Temporal code to export FeatureCollection
-
-```{python}
-#print("Current working directory:", os.getcwd())
-#parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-#print("Parent directory: ", parent_dir)
-#sys.path.append(parent_dir)
-
-from gee_helpers.gee_helpers import(
-    initialize_gee, get_feature_collection,
-    set_dates, set_area, export_if_not_exists
-)
-
-# Start the process
-initialize_gee()
-```
-
-```{python}
-export_if_not_exists(
-  'projects/ee-ronnyale/assets/reference_buffers_with_dates',
-  buffers_with_dates,
- 'Export reference buffers with dates for sampler process')
-```
-
-
-
-
-
-
-
-
-
-
-
-## Variables from LEAF-toolbox processed files
+The main dataset is the filtered abandoned wells which are 1000
+randomly selected sites with a unique ID. Then each of these sites
+has a reference buffer. And both of them have the results from the
+sampler. Each result should contain the same ID which identify
+the observations.
 
 ```{python}
 # Read the LC08 files into one dataframe
@@ -195,50 +85,15 @@ lc08 = pd.concat(dataframes, ignore_index = True)
 ```
 
 ```{python}
-# Check the columns
-print(list(lc08.columns))
-```
-
-```{python}
-lc08.columns
-```
-
-
-```{python}
-# Check # observatios per site
-grouped_df = lc08.groupby("site").size()
-print("Number of observatios per site: ")
-print(grouped_df)
-```
-
-```{python}
-max(grouped_df)
-```
-
-```{python}
-min(grouped_df)
-```
-
-## Joined datasets
-
-```{python}
-
-```
-
-# Checking assets ids
-
-```{python}
+# Assets to compare
 abandoned_wells = ee.FeatureCollection(
     'projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells')
 referece_buffers = ee.FeatureCollection(
     'projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers')
 filtered_polygons = ee.FeatureCollection(
     'projects/ee-ronnyale/assets/random_sample_1000_filtered_polygons')
-```
 
-Check ids:
-
-```{python}
+# Function to compare IDs
 def compare_wllst_values(ee_collections, pandas_df):
     # Function to get sorted list of unique wllst__ values from EE collection
     def get_distinct_ee_values(collection):
@@ -290,3 +145,79 @@ ee_collections = {
 # Run the comparison
 compare_wllst_values(ee_collections, lc08)
 ```
+
+# Variables from abandoned wells and reference buffers
+
+To understand what each of the data products contains, this section
+presents each of the properties/variables.
+
+## Reference buffers
+
+```{python}
+sample_wells = ee.FeatureCollection(
+    'projects/ee-ronnyale/assets/random_sample_1000_filtered_abandoned_wells_date_formatted')
+
+
+sample_buffers = ee.FeatureCollection(
+  'projects/ee-ronnyale/assets/random_sample_1000_filtered_reference_buffers_date_formatted')
+```
+
+Properties contained in the reference buffers FeatureCollection:
+
+```{python}
+check_buffers = sample_buffers.first().getInfo()
+properties = check_buffers['properties']
+
+for key, value in properties.items():
+              print(f'{key}: {type(value).__name__}')
+# print(properties.keys())
+```
+
+## Abandoned wells
+
+```{python}
+check_wells = sample_wells.limit(1).getInfo()
+#print(json.dumps(check_wells, indent = 2))
+```
+
+Properties contained in the filtered abandoned wells polygons
+FeatureCollection:
+
+```{python}
+check_wells = sample_wells.first().getInfo()
+properties = check_wells['properties']
+
+for key, value in properties.items():
+          print(f'{key}: {type(value).__name__}')
+#print(properties.keys())
+```
+
+## Variables from LEAF-toolbox processed files
+
+```{python}
+lc08.columns
+```
+
+
+```{python}
+# Check # observatios per site
+grouped_df = lc08.groupby("site").size()
+print("Number of observatios per site: ")
+print(grouped_df)
+```
+
+```{python}
+max(grouped_df)
+```
+
+```{python}
+min(grouped_df)
+```
+
+## Joined datasets
+
+```{python}
+
+```
+
+
