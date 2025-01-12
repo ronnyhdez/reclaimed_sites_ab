@@ -123,8 +123,51 @@ first_feature = features[0][0]
 print(json.dumps(first_feature['properties'], indent=2))
 ```
 
+## From nested structure to data frame 
+
+Now, to continue with operations on flat data, we have to
+unnest the dataframe. According to what we saw before with
+the structure:
 
 
+```{python}
+wells_flat = wells_df.select(
+    pl.col("features").explode()
+).select(
+    pl.col("features").struct.field("properties").struct.field("*")
+)
+```
+
+Now we can check the shape of the new object:
+
+```{python}
+wells_flat.shape
+```
+
+## Convert dates
+
+The date variables are in miliseconds, so to have a better reading
+I'm going to change it to date time.
+
+```{python}
+wells_flat = wells_flat.select([
+  pl.col("*"),
+
+  (pl.col("system:time_start")
+      .cast(pl.Int64) / 1000
+      .cast(pl.Datetime)
+      .alias("start_date")),
+      
+  (pl.col("system:time_end")
+      .cast(pl.Int64) / 1000
+      .cast(pl.Datetime)
+      .alias("end_date"))
+])
+
+wells_flat.schema
+```            
 
 
-
+```{python}
+wells_flat.describe()
+```
