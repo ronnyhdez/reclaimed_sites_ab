@@ -32,6 +32,7 @@ import sys
 import glob
 import geemap
 import pickle
+import polars as pl
 import seaborn as sns
 from pathlib import Path
 import pandas as pd
@@ -192,12 +193,73 @@ for key, value in properties.items():
 #print(properties.keys())
 ```
 
+### Export file
+
+To be read locally. There are going to be 1 geojson file read in two ways:
+
+ - `pl.read_json` to get data to be analyzed
+ - `gpd.read_file` to read the polygons and plot them
+
+One is going to be using polars for faster data manipulation and analysis
+for the "tabular" data. The spatial data will be read with geopandas to
+get the GeoJSON polygons for some visualizations.
+
+```{python}
+wells_task = ee.batch.Export.table.toDrive(
+    collection=sample_wells,
+    description='wells_export',
+    fileFormat='GeoJSON'
+)
+wells_task.start()
+
+# Export buffers
+buffers_task = ee.batch.Export.table.toDrive(
+    collection=sample_buffers,
+    description='buffers_export',
+    fileFormat='GeoJSON'
+)
+buffers_task.start()
+```
+
+```{python}
+wells_df = pl.read_json('wells_export.geojson')
+buffers_df = pl.read_json('buffers_export.geojson')
+
+# For spatial operations/visualization
+# wells_gdf = gpd.read_file('wells_export.geojson')
+# buffers_gdf = gpd.read_file('buffers_export.geojson')
+```
+
+## Abandoned wells characteristics
+
+```{python}
+wells_df.schema
+```
+
+```{python}
+wells_df.head()
+```
+
+```{python}
+wells_df.shape
+```
+
+```{python}
+wells_df.columns
+```
+
+
 ## Variables from LEAF-toolbox processed files
+
+The following are the columns derive from the landsat 8 product for the
+abandoned well polygons.
 
 ```{python}
 lc08.columns
 ```
 
+The resulting observations of the LEAF-toolbox can be grouped by
+their site ID, which is the same as the well site ID
 
 ```{python}
 # Check # observatios per site
@@ -212,12 +274,6 @@ max(grouped_df)
 
 ```{python}
 min(grouped_df)
-```
-
-## Joined datasets
-
-```{python}
-
 ```
 
 
