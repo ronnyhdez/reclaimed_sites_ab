@@ -112,30 +112,19 @@ Series: '' [struct[4]]
 ```
 
 The first one is telling us that we have a list of features where each
-structure has 4 components. 
+structure has 4 components. The second one shows that within the first row, 
+there are 1000 individual features which are represented by a structure of
+4 components.
+
+Now let's examine the first feature's properties:
 
 ```{python}
-
-# Now let's examine the first feature's properties
-first_feature = features[0][0]  # Get the first item from the first row
-print("Properties in our data:")
+first_feature = features[0][0]  
 print(json.dumps(first_feature['properties'], indent=2))
 ```
 
 
 
-
-```{python}
-wells_df.head()
-```
-
-```{python}
-wells_df.shape
-```
-
-```{python}
-wells_df.columns
-```
 
 
 
