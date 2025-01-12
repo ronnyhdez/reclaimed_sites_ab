@@ -1,0 +1,141 @@
+---
+title: "Abandoned wells description using polars"
+subtitle: "Detailed steps using the exported GeoJSON file"
+author: Ronny A. Hernandez Mora
+execute:
+  message: false
+  warning: false
+format: 
+  html:
+    theme:
+      - flatly
+    linkcolor: "#FF5500"
+    highlight-style: tango
+    toc: true
+    toc-title: Table of contents
+    toc-location: left
+    number-sections: false
+    colorlinks: true
+    code-fold: true
+    code-line-numbers: true
+editor: visual
+jupyter: python3
+editor_options: 
+  chunk_output_type: console
+---
+
+
+This file is using the geojson file exported from GEE on 20250111 to drive
+and then locally. Idea is to use polars for getting the tabular data
+descriptive statistics and geopandas for using the polygons of each
+of the abandoned wells.
+
+The exported data file contains the 1000 filtered polygons and randomly 
+selected.
+
+
+```{python}
+import ee
+import json
+import os
+import sys
+import glob
+import geemap
+import pickle
+import polars as pl
+import seaborn as sns
+from pathlib import Path
+import pandas as pd
+```
+
+```{python}
+wells_df = pl.read_json('wells_export.geojson')
+buffers_df = pl.read_json('buffers_export.geojson')
+
+# For spatial operations/visualization
+# wells_gdf = gpd.read_file('wells_export.geojson')
+# buffers_gdf = gpd.read_file('buffers_export.geojson')
+```
+
+## Abandoned wells characteristics
+
+First, let's check the structure of the GeoJson file we just
+read:
+
+```{python}
+wells_df.schema
+```
+
+That's kind of a messy printing hard to understand, specially if
+it is new data for us that we are not familiared with. What we can
+see at first glance is that we have two columns: `type` and `features`
+
+The `type` column is a `string` and the `features` column is a `list`
+with a struct and then everything is too coupled together to understand
+easily. Let's try to print it in a more understandable way with the `json`
+package:
+
+```{python}
+single_row = wells_df.head(1)
+single_row
+```
+
+So, we got the first row (we have just one row in this Polars dataframe)
+and the print is telling us the `shape`: 1 row and 2 columns. Basically
+what we saw before but less clutered. Then, we have that `features` is
+`list[struct[4]]`. This means that we have a list with a struct with
+4 fields.
+
+```{python}
+features = single_row.get_column('features')
+features 
+```
+
+Now we have printed just the features column, we can start digging
+deeper into its structure. Let's get first the list
+
+```{python}
+features[0]
+```
+
+The difference is that we can see the first sections of each print:
+
+```{python}
+#| eval: false
+shape: (1,)
+Series: 'features' [list[struct[4]]]
+
+# ---------------
+
+shape: (1_000,)
+Series: '' [struct[4]]
+```
+
+The first one is telling us that we have a list of features where each
+structure has 4 components. 
+
+```{python}
+
+# Now let's examine the first feature's properties
+first_feature = features[0][0]  # Get the first item from the first row
+print("Properties in our data:")
+print(json.dumps(first_feature['properties'], indent=2))
+```
+
+
+
+
+```{python}
+wells_df.head()
+```
+
+```{python}
+wells_df.shape
+```
+
+```{python}
+wells_df.columns
+```
+
+
+
