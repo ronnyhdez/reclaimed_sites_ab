@@ -151,21 +151,15 @@ I'm going to change it to date time.
 
 ```{python}
 wells_flat = wells_flat.select([
-  pl.col("*"),
-
-  (pl.col("system:time_start")
-      .cast(pl.Int64) / 1000
-      .cast(pl.Datetime)
-      .alias("start_date")),
-      
-  (pl.col("system:time_end")
-      .cast(pl.Int64) / 1000
-      .cast(pl.Datetime)
-      .alias("end_date"))
+    pl.col("*"),
+    pl.from_epoch(
+        pl.col("system:time_start"), time_unit="ms"
+    ).alias("start_date"),
+    pl.from_epoch(
+        pl.col("system:time_end"), time_unit="ms"
+    ).alias("end_date")
 ])
-
-wells_flat.schema
-```            
+```
 
 
 ```{python}
