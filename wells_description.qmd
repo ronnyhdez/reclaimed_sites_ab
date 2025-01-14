@@ -161,6 +161,27 @@ wells_flat = wells_flat.select([
 ])
 ```
 
+## Remove not useful variables
+
+1 = forest
+2 = wetland
+3 = crop_herbaceous
+4 = other
+
+```{python}
+wells_flat.glimpse()
+```
+
+```{python}
+check = wells_flat.select(
+  pl.all().exclude("olsnd__", "fire_year", "wll_stt",
+                   "prd_x__", "^.*intersects.*$")
+)
+
+check.glimpse()
+```
+
+
 
 ```{python}
 wells_flat.describe()
