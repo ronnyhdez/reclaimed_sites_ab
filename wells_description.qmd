@@ -173,16 +173,45 @@ wells_flat.glimpse()
 ```
 
 ```{python}
-check = wells_flat.select(
+wells_flat = wells_flat.select(
   pl.all().exclude("olsnd__", "fire_year", "wll_stt",
-                   "prd_x__", "^.*intersects.*$")
+                   "prd_x__", "^.*intersects.*$", "lcu_id",
+                   "rclmtn_s", "system:time_start",
+                   "system:time_end", "visible", "source",
+                   "intersecting_fires", "fieldnm",
+                   "disp_nm", "fetr_ty", "hfi_id", "mn_npr_",
+                   "disp_nm", "random", "mx_ls", "rclmtn_c",
+                   "mx_ls__", "frst_spd_d", "plygn_s", "area")
 )
 
-check.glimpse()
+wells_flat.glimpse()
 ```
 
-
+## Rename columns
 
 ```{python}
-wells_flat.describe()
+#check = wells_flat.with_columns(
+#    area_forest=pl.col("1"),
+#    area_wetland=pl.col("2"),
+#    area_crop_herbaceous=pl.col("3"),
+#    area_other=pl.col("4"),
+#    well_site=pl.col("wllst__")
+#)
+
+wells_flat = wells_flat.rename({
+  "1":"area_forest",
+  "2":"area_wetland",
+  "3":"area_crop_herbaceous",
+  "4":"area_other",
+  "wllst__":"well_site",
+  "shape_r":"shape_area",
+  "nmbr_wl":"number_wells",
+  "rclmtn_d":"reclamation_date",
+  "mx_bnd_":"max_abandoned_date",
+  "shp_lng":"shape_length",
+  "frst_spd_y":"first_spud_year"
+})
+wells_flat.glimpse()
 ```
+
+
