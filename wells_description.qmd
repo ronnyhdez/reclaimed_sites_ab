@@ -144,6 +144,19 @@ Now we can check the shape of the new object:
 wells_flat.shape
 ```
 
+
+```{python}
+buffers_flat = buffers_df.select(
+    pl.col("features").explode()
+).select(
+    pl.col("features").struct.field("properties").struct.field("*")
+)
+```
+
+```{python}
+buffers_flat.glimpse()
+```
+
 ## Convert dates
 
 The date variables are in miliseconds, so to have a better reading
@@ -151,6 +164,18 @@ I'm going to change it to date time.
 
 ```{python}
 wells_flat = wells_flat.select([
+    pl.col("*"),
+    pl.from_epoch(
+        pl.col("system:time_start"), time_unit="ms"
+    ).alias("start_date"),
+    pl.from_epoch(
+        pl.col("system:time_end"), time_unit="ms"
+    ).alias("end_date")
+])
+```
+
+```{python}
+buffers_flat = buffers_flat.select([
     pl.col("*"),
     pl.from_epoch(
         pl.col("system:time_start"), time_unit="ms"
@@ -214,4 +239,17 @@ wells_flat = wells_flat.rename({
 wells_flat.glimpse()
 ```
 
+```{python}
+buffers_flat = buffers_flat.select(
+  pl.all().exclude("system:time_start", "system:time_end")
+)
 
+buffers_flat = buffers_flat.rename({
+  "1":"area_forest",
+  "2":"area_wetland",
+  "3":"area_crop_herbaceous",
+  "4":"area_other"
+})
+
+buffers_flat.glimpse()
+```
