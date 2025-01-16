@@ -215,14 +215,6 @@ wells_flat.glimpse()
 ## Rename columns
 
 ```{python}
-#check = wells_flat.with_columns(
-#    area_forest=pl.col("1"),
-#    area_wetland=pl.col("2"),
-#    area_crop_herbaceous=pl.col("3"),
-#    area_other=pl.col("4"),
-#    well_site=pl.col("wllst__")
-#)
-
 wells_flat = wells_flat.rename({
   "1":"area_forest",
   "2":"area_wetland",
@@ -248,8 +240,167 @@ buffers_flat = buffers_flat.rename({
   "1":"area_forest",
   "2":"area_wetland",
   "3":"area_crop_herbaceous",
-  "4":"area_other"
+  "4":"area_other",
+  "wllst__":"well_site"
 })
 
 buffers_flat.glimpse()
+```
+
+## Sankey diagram
+
+```{python}
+wells_flat.glimpse()
+```
+
+```{python}
+buffers_flat.glimpse()
+```
+
+
+```{python}
+joined_data = wells_flat.join(
+    buffers_flat,
+    on='well_site'  # same column name in both
+)
+
+# Quick verification
+print("Original shapes:")
+print(f"Wells: {wells_flat.shape}")
+print(f"Buffers: {buffers_flat.shape}")
+print(f"Joined: {joined_data.shape}")
+
+# Let's look at the first few rows of joined data to verify matching
+print("\nFirst few matching pairs:")
+print(joined_data.select(['well_site', 'area_forest', 'area_forest_right']).head())
+```
+
+```{python}
+# First replace nulls with 0 and calculate the actual transitions
+land_cover_types = ["area_forest", "area_wetland", "area_crop_herbaceous", "area_other"]
+
+# Get total area for each land cover type in wells and buffers
+well_totals = {}
+buffer_totals = {}
+
+for lc in land_cover_types:
+    well_totals[lc] = joined_data.select(pl.col(lc).fill_null(0)).sum()
+    buffer_totals[lc] = joined_data.select(pl.col(f"{lc}_right").fill_null(0)).sum()
+
+print("\nWell totals:", well_totals)
+print("\nBuffer totals:", buffer_totals)
+```
+
+
+```{python}
+transitions = {
+   ('forest', 'forest'): [],
+   ('forest', 'wetland'): [],
+   ('forest', 'crop'): [],
+   ('forest', 'other'): [],
+   ('wetland', 'forest'): [],
+   ('wetland', 'wetland'): [],
+   ('wetland', 'crop'): [],
+   ('wetland', 'other'): [],
+   ('crop', 'forest'): [],
+   ('crop', 'wetland'): [],
+   ('crop', 'crop'): [],
+   ('crop', 'other'): [],
+   ('other', 'forest'): [],
+   ('other', 'wetland'): [],
+   ('other', 'crop'): [],
+    ('other', 'other'): []
+} 
+# For each row in joined_data:
+# If well has forest and buffer has forest -> forest to forest
+# If well has forest and buffer has wetland -> forest to wetland
+# etc.
+
+print("Let's look at a single well-buffer pair first:")
+single_pair = joined_data.select([
+    'well_site',
+    'area_forest', 'area_wetland', 'area_crop_herbaceous', 'area_other',
+    'area_forest_right', 'area_wetland_right', 'area_crop_herbaceous_right', 'area_other_right'
+]).head(1)
+print(single_pair)
+```
+
+```{python}
+# Get the data for all wells and buffers
+for row in joined_data.iter_rows():
+    # Calculate proportions in well
+    total_well = sum(x for x in row[1:5] if x is not None)  # Sum of all well areas
+    if total_well > 0:
+        well_props = [
+            (row[1] or 0) / total_well,  # forest
+            (row[2] or 0) / total_well,  # wetland
+            (row[3] or 0) / total_well,  # crop
+            (row[4] or 0) / total_well   # other
+        ]
+        
+        # Calculate proportions in buffer
+        total_buffer = sum(x for x in row[5:9] if x is not None)
+        if total_buffer > 0:
+            buffer_props = [
+                (row[5] or 0) / total_buffer,  # forest
+                (row[6] or 0) / total_buffer,  # wetland
+                (row[7] or 0) / total_buffer,  # crop
+                (row[8] or 0) / total_buffer   # other
+            ]
+            
+            # Add to transitions - directly comparing proportions
+            types = ['forest', 'wetland', 'crop', 'other']
+            for i, from_type in enumerate(types):
+                for j, to_type in enumerate(types):
+                    if well_props[i] > 0:  # if we have this type in well
+                        transitions[(from_type, to_type)].append(well_props[i] * buffer_props[j])
+
+final_transitions = {k: sum(v) for k, v in transitions.items()}
+```
+
+```{python}
+import plotly.graph_objects as go
+
+# Create labels for nodes
+labels = ['Wells Forest', 'Wells Wetland', 'Wells Crop', 'Wells Other',
+          'Buffer Forest', 'Buffer Wetland', 'Buffer Crop', 'Buffer Other']
+
+# Create source-target indices
+source_indices = []
+target_indices = []
+values = []
+
+# Map from land cover type to index
+source_map = {'forest': 0, 'wetland': 1, 'crop': 2, 'other': 3}
+target_map = {'forest': 4, 'wetland': 5, 'crop': 6, 'other': 7}
+
+# Convert transitions to Sankey format
+for (source, target), value in final_transitions.items():
+    source_indices.append(source_map[source])
+    target_indices.append(target_map[target])
+    values.append(value)
+
+# Create Sankey diagram
+fig = go.Figure(data=[go.Sankey(
+    node=dict(
+        pad=15,
+        thickness=20,
+        line=dict(color="black", width=0.5),
+        label=labels,
+        color="blue"
+    ),
+    link=dict(
+        source=source_indices,
+        target=target_indices,
+        value=values
+    )
+)])
+
+# Update layout
+fig.update_layout(
+    title_text="Land Cover Transitions: Wells to Reference Buffers",
+    font_size=10
+)
+
+fig.show()
 ```
