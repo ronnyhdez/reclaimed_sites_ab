@@ -249,6 +249,8 @@ buffers_flat.glimpse()
 
 ## Sankey diagram
 
+Let's check first both cleaned datasets: 
+
 ```{python}
 wells_flat.glimpse()
 ```
@@ -256,6 +258,49 @@ wells_flat.glimpse()
 ```{python}
 buffers_flat.glimpse()
 ```
+
+And some descriptive statistics of the selected sites:
+
+```{python}
+melted_wells = wells_flat.melt(
+    id_vars = ['well_site'],
+    value_vars = ['area_forest', 'area_wetland', 'area_crop_herbaceous', 'area_other'],
+    variable_name = 'category_area',
+    value_name = 'area'
+).with_columns(pl.lit('well').alias('source'))
+
+melted_wells.glimpse()
+```
+
+```{python}
+melted_buffers = buffers_flat.melt(
+    id_vars = ['well_site'],
+    value_vars = ['area_forest', 'area_wetland', 'area_crop_herbaceous', 'area_other'],
+    variable_name = 'category_area',
+    value_name = 'area'
+).with_columns(pl.lit('buffer').alias('source'))
+
+melted_buffers.glimpse()
+```
+
+```{python}
+# Default concat is vertical
+combined = pl.concat([melted_buffers, melted_wells])
+combined.glimpse()
+```
+
+```{python}
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 6))
+sns.barplot(data=combined, x='category_area', y='area', hue='source')
+plt.show()
+```
+
+Even though the plot shows huge differences, that's because the
+reference buffers are bigger than the wells, so I need to
+normalize the data.
 
 
 ```{python}
