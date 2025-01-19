@@ -210,7 +210,7 @@ wells_task = ee.batch.Export.table.toDrive(
     description='wells_export',
     fileFormat='GeoJSON'
 )
-wells_task.start()
+#wells_task.start()
 
 # Export buffers
 buffers_task = ee.batch.Export.table.toDrive(
@@ -218,7 +218,7 @@ buffers_task = ee.batch.Export.table.toDrive(
     description='buffers_export',
     fileFormat='GeoJSON'
 )
-buffers_task.start()
+#buffers_task.start()
 ```
 
 ```{python}
