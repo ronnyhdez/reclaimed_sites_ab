@@ -49,8 +49,8 @@ import pandas as pd
 ```
 
 ```{python}
-wells_df = pl.read_json('wells_export.geojson')
-buffers_df = pl.read_json('buffers_export.geojson')
+wells_df = pl.read_json('vector_data/wells_export.geojson')
+buffers_df = pl.read_json('vector_data/buffers_export.geojson')
 
 # For spatial operations/visualization
 # wells_gdf = gpd.read_file('wells_export.geojson')
