@@ -174,3 +174,7 @@ data_in/
 new_data/
 data_out/
 data_check/
+data_buffers/
+data_wells/
+vector_data/
+downloaded_data/
