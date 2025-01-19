@@ -70,4 +70,4 @@ urls = [
 ]
 
 for url in urls:
-    download_and_extract(url, 'data_check')
+    download_and_extract(url, 'downloaded_data')
