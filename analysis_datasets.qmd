@@ -232,22 +232,7 @@ buffers_df = pl.read_json('buffers_export.geojson')
 
 ## Abandoned wells characteristics
 
-```{python}
-wells_df.schema
-```
-
-```{python}
-wells_df.head()
-```
-
-```{python}
-wells_df.shape
-```
-
-```{python}
-wells_df.columns
-```
-
+....
 
 ## Variables from LEAF-toolbox processed files
 
