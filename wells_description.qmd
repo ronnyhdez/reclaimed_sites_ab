@@ -122,14 +122,7 @@ buffers_flat = buffers_flat.select([
 
 ## Remove not useful variables
 
-1 = forest
-2 = wetland
-3 = crop_herbaceous
-4 = other
 
-```{python}
-wells_flat.glimpse()
-```
 
 ```{python}
 wells_flat = wells_flat.select(
@@ -147,6 +140,17 @@ wells_flat.glimpse()
 ```
 
 ## Rename columns
+
+During the process in GEE, the land use cover were transformed
+using numbers. The corresponding categories are:
+
+1 = forest
+2 = wetland
+3 = crop_herbaceous
+4 = other
+
+Variables will be transformed with those names and the rest
+of variables will have the official names.
 
 ```{python}
 wells_flat = wells_flat.rename({
