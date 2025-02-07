@@ -51,7 +51,11 @@ buffers_df = pl.read_json('vector_data/buffers_export.geojson')
 First, let's check the structure of the GeoJson file we just
 read:
 
+Steps to get the features
+
 ```{python}
+single_row = wells_df.head(1)
+features = single_row.get_column('features')
 first_feature = features[0][0]  
 print(json.dumps(first_feature['properties'], indent=2))
 ```
@@ -343,6 +347,7 @@ final_transitions = {k: sum(v) for k, v in transitions.items()}
 
 ```{python}
 import plotly.graph_objects as go
+
 
 # Create labels for nodes
 labels = ['Wells Forest', 'Wells Wetland', 'Wells Crop', 'Wells Other',
