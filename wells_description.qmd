@@ -24,7 +24,6 @@ editor_options:
   chunk_output_type: console
 ---
 
-
 This file is using the geojson file exported from GEE on 20250111 to drive
 and then locally. Idea is to use polars for getting the tabular data
 descriptive statistics and geopandas for using the polygons of each
@@ -33,19 +32,10 @@ of the abandoned wells.
 The exported data file contains the 1000 filtered polygons and randomly 
 selected.
 
-
 ```{python}
-import ee
 import json
-import os
-import sys
-import glob
-import geemap
-import pickle
 import polars as pl
 import seaborn as sns
-from pathlib import Path
-import pandas as pd
 ```
 
 ```{python}
@@ -56,69 +46,16 @@ buffers_df = pl.read_json('vector_data/buffers_export.geojson')
 # wells_gdf = gpd.read_file('wells_export.geojson')
 # buffers_gdf = gpd.read_file('buffers_export.geojson')
 ```
-
-## Abandoned wells characteristics
+## Datasets characteristics
 
 First, let's check the structure of the GeoJson file we just
 read:
 
-```{python}
-wells_df.schema
-```
-
-That's kind of a messy printing hard to understand, specially if
-it is new data for us that we are not familiared with. What we can
-see at first glance is that we have two columns: `type` and `features`
-
-The `type` column is a `string` and the `features` column is a `list`
-with a struct and then everything is too coupled together to understand
-easily. Let's try to print it in a more understandable way with the `json`
-package:
+Steps to get the features
 
 ```{python}
 single_row = wells_df.head(1)
-single_row
-```
-
-So, we got the first row (we have just one row in this Polars dataframe)
-and the print is telling us the `shape`: 1 row and 2 columns. Basically
-what we saw before but less clutered. Then, we have that `features` is
-`list[struct[4]]`. This means that we have a list with a struct with
-4 fields.
-
-```{python}
 features = single_row.get_column('features')
-features 
-```
-
-Now we have printed just the features column, we can start digging
-deeper into its structure. Let's get first the list
-
-```{python}
-features[0]
-```
-
-The difference is that we can see the first sections of each print:
-
-```{python}
-#| eval: false
-shape: (1,)
-Series: 'features' [list[struct[4]]]
-
-# ---------------
-
-shape: (1_000,)
-Series: '' [struct[4]]
-```
-
-The first one is telling us that we have a list of features where each
-structure has 4 components. The second one shows that within the first row, 
-there are 1000 individual features which are represented by a structure of
-4 components.
-
-Now let's examine the first feature's properties:
-
-```{python}
 first_feature = features[0][0]  
 print(json.dumps(first_feature['properties'], indent=2))
 ```
@@ -129,29 +66,31 @@ Now, to continue with operations on flat data, we have to
 unnest the dataframe. According to what we saw before with
 the structure:
 
-
 ```{python}
 wells_flat = wells_df.select(
     pl.col("features").explode()
 ).select(
     pl.col("features").struct.field("properties").struct.field("*")
 )
-```
 
-Now we can check the shape of the new object:
-
-```{python}
-wells_flat.shape
-```
-
-
-```{python}
+# Buffers
 buffers_flat = buffers_df.select(
     pl.col("features").explode()
 ).select(
     pl.col("features").struct.field("properties").struct.field("*")
 )
 ```
+
+Now we can have a glimpse of the dataframe: 
+
+```{python}
+wells_flat.glimpse()
+```
+
+### Buffers shape and variables
+
+The same process was applied to the buffers, here are the
+results:
 
 ```{python}
 buffers_flat.glimpse()
@@ -172,9 +111,8 @@ wells_flat = wells_flat.select([
         pl.col("system:time_end"), time_unit="ms"
     ).alias("end_date")
 ])
-```
 
-```{python}
+# Buffers date
 buffers_flat = buffers_flat.select([
     pl.col("*"),
     pl.from_epoch(
@@ -188,14 +126,7 @@ buffers_flat = buffers_flat.select([
 
 ## Remove not useful variables
 
-1 = forest
-2 = wetland
-3 = crop_herbaceous
-4 = other
 
-```{python}
-wells_flat.glimpse()
-```
 
 ```{python}
 wells_flat = wells_flat.select(
@@ -213,6 +144,17 @@ wells_flat.glimpse()
 ```
 
 ## Rename columns
+
+During the process in GEE, the land use cover were transformed
+using numbers. The corresponding categories are:
+
+1 = forest
+2 = wetland
+3 = crop_herbaceous
+4 = other
+
+Variables will be transformed with those names and the rest
+of variables will have the official names.
 
 ```{python}
 wells_flat = wells_flat.rename({
@@ -405,6 +347,7 @@ final_transitions = {k: sum(v) for k, v in transitions.items()}
 
 ```{python}
 import plotly.graph_objects as go
+
 
 # Create labels for nodes
 labels = ['Wells Forest', 'Wells Wetland', 'Wells Crop', 'Wells Other',

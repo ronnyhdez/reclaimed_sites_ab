@@ -24,17 +24,14 @@ editor_options:
   chunk_output_type: console
 ---
 
+hola
+
 ```{python}
 import ee
 import json
-import os
-import sys
 import glob
-import geemap
 import pickle
 import polars as pl
-import seaborn as sns
-from pathlib import Path
 import pandas as pd
 ```
 
@@ -205,12 +202,13 @@ for the "tabular" data. The spatial data will be read with geopandas to
 get the GeoJSON polygons for some visualizations.
 
 ```{python}
+#| eval: false
 wells_task = ee.batch.Export.table.toDrive(
     collection=sample_wells,
     description='wells_export',
     fileFormat='GeoJSON'
 )
-wells_task.start()
+#wells_task.start()
 
 # Export buffers
 buffers_task = ee.batch.Export.table.toDrive(
@@ -218,36 +216,21 @@ buffers_task = ee.batch.Export.table.toDrive(
     description='buffers_export',
     fileFormat='GeoJSON'
 )
-buffers_task.start()
+#buffers_task.start()
 ```
 
 ```{python}
-wells_df = pl.read_json('wells_export.geojson')
-buffers_df = pl.read_json('buffers_export.geojson')
+wells_df = pl.read_json('vector_data/wells_export.geojson')
+buffers_df = pl.read_json('vector_data/buffers_export.geojson')
 
 # For spatial operations/visualization
-# wells_gdf = gpd.read_file('wells_export.geojson')
-# buffers_gdf = gpd.read_file('buffers_export.geojson')
+# wells_gdf = gpd.read_file('vector_data/wells_export.geojson')
+# buffers_gdf = gpd.read_file('vector_data/buffers_export.geojson')
 ```
 
 ## Abandoned wells characteristics
 
-```{python}
-wells_df.schema
-```
-
-```{python}
-wells_df.head()
-```
-
-```{python}
-wells_df.shape
-```
-
-```{python}
-wells_df.columns
-```
-
+....
 
 ## Variables from LEAF-toolbox processed files
 
